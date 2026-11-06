@@ -1,0 +1,208 @@
+/* ---------- store cards on the Kyra home page ---------- */
+.bp-card{display:flex!important;align-items:center;justify-content:center}
+.bp-card img{width:auto;max-width:56%;max-height:56%;object-fit:contain;transition:transform .8s cubic-bezier(.2,.8,.1,1)}
+.bp-card:hover img{transform:scale(1.04)}
+.bp-card-patchi{background:#93B993}
+.bp-card-patchi img{max-height:62%}
+.bp-card-adidas{background:linear-gradient(180deg,#070707,#232323)}
+.bp-card-adidas img{max-height:58%}
+.bp-card-celio{background:#fff;box-shadow:inset 0 0 0 1px #E2E2E2}
+.bp-card-celio img{max-width:58%}
+
+.kv-kyra main{padding-top:var(--hh)}
+.k:not(.kv-home) main{padding-top:var(--hh)}
+.k main{animation:kpage .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes kpage{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.k main{animation:none}}
+.kv-contact main{padding-top:var(--hh)}
+.ct-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:clamp(48px,7vw,120px);align-items:start}
+.ct-info{margin:0;display:grid;gap:34px}
+.ct-info dt{margin:0 0 10px}
+.ct-info dd{margin:0;font-size:17px;font-weight:300;line-height:1.6}
+.ct-info a{text-decoration:none;border-bottom:1px solid var(--rule)}
+.ct-info a:hover{border-color:var(--gold)}
+.ct-social{display:flex;flex-wrap:wrap;gap:8px 24px}
+.ct-form{background:var(--panel);padding:clamp(28px,3.4vw,52px)}
+.ct-form .h3{margin:0 0 28px}
+.ct-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+.ct-field{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.ct-field label{font-size:13px;font-weight:500;color:var(--muted)}
+.ct-field input,.ct-field select,.ct-field textarea{font:inherit;font-size:16px;font-weight:400;color:#000;background:#fff;border:1px solid #D9D6CF;border-radius:0;padding:13px 14px;width:100%}
+.ct-field textarea{resize:vertical;min-height:140px}
+.ct-field input:focus,.ct-field select:focus,.ct-field textarea:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+.ct-err{margin:-8px 0 18px;color:#A3261B;font-size:14px}
+.ct-note{margin:16px 0 0;font-size:13px;line-height:1.55;color:var(--muted);max-width:52ch}
+.k .svc-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.k .dlv{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){
+  .ct-grid{grid-template-columns:minmax(0,1fr)}
+  .k .svc-grid{grid-template-columns:minmax(0,1fr);row-gap:24px}
+  .k .svc-item{border-left:0;padding-left:0}
+}
+@media (max-width:560px){.ct-row{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- brand pages: shared skeleton ---------- */
+.bp{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--bf);-webkit-font-smoothing:antialiased}
+.bp *,.bp *:before,.bp *:after{box-sizing:border-box}
+.bp a{color:inherit}
+.bp button{font:inherit;color:inherit;cursor:pointer}
+.bp :focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.bp-wrap{width:100%;max-width:1440px;margin:0 auto;padding-left:max(clamp(20px,5vw,80px),env(safe-area-inset-left,0px));padding-right:max(clamp(20px,5vw,80px),env(safe-area-inset-right,0px))}
+.bp-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:20px;min-height:60px;padding:0 max(clamp(20px,5vw,80px),env(safe-area-inset-left,0px));background:var(--bar);color:var(--barink)}
+.bp:before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bar);z-index:21}
+.bp-back{display:inline-flex;align-items:center;gap:10px;min-height:44px;text-decoration:none;font-size:14px}
+.bp-back:hover span{text-decoration:underline;text-underline-offset:4px}
+.bp-kc{margin-left:auto;font-size:13px;opacity:.6}
+.bp-lang{display:flex;align-items:center;gap:6px;font-size:12px}
+.bp-lang button{background:none;border:0;padding:10px 4px;opacity:.55}
+.bp-lang button[aria-pressed=true],.bp-lang button:hover{opacity:1}
+.bp-lang span{opacity:.3}
+.bp-hero-in{display:grid;align-items:center}
+.bp-logo{margin:0;line-height:0}
+.bp-logo img{display:block;width:100%;height:auto}
+.bp-tag{margin:0 0 10px}
+.bp-intro{margin:0;max-width:44ch;line-height:1.6}
+.bp-headline{margin:0 0 20px}
+.bp-group+.bp-group{margin-top:clamp(32px,4vw,56px)}
+.bp-glabel{margin:0 0 18px;font-size:15px;font-weight:600}
+.bp-opts{display:grid;gap:14px}
+.bp-opt{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:0;background:none;padding:0;transition:background .3s,color .3s,border-color .3s}
+.bp-oname{display:block}
+.bp-onote{display:block;margin-top:6px;font-size:14px;line-height:1.45;opacity:.75}
+.bp-ocount{display:block;margin-top:auto;padding-top:22px;font-size:13px}
+.bp-results{padding-block:clamp(56px,7vw,110px) clamp(72px,8vw,130px)}
+.bp-rtitle{margin:0 0 26px}
+.bp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:36px 24px}
+.bp-pimg{aspect-ratio:1;background:var(--card);margin-bottom:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bp-pimg img{max-width:82%;max-height:82%;object-fit:contain}
+.bp-pname{margin:0 0 6px;font-size:16px}
+.bp-pdesc{margin:0 0 8px;font-size:14px;opacity:.7}
+.bp-price{margin:0;font-weight:600}
+.bp-empty{max-width:56ch;font-size:16px;line-height:1.6}
+.bp-empty p{margin:0 0 6px}
+.bp-empty a{font-weight:600}
+.bp-ft{padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));background:var(--bar);color:var(--barink);font-size:13px}
+.bp-ft-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px 28px}
+.bp-ft-in p{margin:0;opacity:.7}
+.bp-ft-in p:last-child{margin-left:auto}
+
+/* ---------- Patchi: sage field, cream, soft rounded ---------- */
+.bp-patchi{--bg:#93B993;--ink:#24402B;--bar:#93B993;--barink:#24402B;--card:#F2EEE1;--focus:#24402B;--bf:"Quicksand","Nunito",system-ui,sans-serif}
+.bp-patchi .bp-bar{box-shadow:0 1px 0 #24402B1f}
+.bp-patchi .bp-hero{padding-block:clamp(48px,7vw,110px) clamp(40px,5vw,80px);text-align:center}
+.bp-patchi .bp-hero-in{justify-items:center;gap:clamp(28px,3.5vw,44px)}
+.bp-patchi .bp-logo{width:clamp(170px,22vw,290px)}
+.bp-patchi .bp-tag{font-weight:700;font-size:15px;color:#24402B}
+.bp-patchi .bp-intro{margin:0 auto;font-size:clamp(18px,1.7vw,22px);font-weight:600;line-height:1.5;color:#1C3322}
+.bp-patchi .bp-cats{padding-bottom:clamp(20px,3vw,40px)}
+.bp-patchi .bp-glabel{text-align:center;color:#24402B}
+.bp-patchi .bp-opts{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bp-patchi .bp-opt{min-height:190px;padding:26px 26px 22px;border-radius:22px;background:#F2EEE1;color:#24402B}
+.bp-patchi .bp-oname{font-size:clamp(21px,1.8vw,26px);font-weight:600;line-height:1.2}
+.bp-patchi .bp-ocount{font-weight:600;color:#5E8463}
+.bp-patchi .bp-opt:hover{background:#fff}
+.bp-patchi .bp-opt.on{background:#24402B;color:#F2EEE1}
+.bp-patchi .bp-opt.on .bp-ocount{color:#B9D4B9}
+.bp-patchi .bp-results{background:#F2EEE1;border-radius:36px 36px 0 0;margin-top:clamp(40px,5vw,70px)}
+.bp-patchi .bp-rtitle{font-size:clamp(24px,2.4vw,32px);font-weight:600}
+.bp-patchi .bp-pimg{border-radius:18px;background:#fff}
+.bp-patchi .bp-ft{background:#24402B;color:#F2EEE1}
+
+.bp-prod{min-width:0}
+.bp-pimg img.bp-mark{width:38%;max-width:38%;opacity:.9}
+.bp-pcat{margin:0 0 6px;font-size:13px;font-weight:600;opacity:.7}
+.bp-ref{margin:0 0 12px;font-size:12px;opacity:.55;letter-spacing:.02em}
+.bp-pfoot{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bp-pfoot .bp-price{font-size:17px}
+.bp-stock{font-size:13px;opacity:.7}
+.bp-stock.out{opacity:1;color:#A3261B}
+.bp-patchi .bp-pimg{background:#93B993}
+.bp-patchi .bp-pname{font-weight:700;line-height:1.3}
+.bp-patchi .bp-price{font-weight:700;color:#24402B}
+.bp-add{display:block;width:100%;min-height:44px;margin-top:14px;border:0;background:var(--ink);color:var(--bg);font-weight:600;font-size:14px;transition:background .3s}
+.bp-patchi .bp-add{background:#24402B;color:#F2EEE1;border-radius:999px}
+.bp-patchi .bp-add:hover{background:#1A3020}
+.bp-patchi .bp-add.done{background:#5E8463}
+.bp.bp-row{min-height:0;padding-block:clamp(64px,7vw,110px)}
+.bp-row-head{display:flex;align-items:center;justify-content:space-between;gap:20px 40px;flex-wrap:wrap;margin-bottom:clamp(28px,3vw,44px)}
+.bp-row-logo{display:block;height:clamp(72px,7vw,100px);width:auto}
+.bp-patchi.bp-row .bp-intro{margin:0;text-align:left;max-width:40ch;font-size:clamp(17px,1.5vw,20px)}
+.bp-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.bp-patchi.bp-row .bp-prod{display:flex;flex-direction:column;background:#F2EEE1;border-radius:22px;padding:14px 14px 18px}
+.bp-patchi.bp-row .bp-pimg{border-radius:14px}
+.bp-patchi.bp-row .bp-add{margin-top:auto}
+.bp-patchi.bp-row .bp-pfoot{margin-bottom:14px}
+.bp-cta-bar{display:flex;justify-content:center;margin-top:clamp(36px,4vw,56px)}
+.bp-cta{display:inline-flex;align-items:center;min-height:52px;padding:0 32px;text-decoration:none;font-weight:700;font-size:15px}
+.bp-patchi .bp-cta{background:#F2EEE1;color:#24402B;border-radius:999px}
+.bp-patchi .bp-cta:hover{background:#fff}
+.k .pgrid.hstrip{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1100px){
+  .k .pgrid.hstrip,.bp-strip{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(220px,38%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px}
+  .k .pgrid.hstrip>*,.bp-strip>*{scroll-snap-align:start}
+}
+@media (max-width:600px){.k .pgrid.hstrip,.bp-strip{grid-auto-columns:72%}}
+/* ---------- adidas: black and white, bold condensed ---------- */
+.bp-adidas{--bg:#fff;--ink:#000;--bar:#000;--barink:#fff;--card:#ECEFF1;--focus:#000;--bf:"Barlow",system-ui,sans-serif}
+.bp-adidas .bp-hero{background:linear-gradient(180deg,#070707,#232323);color:#fff;padding-block:clamp(56px,8vw,130px)}
+.bp-adidas .bp-hero-in{grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:clamp(36px,7vw,120px)}
+.bp-adidas .bp-logo{width:clamp(140px,17vw,250px)}
+.bp-adidas .bp-headline{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-style:italic;font-size:clamp(52px,8.4vw,132px);line-height:.88;letter-spacing:-.01em}
+.bp-adidas .bp-headline span{display:block}
+.bp-adidas .bp-tag{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;color:#BDBDBD}
+.bp-adidas .bp-intro{font-size:17px;color:#E4E4E4}
+.bp-adidas .bp-cats{padding-top:clamp(48px,6vw,90px)}
+.bp-adidas .bp-glabel{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:18px}
+.bp-adidas .bp-seg .bp-opts{display:flex;gap:0;border:2px solid #000;width:max-content;max-width:100%}
+.bp-adidas .bp-seg .bp-opt{padding:14px clamp(18px,3vw,36px);min-height:48px;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:18px;letter-spacing:.03em}
+.bp-adidas .bp-seg .bp-opt+.bp-opt{border-left:2px solid #000}
+.bp-adidas .bp-seg .bp-opt:hover{background:#ECEFF1}
+.bp-adidas .bp-seg .bp-opt.on{background:#000;color:#fff}
+.bp-adidas .bp-tiles .bp-opts{grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+.bp-adidas .bp-tiles .bp-opt{min-height:clamp(200px,20vw,280px);padding:26px;border:2px solid #000;margin:0 -2px -2px 0}
+.bp-adidas .bp-tiles .bp-oname{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-style:italic;text-transform:uppercase;font-size:clamp(34px,3.6vw,56px);line-height:.95}
+.bp-adidas .bp-tiles .bp-ocount{font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
+.bp-adidas .bp-tiles .bp-opt:hover,.bp-adidas .bp-tiles .bp-opt.on{background:#000;color:#fff}
+.bp-adidas .bp-rtitle{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-style:italic;text-transform:uppercase;font-size:clamp(30px,3vw,44px)}
+.bp-adidas .bp-empty a{text-underline-offset:3px}
+
+/* ---------- Celio: white, black, red accent, wide lowercase ---------- */
+.bp-celio{--bg:#fff;--ink:#000;--bar:#fff;--barink:#000;--card:#F3F3F3;--focus:#E30613;--bf:"Figtree",system-ui,sans-serif}
+.bp-celio .bp-bar{box-shadow:0 1px 0 #E2E2E2}
+.bp-celio .bp-hero{padding-block:clamp(60px,9vw,150px) clamp(48px,6vw,90px)}
+.bp-celio .bp-hero-in{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(36px,6vw,100px);align-items:end}
+.bp-celio .bp-logo{width:min(100%,420px)}
+.bp-celio .bp-tag{color:#E30613;font-weight:600;font-size:15px}
+.bp-celio .bp-intro{font-family:"Questrial",sans-serif;font-size:clamp(19px,1.7vw,24px);line-height:1.45}
+.bp-celio .bp-glabel{font-family:"Questrial",sans-serif;font-weight:400;font-size:15px;color:#6B6B6B}
+.bp-celio .bp-list .bp-opts{gap:0;border-top:1px solid #000}
+.bp-celio .bp-list .bp-opt{flex-direction:row;align-items:baseline;justify-content:space-between;gap:20px;padding:clamp(14px,1.6vw,22px) 0;border-bottom:1px solid #000;width:100%}
+.bp-celio .bp-list .bp-oname{font-family:"Questrial",sans-serif;font-size:clamp(28px,4.2vw,62px);line-height:1.05;letter-spacing:.02em;text-transform:lowercase}
+.bp-celio .bp-list .bp-ocount{margin:0;padding:0;font-size:14px;color:#6B6B6B;white-space:nowrap}
+.bp-celio .bp-list .bp-opt:hover .bp-oname{padding-left:.25em}
+.bp-celio .bp-list .bp-oname{transition:padding .4s cubic-bezier(.2,.8,.1,1)}
+.bp-celio .bp-list .bp-opt.on .bp-oname,.bp-celio .bp-list .bp-opt.on .bp-ocount{color:#E30613}
+.bp-celio .bp-results{background:#F3F3F3;margin-top:clamp(48px,6vw,90px)}
+.bp-celio .bp-rtitle{font-family:"Questrial",sans-serif;font-weight:400;font-size:clamp(26px,2.6vw,36px);text-transform:lowercase}
+.bp-celio .bp-pimg{background:#fff}
+.bp-celio .bp-empty a{color:#E30613}
+.bp-celio .bp-ft{background:#000;color:#fff}
+
+@media (max-width:900px){
+  .bp-patchi .bp-opts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bp-adidas .bp-hero-in,.bp-celio .bp-hero-in{grid-template-columns:minmax(0,1fr)}
+  .bp-adidas .bp-tiles .bp-opts{grid-template-columns:minmax(0,1fr)}
+  .bp-adidas .bp-tiles .bp-opt{min-height:150px}
+}
+@media (max-width:560px){
+  .bp-adidas .bp-seg .bp-opts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}
+  .bp-adidas .bp-seg .bp-opt{padding:12px 4px;font-size:15px;align-items:center;text-align:center}
+  .bp-patchi .bp-opts{grid-template-columns:minmax(0,1fr)}
+  .bp-patchi .bp-opt{min-height:0}
+  .bp-kc{display:none}
+  .bp-lang{margin-left:auto}
+  .bp-ft-in p:last-child{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .bp *,.bp-card img{transition:none!important}
+}
