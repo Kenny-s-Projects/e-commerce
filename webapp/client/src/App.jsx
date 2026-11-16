@@ -25,6 +25,7 @@ export default function App() {
       <ScrollCue ready={ready} />
 
       <main>
+
         <Hero houses={houses} ready={ready} />
         <BrandSection house={kyra} index={1} total={houses.length} />
         <BrandSection house={patchi} index={2} total={houses.length} />

@@ -8,7 +8,7 @@ export const houses = [
   {
     id: 'kyra',
     name: 'kyra',
-    logo: null, // pas de fichier logo : wordmark en texte
+    logo: '/img/logos/kyra.png',
     theme: 'beige',
     tagline: 'Parfums · Maquillage & soins',
     title: 'Les grandes maisons de',
