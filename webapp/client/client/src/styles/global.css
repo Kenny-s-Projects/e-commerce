@@ -1,0 +1,70 @@
+/* ---------- Couleurs et typo (tirées de la maquette) ---------- */
+:root {
+  --beige: #e9e3da;      /* fond Kyra et page */
+  --cream: #f5f2ec;      /* fond des cartes produit */
+  --green: #8eb48e;      /* Patchi */
+  --black: #0a0a0a;      /* adidas */
+  --white: #ffffff;      /* Celio */
+  --ink: #1a1a1a;        /* texte */
+  --ink-soft: #6b6b6b;   /* texte secondaire */
+  --line: rgba(26, 26, 26, 0.35);
+
+  --sans: 'Jost', system-ui, sans-serif;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+
+  --gutter: clamp(20px, 4vw, 64px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--sans);
+  font-weight: 400;
+  color: var(--ink);
+  background: var(--beige);
+  overflow-x: hidden;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Petites capitales espacées, réutilisées partout */
+.caps {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Mot en serif italique dans les titres */
+.accent {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+}
