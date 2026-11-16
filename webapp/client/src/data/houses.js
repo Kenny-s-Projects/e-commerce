@@ -8,7 +8,7 @@ export const houses = [
   {
     id: 'kyra',
     name: 'kyra',
-    logo: '/img/logos/kyra.png',
+    logo: null, // pas de fichier logo : wordmark en texte
     theme: 'beige',
     tagline: 'Parfums · Maquillage & soins',
     title: 'Les grandes maisons de',
@@ -47,8 +47,18 @@ export const houses = [
     logo: '/img/logos/adidas-white.png',
     theme: 'black',
     tagline: 'Sport & lifestyle',
+    title: 'Le sport,',
+    accent: 'en style.',
+    accentInline: true,
+    subtitle: 'Chaussures, vêtements et accessoires pour homme, femme et enfant.',
     hero: { img: null, name: '[Produit adidas]', price: null },
-    products: [],
+    // Photos et prix à venir : catégories reprises de brands.js
+    products: [
+      { id: 'adidas-chaussures', store: 'Chaussures', name: '[Produit adidas]', price: null },
+      { id: 'adidas-vetements', store: 'Vêtements', name: '[Produit adidas]', price: null },
+      { id: 'adidas-accessoires', store: 'Accessoires', name: '[Produit adidas]', price: null },
+      { id: 'adidas-enfant', store: 'Enfant', name: '[Produit adidas]', price: null },
+    ],
   },
   {
     id: 'celio',
@@ -56,10 +66,32 @@ export const houses = [
     logo: '/img/logos/celio.png',
     theme: 'white',
     tagline: 'Mode homme',
+    title: 'Le vestiaire',
+    accent: 'masculin.',
+    accentInline: true,
+    subtitle: 'Chemises, jeans, chinos et tous les essentiels du vestiaire masculin.',
     hero: { img: null, name: '[Produit Celio]', price: null },
-    products: [],
+    // Photos et prix à venir
+    products: [
+      { id: 'celio-chemises', store: 'Chemises', name: '[Produit Celio]', price: null },
+      { id: 'celio-jeans', store: 'Jeans', name: '[Produit Celio]', price: null },
+      { id: 'celio-pantalons', store: 'Pantalons & chinos', name: '[Produit Celio]', price: null },
+      { id: 'celio-vestes', store: 'Vestes', name: '[Produit Celio]', price: null },
+    ],
   },
 ]
+
+// Toutes les images d'un produit : `images` (plusieurs photos) ou `img` (une seule)
+export const productImages = (product) => product.images ?? (product.img ? [product.img] : [])
+
+// Retrouver un produit par son id, toutes Maisons confondues
+export const findProduct = (id) => {
+  for (const house of houses) {
+    const product = house.products.find((p) => p.id === id)
+    if (product) return { ...product, house }
+  }
+  return null
+}
 
 export const formatPrice = (price, unit) => {
   if (price == null) return '[Prix]'
