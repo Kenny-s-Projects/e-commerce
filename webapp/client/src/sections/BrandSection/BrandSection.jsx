@@ -2,23 +2,27 @@ import { motion } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import TitleCta from '../../components/TitleCta/TitleCta.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
-import './BrandSection.css'
+import { sectionThemes } from '../../data/themes.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
 /**
  * Section d'une Maison sur la home : SectionTitle + TitleCta + 4 ProductSingle.
- * Réutilisable pour Patchi, adidas et Celio (le fond suit house.theme).
+ * Même composant pour Kyra, Patchi, adidas et Celio : seules les données changent.
  */
 export default function BrandSection({ house, index, total, onAdd }) {
   return (
-    <section id={house.id} className={`brand-section brand-section--${house.theme}`}>
-      <div className="brand-section__head">
+    <section
+      id={house.id}
+      className={`px-gutter py-[clamp(80px,10vw,140px)] ${sectionThemes[house.theme]}`}
+    >
+      <div className="mb-[clamp(48px,5vw,72px)] flex items-end justify-between gap-10 max-sm:flex-col max-sm:items-start">
         <SectionTitle
           index={index}
           total={total}
           title={house.title}
           accent={house.accent}
+          accentInline={house.accentInline}
           subtitle={house.subtitle}
         />
         <TitleCta
@@ -30,7 +34,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
       </div>
 
       <motion.div
-        className="brand-section__grid"
+        className="grid grid-cols-4 gap-[clamp(16px,1.8vw,28px)] max-[900px]:grid-cols-2 max-[900px]:gap-y-10"
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.2 }}

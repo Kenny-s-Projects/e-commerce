@@ -1,5 +1,8 @@
 // Données fantômes : les 4 Maisons de la home.
-// Produits Kyra repris de l'existant (app.js), images dans public/img.
+// Produits Kyra repris de l'existant (app.js), Patchi de brands.js (ERP, oct. 2026).
+// Images dans public/img.
+
+const PATCHI_IMG = '/img/logos/patchi-placeholder.png' // visuel provisoire
 
 export const houses = [
   {
@@ -26,8 +29,17 @@ export const houses = [
     logo: '/img/logos/patchi.png',
     theme: 'green',
     tagline: 'Chocolats & cadeaux',
-    hero: { img: '/img/logos/patchi-placeholder.png', name: 'Filled Chocolate Box 1026 g', price: 163, boxed: true },
-    products: [],
+    title: 'Le chocolat,',
+    accent: 'l’art d’offrir.',
+    accentInline: true, // titre sur une seule ligne, comme la maquette
+    subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
+    hero: { img: PATCHI_IMG, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
+    products: [
+      { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_IMG, boxed: true },
+      { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_IMG, boxed: true },
+      { id: 'gns0013', ref: 'GNS0013', store: 'My Treat', name: 'Dragée Diet Almond Milk, 250 g', price: 45, img: PATCHI_IMG, boxed: true },
+      { id: 'gbr0002', ref: 'GBR0002', store: 'Tablettes', name: 'Chocolate Bar 100 g Noblesse 70%', price: 15, img: PATCHI_IMG, boxed: true },
+    ],
   },
   {
     id: 'adidas',
@@ -49,4 +61,7 @@ export const houses = [
   },
 ]
 
-export const formatPrice = (price) => (price == null ? '[Prix]' : `$${price}`)
+export const formatPrice = (price, unit) => {
+  if (price == null) return '[Prix]'
+  return unit ? `$${price} / ${unit}` : `$${price}`
+}
