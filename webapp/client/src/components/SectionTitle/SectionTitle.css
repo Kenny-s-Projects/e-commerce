@@ -1,0 +1,38 @@
+.section-title {
+  max-width: 640px;
+}
+
+.section-title__mask {
+  display: block;
+  overflow: hidden;
+}
+
+.section-title__line {
+  display: block;
+}
+
+.section-title__index {
+  margin-bottom: 28px;
+  opacity: 0.8;
+}
+
+.section-title__heading {
+  font-size: clamp(36px, 4.6vw, 64px);
+  font-weight: 300;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+/* Le mot en italique est un peu plus grand pour équilibrer la serif */
+.section-title__heading .accent {
+  font-size: 1.08em;
+  line-height: 1;
+  padding-bottom: 0.08em;
+}
+
+.section-title__subtitle {
+  margin-top: 24px;
+  max-width: 440px;
+  font-size: 14px;
+  line-height: 1.75;
+}

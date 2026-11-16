@@ -1,0 +1,59 @@
+.title-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.title-cta__name {
+  font-size: clamp(44px, 5vw, 72px);
+  font-weight: 300;
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+}
+
+.title-cta__logo {
+  height: clamp(32px, 3.4vw, 48px);
+  width: auto;
+}
+
+.title-cta__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 8px;
+}
+
+/* Trait sous le lien, qui se redessine au survol */
+.title-cta__link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right;
+  transition: transform 0.5s var(--ease);
+}
+
+.title-cta__link:hover::after {
+  animation: redraw 0.7s var(--ease);
+}
+
+@keyframes redraw {
+  0%   { transform: scaleX(1); transform-origin: right; }
+  50%  { transform: scaleX(0); transform-origin: right; }
+  51%  { transform: scaleX(0); transform-origin: left; }
+  100% { transform: scaleX(1); transform-origin: left; }
+}
+
+.title-cta__arrow {
+  font-size: 14px;
+  transition: transform 0.5s var(--ease);
+}
+
+.title-cta__link:hover .title-cta__arrow {
+  transform: translateX(6px);
+}
