@@ -15,9 +15,9 @@ export default function BrandSection({ house, index, total, onAdd }) {
   return (
     <section
       id={house.id}
-      className={`px-gutter py-[clamp(80px,10vw,140px)] ${sectionThemes[house.theme]}`}
+      className={`px-gutter py-[clamp(80px,10vw,140px)] ${sectionThemes[house.theme]} bg-[#F5E5D2]`}
     >
-      <div className="mb-[clamp(48px,5vw,72px)] flex items-end justify-between gap-10 max-sm:flex-col max-sm:items-start">
+      <div className="mb-[clamp(48px,5vw,72px)] flex items-end justify-between gap-10 max-sm:flex-col max-sm:items-start ">
         <SectionTitle
           index={index}
           total={total}

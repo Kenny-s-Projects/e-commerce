@@ -3,6 +3,8 @@
 // Images dans public/img.
 
 const PATCHI_IMG = '/img/logos/patchi-placeholder.png' // visuel provisoire
+const PATCHI_IMG_SECTION = '/img/logos/patchi-heroSection.png' // visuel provisoire
+const KYRA_IMG_SECTION = '/img/logos/kyra-heroSection.png' // visuel provisoire
 
 export const houses = [
   {
@@ -15,7 +17,7 @@ export const houses = [
     accent: 'beauté.',
     subtitle:
       'Chanel, Dior, Hermès, Tom Ford, blackUp, Calvin Klein et Versace : parfums, maquillage et soins.',
-    hero: { img: '/img/logos/logo-kyra-silouhette.png', name: 'Miss Dior Parfum', price: 78 },
+    hero: { img: KYRA_IMG_SECTION, name: 'Miss Dior Parfum', price: 78 },
     products: [
       { id: 'chanel-chance-eau-tendre', store: 'Chanel', name: 'Chance Eau Tendre', price: 100, img: '/img/chanel-chance-eau-tendre.webp' },
       { id: 'hermes-twilly-eau-ginger', store: 'Hermès', name: 'Twilly Eau Ginger', price: 96, img: '/img/hermes-twilly-eau-ginger.webp' },
@@ -33,7 +35,7 @@ export const houses = [
     accent: 'l’art d’offrir.',
     accentInline: true, // titre sur une seule ligne, comme la maquette
     subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
-    hero: { img: PATCHI_IMG, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
+    hero: { img: PATCHI_IMG_SECTION, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
     products: [
       { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_IMG, boxed: true },
       { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_IMG, boxed: true },

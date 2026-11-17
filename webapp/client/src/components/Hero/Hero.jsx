@@ -66,7 +66,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
         transition={{ duration: 1.1, delay: 0.3 + 0.15 * index, ease }}
       />
 
-      {/* Haut : numéro + logo */}
+
       <header className="flex items-start justify-between gap-3">
         <span className="caps opacity-70">{String(index + 1).padStart(2, '0')}</span>
         {house.logo ? (
@@ -76,7 +76,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             className={
               house.id === 'celio'
                 ? 'mt-1.5 h-[clamp(16px,1.5vw,22px)] w-auto'
-                : 'h-[clamp(26px,2.6vw,38px)] w-auto object-contain'
+                : 'h-[clamp(26px,2.6vw,38px)] w-20 object-contain'
             }
           />
         ) : (
@@ -98,8 +98,8 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             alt={hero.name}
             className={
               hero.boxed
-                ? 'aspect-square w-[min(70%,220px)] object-cover shadow-[0_30px_60px_rgba(0,0,0,0.18)]'
-                : 'max-h-[52vh] w-auto max-w-full object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.22)] max-md:max-h-[26vh]'
+                ? 'aspect-square w-[min(70%,220px)] object-cover shadow-[0_30px_60px_rgba(0,0,0,0.18)] '
+                : 'max-h-[52vh] w-auto max-w-full object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.22)] max-md:max-h-[26vh]  '
             }
           />
         ) : (
@@ -126,8 +126,8 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
               exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
               transition={{ duration: 0.6, delay: 0.35, ease }}
             >
-              <p className="mt-0.5 text-[15px]">{hero.name}</p>
-              <p className="mt-0.5 text-[13px] opacity-75">{formatPrice(hero.price)}</p>
+              {/* <p className="mt-0.5 text-[15px]">{hero.name}</p> */}
+              {/* <p className="mt-0.5 text-[13px] opacity-75">{formatPrice(hero.price)}</p> */}
               <a
                 href={maisonHref(house.id)}
                 className="caps group mt-3.5 inline-flex items-center gap-2.5 whitespace-nowrap border-b border-current pb-1.5"

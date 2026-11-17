@@ -85,6 +85,7 @@ export default function SectionTitle({
         </div>
       )}
 
+
       <Tag className="text-[clamp(36px,4.6vw,64px)] font-light leading-[1.08] tracking-[-0.015em]">
         {accentInline || !title ? (
           <span className="block overflow-hidden pb-[0.08em]">
