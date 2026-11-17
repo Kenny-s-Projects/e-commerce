@@ -37,7 +37,7 @@ const products = [
 export default {
   id: 'kyra',
   name: 'kyra',
-  logo: null, // pas de fichier logo : wordmark en texte
+  logo: '/img/logos/logo-kyra.png',
 
   /* ---------- Home ---------- */
   theme: 'beige',
@@ -45,7 +45,7 @@ export default {
   title: 'Les grandes maisons de',
   accent: 'beauté.',
   subtitle: 'Chanel, Dior, Hermès, Tom Ford, blackUp, Calvin Klein et Versace : parfums, maquillage et soins.',
-  hero: { img: '/img/dior-miss-dior-parfum.webp', name: 'Miss Dior Parfum', price: 78 },
+  hero: { img: '/img/ck-defy-parfum2.webp', name: 'Calvin Klein CK One Eau De Toilette', price: 78 },
   featured: ['chanel-chance-eau-tendre', 'hermes-twilly-eau-ginger', 'tomford-black-orchid', 'versace-dylan-blue'],
 
   /* ---------- Catalogue ---------- */

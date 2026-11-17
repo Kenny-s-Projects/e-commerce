@@ -9,7 +9,7 @@ export const sectionThemes = {
 }
 
 export const heroThemes = {
-  beige: 'bg-beige text-ink',
+  beige: 'bg-[#ad4c23] text-white',
   green: 'bg-green text-paper',
   black: 'bg-black text-white',
   white: 'bg-white text-ink',

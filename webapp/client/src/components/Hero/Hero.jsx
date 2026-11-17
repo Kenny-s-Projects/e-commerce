@@ -86,10 +86,10 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
         )}
       </header>
 
-      {/* Visuel */}
+      {/* Visuel 
       <motion.div
         className="grid min-h-0 flex-1 place-items-center py-6"
-        animate={{ scale: isActive ? 1.08 : 1 }}
+        animate={{ scale: isActive ? 1.0 : 1.2 }}
         transition={{ duration: 0.9, ease }}
       >
         {hero.img ? (
@@ -98,8 +98,9 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             alt={hero.name}
             className={
               hero.boxed
-                ? 'aspect-square w-[min(70%,220px)] object-cover shadow-[0_30px_60px_rgba(0,0,0,0.18)]'
-                : 'max-h-[52vh] w-auto max-w-full object-contain mix-blend-multiply max-md:max-h-[26vh]'
+                ? 'aspect-square w-[min(70%,220px)] object-cover shadow-[0_30px_60px_rgba(0,0,0,0.18)] '
+                : 'max-h-[52vh] w-auto max-w-full object-contain mix-blend-multiply max-md:max-h-[26vh] bg-[#FAF5EE] p-4'
+
             }
           />
         ) : (
@@ -111,7 +112,37 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             Photo produit<br />à venir
           </div>
         )}
-      </motion.div>
+      </motion.div> */}
+
+      {/* Visuel : même cadre (4/5, largeur fixe) pour les 4 colonnes, seul le contenu change */}
+      <div className="grid min-h-0 flex-1 place-items-center py-6">
+        <motion.div
+          className={`relative aspect-[4/5] w-[min(100%,clamp(140px,15vw,240px))] overflow-hidden ${
+            hero.img
+              ? 'bg-[#ad4c23] shadow-[0_40px_80px_-28px_rgba(0,0,0,0.5),0_14px_28px_-10px_rgba(0,0,0,0.25)]'
+              : 'border border-dashed border-current opacity-60'
+          }`}
+          animate={{ scale: isActive ? 1.08 : 1 }}
+          transition={{ duration: 0.9, ease }}
+        >
+          {hero.img ? (
+            <img
+              src={hero.img}
+              alt={hero.name}
+              className={
+                hero.boxed
+                  ? 'absolute inset-0 size-full object-cover' // coffret Patchi : remplit le cadre
+                  : 'absolute inset-0 m-auto h-[80%] w-[80%] object-contain drop-shadow-[0_18px_18px_rgba(0,0,0,0.28)]' // flacon : centré, avec son ombre
+              }
+            />
+          ) : (
+            <span className="caps absolute inset-0 grid place-items-center text-center text-[8px] leading-[1.8]">
+              Photo produit<br />à venir
+            </span>
+          )}
+        </motion.div>
+      </div>
+    
 
       {/* Bas : catégorie + détails du produit quand la colonne est ouverte */}
       <footer className="min-h-[110px] max-md:min-h-0">
