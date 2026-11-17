@@ -51,8 +51,8 @@ export default function AdidasPage({ onAdd }) {
           products={list}
           total={list.length}
           groups={[
-            { key: 'who', options: who },
-            { key: 'cat', options: rayons.map(({ id, label }) => ({ id, label })) },
+            { key: 'who', label: 'Pour qui', options: who },
+            { key: 'cat', label: 'Rayons', options: rayons.map(({ id, label }) => ({ id, label })) },
           ]}
           value={filter}
           onChange={toggle}

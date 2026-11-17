@@ -43,7 +43,7 @@ export default function PatchiPage({ onAdd }) {
         ref={barRef}
         products={list}
         total={list.length}
-        groups={[{ key: 'cat', options: collections }]}
+        groups={[{ key: 'cat', label: 'Collections', options: collections }]}
         value={filter}
         onChange={toggle}
         barClass="bg-paper text-forest"

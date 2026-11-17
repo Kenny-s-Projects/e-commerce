@@ -8,6 +8,7 @@ import {
   useReducedMotion,
 } from 'framer-motion'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
+import FilterPanel from '../../components/maison/FilterPanel.jsx'
 import { maisons, optionsOf } from '../../data/maisons.js'
 import { formatPrice, maisonHref } from '../../data/houses.js'
 
@@ -127,9 +128,30 @@ export default function Maison({ maison, onAdd }) {
 
       {/* Filtres, collés sous la barre */}
       <div ref={gridRef} className={`sticky top-16 z-30 border-y border-current/15 ${maison.bodyClass}`} id="grille">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-gutter py-3.5">
+        <FilterPanel
+          id={`filtres-${maison.id}`}
+          activeCount={Object.values(sel).filter(Boolean).length}
+          total={list.length}
+          onClear={() => setSel({})}
+          round={maison.id === 'patchi'}
+          sort={
+            <label className="flex items-center gap-2 text-[12px]">
+              <span className="opacity-80 max-sm:sr-only">Trier</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className={`h-9 border border-current/25 bg-transparent px-3 text-[12px] ${maison.id === 'patchi' ? 'rounded-full' : ''}`}
+              >
+                {SORTS.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </label>
+          }
+        >
           {maison.filters.map((g, gi) => (
             <div key={g.key} className={`flex flex-wrap items-center gap-2 ${gi > 0 ? 'border-l border-current/15 pl-6 max-md:border-0 max-md:pl-0' : ''}`}>
+              <span className="caps w-full opacity-70 md:hidden">{g.label}</span>
               {optionsOf(maison, g).map((o) => {
                 const on = sel[g.key] === o.id
                 return (
@@ -148,20 +170,7 @@ export default function Maison({ maison, onAdd }) {
               })}
             </div>
           ))}
-          <span className="ml-auto text-[12px] opacity-80 max-md:ml-0">{list.length} produits</span>
-          <label className="flex items-center gap-2 text-[12px]">
-            <span className="opacity-80">Trier</span>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className={`h-9 border border-current/25 bg-transparent px-3 text-[12px] ${maison.id === 'patchi' ? 'rounded-full' : ''}`}
-            >
-              {SORTS.map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </select>
-          </label>
-        </div>
+        </FilterPanel>
       </div>
 
       {/* Grille, 3 par ligne */}
@@ -225,7 +234,7 @@ function MaisonHero({ maison, onBrowse }) {
           transition={{ duration: 1.1, ease }}
         >
           {maison.logo ? (
-            <img src={maison.logo} alt={maison.name} className="mx-auto h-auto w-[clamp(170px,20vw,290px)]" />
+            <img src={maison.logo} alt={maison.name} className={maison.logoClass ?? 'mx-auto h-auto w-[clamp(170px,20vw,290px)]'} />
           ) : (
             <h1 className="text-[clamp(110px,15vw,230px)] font-light leading-[0.8] tracking-[-0.04em]">{maison.wordmark}</h1>
           )}

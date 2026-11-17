@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductSingle from '../ProductSingle/ProductSingle.jsx'
+import FilterPanel from './FilterPanel.jsx'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -8,7 +9,8 @@ const ease = [0.22, 1, 0.36, 1]
  * Filtres collés sous la barre + grille de produits, commun aux pages Maison.
  *  products   : produits déjà filtrés à afficher
  *  total      : nombre affiché à droite (« 12 produits »)
- *  groups     : [{ key, options: [{ id, label }] }] → une rangée de pastilles par groupe
+ *  groups     : [{ key, label?, options: [{ id, label }] }] → une rangée de pastilles par groupe
+ *               (label affiché dans le panneau mobile)
  *  value      : filtres actifs { key: id } ; onChange(key, id)
  *  barClass   : fond et couleurs de la barre (identiques à la page)
  *  pill       : 'round' (Patchi) | 'square'
@@ -30,9 +32,16 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
     <div id="grille">
       {title}
       <div ref={ref} className={`sticky top-16 z-30 border-y border-current/15 ${barClass}`}>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-gutter py-3.5">
+        <FilterPanel
+          id={`filtres-${house.id}`}
+          activeCount={Object.values(value).filter(Boolean).length}
+          total={total}
+          onClear={() => groups.forEach((g) => value[g.key] && onChange(g.key, value[g.key]))}
+          round={pill === 'round'}
+        >
           {groups.map((g, gi) => (
             <div key={g.key} className={`flex flex-wrap items-center gap-2 ${gi > 0 ? 'border-l border-current/15 pl-6 max-md:border-0 max-md:pl-0' : ''}`}>
+              {g.label && <span className="caps w-full opacity-70 md:hidden">{g.label}</span>}
               {g.options.map((o) => {
                 const on = value[g.key] === o.id
                 return (
@@ -59,13 +68,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
               })}
             </div>
           ))}
-          <span className="ml-auto text-[12px] opacity-80 max-md:ml-0">
-            <motion.span key={total} className="inline-block" initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.4, ease }}>
-              {total}
-            </motion.span>{' '}
-            produit{total > 1 ? 's' : ''}
-          </span>
-        </div>
+        </FilterPanel>
       </div>
 
       <Grid items={first} cols={cols} house={house} onAdd={onAdd} />
