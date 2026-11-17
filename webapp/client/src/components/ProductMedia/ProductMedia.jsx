@@ -14,6 +14,7 @@ import useMediaQuery from '../../hooks/useMediaQuery.js'
  *  alt       : texte alternatif
  *  href      : lien vers la fiche produit
  *  className : fond et proportions du cadre (ex. 'aspect-[4/5] bg-(--card)')
+ *  placeholder : contenu affiché quand il n'y a pas encore de photo (ex. logo de la Maison)
  *  swipe     : false → sur mobile, une seule image (utile dans un carrousel déjà horizontal)
  *
  *  La carte parente doit porter la classe `group` pour le survol.
@@ -25,6 +26,7 @@ export default function ProductMedia({
   href = '#',
   className = '',
   swipe = true,
+  placeholder,
 }) {
   const canHover = useMediaQuery('(hover: hover) and (pointer: fine)')
   const [loaded, setLoaded] = useState(false)
@@ -32,7 +34,7 @@ export default function ProductMedia({
   if (images.length === 0) {
     return (
       <a href={href} className={`relative grid place-items-center overflow-hidden ${className}`}>
-        <span className="caps text-[8px] opacity-50">Photo à venir</span>
+        {placeholder ?? <span className="caps text-[8px] opacity-50">Photo à venir</span>}
       </a>
     )
   }

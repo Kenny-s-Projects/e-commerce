@@ -3,6 +3,7 @@ import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import TitleCta from '../../components/TitleCta/TitleCta.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import { sectionThemes } from '../../data/themes.js'
+import { featuredProducts } from '../../data/houses.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -40,7 +41,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
         viewport={{ once: true, amount: 0.2 }}
         variants={{ show: { transition: { staggerChildren: 0.12 } } }}
       >
-        {house.products.slice(0, 4).map((product) => (
+        {featuredProducts(house).map((product) => (
           <motion.div
             key={product.id}
             variants={{

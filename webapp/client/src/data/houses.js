@@ -1,85 +1,17 @@
-// Données fantômes : les 4 Maisons de la home.
-// Produits Kyra repris de l'existant (app.js), Patchi de brands.js (ERP, oct. 2026).
-// Images dans public/img.
+// Les 4 Maisons. Chaque Maison a son fichier dans data/houses/ :
+// textes de la home, catalogue complet (produits + collections) et réglages de sa page.
+import kyra from './houses/kyra.js'
+import patchi from './houses/patchi.js'
+import adidas from './houses/adidas.js'
+import celio from './houses/celio.js'
 
-const PATCHI_IMG = '/img/logos/patchi-placeholder.png' // visuel provisoire
+export const houses = [kyra, patchi, adidas, celio]
 
-export const houses = [
-  {
-    id: 'kyra',
-    name: 'kyra',
-    logo: null, // pas de fichier logo : wordmark en texte
-    theme: 'beige',
-    tagline: 'Parfums · Maquillage & soins',
-    title: 'Les grandes maisons de',
-    accent: 'beauté.',
-    subtitle:
-      'Chanel, Dior, Hermès, Tom Ford, blackUp, Calvin Klein et Versace : parfums, maquillage et soins.',
-    hero: { img: '/img/dior-miss-dior-parfum.webp', name: 'Miss Dior Parfum', price: 78 },
-    products: [
-      { id: 'chanel-chance-eau-tendre', store: 'Chanel', name: 'Chance Eau Tendre', price: 100, img: '/img/chanel-chance-eau-tendre.webp' },
-      { id: 'hermes-twilly-eau-ginger', store: 'Hermès', name: 'Twilly Eau Ginger', price: 96, img: '/img/hermes-twilly-eau-ginger.webp' },
-      { id: 'tomford-black-orchid', store: 'Tom Ford', name: 'Black Orchid', price: 74, img: '/img/tomford-black-orchid.webp' },
-      { id: 'versace-dylan-blue', store: 'Versace', name: 'Dylan Blue Pour Femme', price: 97, img: '/img/versace-dylan-blue.webp' },
-    ],
-  },
-  {
-    id: 'patchi',
-    name: 'Patchi',
-    logo: '/img/logos/patchi.png',
-    theme: 'green',
-    tagline: 'Chocolats & cadeaux',
-    title: 'Le chocolat,',
-    accent: 'l’art d’offrir.',
-    accentInline: true, // titre sur une seule ligne, comme la maquette
-    subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
-    hero: { img: PATCHI_IMG, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
-    products: [
-      { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_IMG, boxed: true },
-      { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_IMG, boxed: true },
-      { id: 'gns0013', ref: 'GNS0013', store: 'My Treat', name: 'Dragée Diet Almond Milk, 250 g', price: 45, img: PATCHI_IMG, boxed: true },
-      { id: 'gbr0002', ref: 'GBR0002', store: 'Tablettes', name: 'Chocolate Bar 100 g Noblesse 70%', price: 15, img: PATCHI_IMG, boxed: true },
-    ],
-  },
-  {
-    id: 'adidas',
-    name: 'adidas',
-    logo: '/img/logos/adidas-white.png',
-    theme: 'black',
-    tagline: 'Sport & lifestyle',
-    title: 'Le sport,',
-    accent: 'en style.',
-    accentInline: true,
-    subtitle: 'Chaussures, vêtements et accessoires pour homme, femme et enfant.',
-    hero: { img: null, name: '[Produit adidas]', price: null },
-    // Photos et prix à venir : catégories reprises de brands.js
-    products: [
-      { id: 'adidas-chaussures', store: 'Chaussures', name: '[Produit adidas]', price: null },
-      { id: 'adidas-vetements', store: 'Vêtements', name: '[Produit adidas]', price: null },
-      { id: 'adidas-accessoires', store: 'Accessoires', name: '[Produit adidas]', price: null },
-      { id: 'adidas-enfant', store: 'Enfant', name: '[Produit adidas]', price: null },
-    ],
-  },
-  {
-    id: 'celio',
-    name: 'celio',
-    logo: '/img/logos/celio.png',
-    theme: 'white',
-    tagline: 'Mode homme',
-    title: 'Le vestiaire',
-    accent: 'masculin.',
-    accentInline: true,
-    subtitle: 'Chemises, jeans, chinos et tous les essentiels du vestiaire masculin.',
-    hero: { img: null, name: '[Produit Celio]', price: null },
-    // Photos et prix à venir
-    products: [
-      { id: 'celio-chemises', store: 'Chemises', name: '[Produit Celio]', price: null },
-      { id: 'celio-jeans', store: 'Jeans', name: '[Produit Celio]', price: null },
-      { id: 'celio-pantalons', store: 'Pantalons & chinos', name: '[Produit Celio]', price: null },
-      { id: 'celio-vestes', store: 'Vestes', name: '[Produit Celio]', price: null },
-    ],
-  },
-]
+export const getHouse = (id) => houses.find((h) => h.id === id)
+
+// Les 4 produits mis en avant sur la home
+export const featuredProducts = (house) =>
+  (house.featured ?? []).map((id) => house.products.find((p) => p.id === id)).filter(Boolean)
 
 // Toutes les images d'un produit : `images` (plusieurs photos) ou `img` (une seule)
 export const productImages = (product) => product.images ?? (product.img ? [product.img] : [])
@@ -96,4 +28,11 @@ export const findProduct = (id) => {
 export const formatPrice = (price, unit) => {
   if (price == null) return '[Prix]'
   return unit ? `$${price} / ${unit}` : `$${price}`
+}
+
+// "5 kg en stock", "6 en stock", "Épuisé" ; rien si le stock n'est pas connu
+export const formatStock = (stock, unit) => {
+  if (stock == null) return null
+  if (stock === 0) return 'Épuisé'
+  return `${stock}${unit ? ` ${unit}` : ''} en stock`
 }

@@ -129,7 +129,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
               <p className="mt-0.5 text-[15px]">{hero.name}</p>
               <p className="mt-0.5 text-[13px] opacity-75">{formatPrice(hero.price)}</p>
               <a
-                href={`#${house.id}`}
+                href={`#maison/${house.id}`}
                 className="caps group mt-3.5 inline-flex items-center gap-2.5 whitespace-nowrap border-b border-current pb-1.5"
               >
                 Entrer chez {house.name}

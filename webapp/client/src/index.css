@@ -46,6 +46,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
+  font-variant-numeric: lining-nums; /* « 50 » et non « 5o » */
 }
 
 /* Marges latérales de la page */

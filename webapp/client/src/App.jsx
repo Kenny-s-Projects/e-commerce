@@ -2,20 +2,27 @@ import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import Loader from './components/Loader/Loader.jsx'
 import Header from './components/Header/Header.jsx'
-import Hero from './components/Hero/Hero.jsx'
 import ScrollCue from './components/ScrollCue/ScrollCue.jsx'
-import BrandSection from './sections/BrandSection/BrandSection.jsx'
-import Selection from './sections/Selection/Selection.jsx'
-import Gifts from './sections/Gifts/Gifts.jsx'
-import Services from './sections/Services/Services.jsx'
 import Footer from './sections/Footer/Footer.jsx'
-import { houses } from './data/houses.js'
-import { selection, gifts, services, contact, footer } from './data/home.js'
+import HomePage from './pages/HomePage.jsx'
+import HousePage from './pages/HousePage.jsx'
+import PageCurtain from './components/PageCurtain/PageCurtain.jsx'
+import useHashRoute from './hooks/useHashRoute.js'
+import { getHouse } from './data/houses.js'
+import { contact, footer } from './data/home.js'
 import { hasSeenIntro } from './utils/intro.js'
 
+/**
+ * Pages :
+ *   #               → accueil
+ *   #maison/kyra    → page Maison (kyra, patchi, adidas, celio)
+ */
 export default function App() {
   // Préchargeur une seule fois par session
   const [ready, setReady] = useState(hasSeenIntro)
+  const route = useHashRoute()
+  const house = route.page === 'house' ? getHouse(route.id) : null
+  const [firstPage] = useState(route)
 
   return (
     <>
@@ -23,20 +30,20 @@ export default function App() {
         {!ready && <Loader key="loader" onComplete={() => setReady(true)} />}
       </AnimatePresence>
 
-      <Header cartCount={0} ready={ready} />
+      {/* Header blanc sur un hero sombre (adidas) ; inversé automatiquement sur les colonnes de l'accueil */}
+      <Header cartCount={0} ready={ready} invert={Boolean(house?.shop.dark)} blend={!house} />
       <ScrollCue ready={ready} />
 
       <main>
-        <Hero houses={houses} ready={ready} />
-
-        {/* 01 Kyra · 02 Patchi · 03 adidas · 04 Celio */}
-        {houses.map((house, i) => (
-          <BrandSection key={house.id} house={house} index={i + 1} total={houses.length} />
-        ))}
-
-        <Selection items={selection} />
-        <Gifts gifts={gifts} />
-        <Services items={services} />
+        {house ? (
+          <HousePage key={house.id} house={house} />
+        ) : (
+          <>
+            {/* Retour à l'accueil depuis une Maison : rideau beige */}
+            {route !== firstPage && <PageCurtain className="bg-beige" />}
+            <HomePage ready={ready} />
+          </>
+        )}
       </main>
 
       <Footer footer={footer} contact={contact} />
