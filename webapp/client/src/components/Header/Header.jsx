@@ -1,54 +1,188 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import BagIcon from '../icons/BagIcon.jsx'
+import SearchIcon from '../icons/SearchIcon.jsx'
+import MenuPanel from './MenuPanel.jsx'
+import SearchBar from './SearchBar.jsx'
+
+const ease = [0.22, 1, 0.36, 1]
 
 // Lien texte avec soulignement qui se dessine au survol
 const linkClass =
   'caps relative py-1 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-right after:scale-x-0 after:bg-current after:transition-transform after:duration-400 after:ease-lux hover:after:origin-left hover:after:scale-x-100'
 
-export default function Header({ cartCount = 0, ready = true, onMenu, onSearch, onCart }) {
-  const [scrolled, setScrolled] = useState(false)
+// Pastille grise (style Haven)
+const pill = 'pointer-events-auto flex h-10 items-center rounded-md bg-[#f4f4f4] text-ink transition-colors duration-300 hover:bg-[#ececec]'
 
-  // Barre toujours blanche ; une ombre légère apparaît dès qu'on quitte le haut de la page
+/**
+ * Header façon Haven.
+ * - En haut de page : logo à gauche, pastille « Menu » au centre, Recherche et Panier à droite.
+ * - Au défilement : la barre s'efface ; il ne reste au centre que la pastille « Menu »,
+ *   suivie d'une pastille Recherche (loupe) et d'une pastille Panier (sac + nombre).
+ * - « Menu » ouvre un panneau qui se déplie depuis la pastille ; la loupe ouvre une barre de recherche.
+ *  cartCount : nombre d'articles · ready : false pendant le préchargeur · onCart : ouvre le tiroir panier
+ */
+export default function Header({ cartCount = 0, ready = true, onCart }) {
+  const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    const onScroll = () => setScrolled(window.scrollY > 80)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Échap ferme ce qui est ouvert
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        setSearchOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const openMenu = () => {
+    setSearchOpen(false)
+    setMenuOpen(true)
+  }
+  const openSearch = () => {
+    setMenuOpen(false)
+    setSearchOpen(true)
+  }
+
   return (
-    <motion.header
-      className={`fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-ink/10 bg-white px-gutter text-ink transition-shadow duration-500 ease-lux ${
-        scrolled ? 'shadow-[0_8px_30px_rgba(0,0,0,0.06)]' : ''
-      }`}
-      initial={{ y: -24, opacity: 0 }}
-      animate={ready ? { y: 0, opacity: 1 } : {}}
-      transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <a href="#" className="text-[17px] font-medium tracking-wide">kclick</a>
+    <>
+      <motion.header
+        className={`pointer-events-none fixed inset-x-0 top-0 z-50 h-16 px-gutter text-ink transition-[background-color,border-color] duration-500 ease-lux ${
+          scrolled ? 'border-b border-transparent bg-transparent' : 'border-b border-ink/10 bg-white'
+        }`}
+        initial={{ y: -24, opacity: 0 }}
+        animate={ready ? { y: 0, opacity: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.6, ease }}
+      >
+        <LayoutGroup>
+          <div className="relative flex h-full items-center justify-between">
+            {/* Logo : disparaît au défilement */}
+            <AnimatePresence initial={false}>
+              {!scrolled && (
+                <motion.a
+                  key="logo"
+                  href="#"
+                  className="pointer-events-auto text-[17px] font-medium tracking-wide"
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  transition={{ duration: 0.4, ease }}
+                >
+                  kclick
+                </motion.a>
+              )}
+            </AnimatePresence>
 
-      <nav className="flex items-center gap-[clamp(18px,2.4vw,36px)]">
-        <button className={linkClass} onClick={onMenu}>Menu</button>
-        <button className={`${linkClass} max-sm:hidden`} onClick={onSearch}>Recherche</button>
+            {/* Centre : pastille Menu (+ Recherche et Panier une fois réduit) */}
+            <motion.div layout className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5" transition={{ duration: 0.5, ease }}>
+              <motion.button
+                layout
+                type="button"
+                onClick={openMenu}
+                aria-expanded={menuOpen}
+                aria-controls="menu-panel"
+                className={`${pill} justify-between gap-10 px-4 ${scrolled ? 'w-[min(280px,52vw)]' : 'w-[min(400px,46vw)] max-sm:w-[44vw]'}`}
+                transition={{ duration: 0.5, ease }}
+              >
+                <motion.span layout="position" className="text-[14px]">Menu</motion.span>
+                <motion.span layout="position" aria-hidden className="flex w-[60px] flex-col gap-[6px] max-sm:w-8">
+                  <span className="block h-px bg-current" />
+                  <span className="block h-px bg-current" />
+                </motion.span>
+              </motion.button>
 
-        {/* Ordinateur : texte « Panier (n) » */}
-        <button className={`${linkClass} max-sm:hidden`} onClick={onCart}>
-          Panier (<motion.span key={cartCount} className="inline-block" initial={{ scale: 1.6 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>{cartCount}</motion.span>)
-        </button>
+              <AnimatePresence initial={false}>
+                {scrolled && (
+                  <motion.button
+                    key="search-pill"
+                    type="button"
+                    onClick={openSearch}
+                    aria-label="Rechercher"
+                    className={`${pill} w-10 justify-center`}
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                    transition={{ duration: 0.35, ease }}
+                  >
+                    <SearchIcon />
+                  </motion.button>
+                )}
+                {scrolled && (
+                  <motion.button
+                    key="cart-pill"
+                    type="button"
+                    onClick={onCart}
+                    aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
+                    className={`${pill} gap-2 px-3`}
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                    transition={{ duration: 0.35, delay: 0.05, ease }}
+                  >
+                    <BagIcon className="size-[18px]" />
+                    <CartCount count={cartCount} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
 
-        {/* Mobile : icône sac + pastille du nombre d'articles */}
-        <button
-          className="relative -m-2 p-2 sm:hidden"
-          onClick={onCart}
-          aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
-        >
-          <BagIcon className="size-[22px]" />
-          <span className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-ink text-[9px] leading-none text-cream">
-            {cartCount}
-          </span>
-        </button>
-      </nav>
-    </motion.header>
+            {/* Droite : Recherche + Panier, en haut de page */}
+            <AnimatePresence initial={false}>
+              {!scrolled && (
+                <motion.nav
+                  key="right"
+                  className="pointer-events-auto flex items-center gap-[clamp(18px,2.4vw,36px)]"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 12 }}
+                  transition={{ duration: 0.4, ease }}
+                >
+                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={openSearch}>Recherche</button>
+                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={onCart}>
+                    Panier (<CartCount count={cartCount} />)
+                  </button>
+                  {/* Mobile : icône sac + pastille */}
+                  <button
+                    type="button"
+                    className="relative -m-2 p-2 sm:hidden"
+                    onClick={onCart}
+                    aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
+                  >
+                    <BagIcon className="size-[22px]" />
+                    <span className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-ink text-[9px] leading-none text-cream">
+                      {cartCount}
+                    </span>
+                  </button>
+                </motion.nav>
+              )}
+            </AnimatePresence>
+          </div>
+        </LayoutGroup>
+      </motion.header>
+
+      <MenuPanel open={menuOpen} onClose={() => setMenuOpen(false)} onSearch={openSearch} />
+      <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   )
 }
+
+// Le nombre d'articles « saute » à chaque ajout
+function CartCount({ count }) {
+  return (
+    <motion.span key={count} className="inline-block text-[13px] tabular-nums" initial={{ scale: 1.6 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease }}>
+      {count}
+    </motion.span>
+  )
+}
+
