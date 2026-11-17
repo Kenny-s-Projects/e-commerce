@@ -1,5 +1,6 @@
 // Contenus de la home après les 4 Maisons : Sélection, Offrir, services, pied de page.
-
+const PATCHI_MoinsFifty = '/img/products/patchi/Chocolate Bar 100 g Noblesse/Offert.webp' // visuel provisoire
+const PATCHI_Offert = '/img/products/patchi/Filled Chocolate Box 1025 g/MoinsFifty.avif' // visuel provisoire
 // La Sélection : ids de produits pris dans houses.js, avec le fond de chaque carte
 export const selection = [
   { id: 'hermes-twilly-eau-ginger', tone: 'bg-[#f1f0ed]' },
@@ -17,8 +18,8 @@ export const gifts = {
   items: [
     { id: 'pour-elle', label: 'Pour elle', img: '/img/chanel-chance-eau-tendre.webp', fit: 'contain', tone: 'bg-beige' },
     { id: 'pour-lui', label: 'Pour lui', img: '/img/versace-dylan-blue.webp', fit: 'contain', tone: 'bg-[#f1f0ed]' },
-    { id: 'coffrets', label: 'Coffrets', img: '/img/logos/patchi-placeholder.png', fit: 'bleed', tone: 'bg-green' },
-    { id: 'moins-de-50', label: 'Moins de 50 $', img: '/img/logos/patchi-placeholder.png', fit: 'boxed', tone: 'bg-paper' },
+    { id: 'coffrets', label: 'Coffrets', img: PATCHI_Offert, fit: 'bleed', tone: 'bg-green' },
+    { id: 'moins-de-50', label: 'Moins de 50 $', img: PATCHI_MoinsFifty, fit: 'boxed', tone: 'bg-paper' },
   ],
 }
 
