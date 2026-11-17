@@ -2,7 +2,12 @@
 // Produits Kyra repris de l'existant (app.js), Patchi de brands.js (ERP, oct. 2026).
 // Images dans public/img.
 
-const PATCHI_IMG = '/img/logos/patchi-placeholder.png' // visuel provisoire
+const PATCHI_IMG = '/img/logos/patchi-placeholder.png'
+const PATCHI_Product1 = '/img/products/patchi/Chocolate Bar 100 g Noblesse/Product1.webp' // visuel provisoire
+const PATCHI_Product2 = '/img/products/patchi/Chocolate Milk Filled with Praline/Product2.webp' // visuel provisoire
+const PATCHI_Product3 = '/img/products/patchi/Dragée Diet Almond Milk/Product3.webp' // visuel provisoire
+const PATCHI_Product4 = '/img/products/patchi/Filled Chocolate Box 1025 g/Product4.avif' // visuel provisoire
+
 const PATCHI_IMG_SECTION = '/img/logos/patchi-heroSection.png' // visuel provisoire
 const KYRA_IMG_SECTION = '/img/logos/kyra-heroSection.png' // visuel provisoire
 
@@ -37,10 +42,10 @@ export const houses = [
     subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
     hero: { img: PATCHI_IMG_SECTION, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
     products: [
-      { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_IMG, boxed: true },
-      { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_IMG, boxed: true },
-      { id: 'gns0013', ref: 'GNS0013', store: 'My Treat', name: 'Dragée Diet Almond Milk, 250 g', price: 45, img: PATCHI_IMG, boxed: true },
-      { id: 'gbr0002', ref: 'GBR0002', store: 'Tablettes', name: 'Chocolate Bar 100 g Noblesse 70%', price: 15, img: PATCHI_IMG, boxed: true },
+      { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_Product1, boxed: true },
+      { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_Product2, boxed: true },
+      { id: 'gns0013', ref: 'GNS0013', store: 'My Treat', name: 'Dragée Diet Almond Milk, 250 g', price: 45, img: PATCHI_Product3, boxed: true },
+      { id: 'gbr0002', ref: 'GBR0002', store: 'Tablettes', name: 'Chocolate Bar 100 g Noblesse 70%', price: 15, img: PATCHI_Product4, boxed: true },
     ],
   },
   {
