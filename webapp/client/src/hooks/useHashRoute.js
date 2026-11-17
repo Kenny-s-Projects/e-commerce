@@ -1,33 +1,21 @@
 import { useEffect, useState } from 'react'
+import { MAISON_PAGES } from '../data/houses.js'
 
-/**
- * Routeur minimal par ancre (pas de dépendance, compatible Netlify sans réglage) :
- *   ''  ou '#'           → { page: 'home' }
- *   '#maison/patchi'     → { page: 'house', id: 'patchi' }
- * Les autres ancres (#kyra, #produit/…) ne changent pas de page :
- * elles servent au défilement ou aux pages à venir.
- */
-function parse(hash) {
-  const h = hash.replace(/^#\/?/, '')
-  if (h === '') return { page: 'home' }
-  const house = h.match(/^maison\/([\w-]+)/)
-  if (house) return { page: 'house', id: house[1] }
-  return null
+// Lit l'adresse après le # : « maison/kyra » → page Maison, sinon accueil (avec une ancre éventuelle)
+const parse = () => {
+  const hash = decodeURIComponent(window.location.hash.slice(1))
+  const m = hash.match(/^maison\/([a-z]+)$/)
+  if (m && MAISON_PAGES.includes(m[1])) return { page: 'maison', id: m[1], anchor: '' }
+  return { page: 'home', id: '', anchor: hash }
 }
 
+/** Route courante, mise à jour à chaque changement d'adresse (#…). */
 export default function useHashRoute() {
-  const [route, setRoute] = useState(() => parse(window.location.hash) ?? { page: 'home' })
-
+  const [route, setRoute] = useState(parse)
   useEffect(() => {
-    const onChange = () => {
-      const next = parse(window.location.hash)
-      if (!next) return
-      setRoute(next)
-      window.scrollTo({ top: 0, behavior: 'instant' }) // nouvelle page : on repart du haut
-    }
+    const onChange = () => setRoute(parse())
     window.addEventListener('hashchange', onChange)
     return () => window.removeEventListener('hashchange', onChange)
   }, [])
-
   return route
 }

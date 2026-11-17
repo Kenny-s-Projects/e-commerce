@@ -10,6 +10,12 @@
   --color-black: #0a0a0a;   /* adidas, préchargeur */
   --color-ink: #1a1a1a;     /* texte */
   --color-gold: #c9a96a;    /* préchargeur : % et barre */
+  --color-kyra: #cf6333;    /* couleur officielle Kyra */
+  --color-kyra-ink: #140b06; /* texte sur l’orange Kyra (contraste 5:1) */
+  --color-kyra-card: #f8f1ea; /* cartes produit Kyra */
+  --color-cacao: #3b2418;    /* Patchi : brun cacao */
+  --color-forest-deep: #1c3322; /* Patchi : vert profond (coffret, bandeaux) */
+  --color-celio: #c8102e;    /* Celio : rouge de l’astérisque */
 
   --font-sans: 'Jost', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
@@ -46,7 +52,6 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  font-variant-numeric: lining-nums; /* « 50 » et non « 5o » */
 }
 
 /* Marges latérales de la page */
@@ -61,5 +66,10 @@
 
   button {
     cursor: pointer;
+  }
+
+  /* Les ancres (#kyra, #patchi…) s’arrêtent sous la barre fixe */
+  [id] {
+    scroll-margin-top: 4rem;
   }
 }

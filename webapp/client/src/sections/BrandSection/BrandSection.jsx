@@ -3,7 +3,7 @@ import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import TitleCta from '../../components/TitleCta/TitleCta.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import { sectionThemes } from '../../data/themes.js'
-import { featuredProducts } from '../../data/houses.js'
+import { maisonHref } from '../../data/houses.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -30,7 +30,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
           name={house.name}
           logo={house.logo}
           label={`Entrer chez ${house.name}`}
-          href={`#maison/${house.id}`}
+          href={maisonHref(house.id)}
         />
       </div>
 
@@ -41,7 +41,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
         viewport={{ once: true, amount: 0.2 }}
         variants={{ show: { transition: { staggerChildren: 0.12 } } }}
       >
-        {featuredProducts(house).map((product) => (
+        {house.products.slice(0, 4).map((product) => (
           <motion.div
             key={product.id}
             variants={{
@@ -49,7 +49,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
               show: { opacity: 1, y: 0, transition: { duration: 0.9, ease } },
             }}
           >
-            <ProductSingle product={product} onAdd={onAdd} />
+            <ProductSingle product={product} onAdd={onAdd} href={maisonHref(house.id)} />
           </motion.div>
         ))}
       </motion.div>

@@ -87,7 +87,7 @@ export default function SectionTitle({
 
       <Tag className="text-[clamp(36px,4.6vw,64px)] font-light leading-[1.08] tracking-[-0.015em]">
         {accentInline || !title ? (
-          <span className="block overflow-hidden pb-[0.08em] pr-[0.3em]">
+          <span className="block overflow-hidden pb-[0.08em]">
             <motion.span className="block" variants={line} custom={{ i: 1, dir }}>
               {title} {accent && accentEl}
             </motion.span>
@@ -100,7 +100,7 @@ export default function SectionTitle({
               </motion.span>
             </span>
             {accent && (
-              <span className="block overflow-hidden pb-[0.08em] pr-[0.3em]">
+              <span className="block overflow-hidden pb-[0.08em]">
                 <motion.span className="block" variants={line} custom={{ i: 2, dir }}>
                   {accentEl}
                 </motion.span>

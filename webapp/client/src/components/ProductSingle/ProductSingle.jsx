@@ -11,7 +11,8 @@ import { formatPrice, productImages } from '../../data/houses.js'
  * Image : changement au survol (ordinateur), défilement au doigt + barre (mobile) → voir ProductMedia.
  * Les couleurs suivent la section : fond de carte = var(--card), texte = var(--fg).
  */
-export default function ProductSingle({ product, onAdd }) {
+export default function ProductSingle({ product, onAdd, href = '#' }) {
+  const available = product.price != null
   const [added, setAdded] = useState(false)
 
   const handleAdd = () => {
@@ -27,7 +28,7 @@ export default function ProductSingle({ product, onAdd }) {
         images={productImages(product)}
         fit={product.boxed ? 'boxed' : 'contain'}
         alt={product.name}
-        href={`#produit/${product.id}`}
+        href={href}
         className="mb-[18px] aspect-[4/5] bg-(--card)"
       />
 
@@ -39,13 +40,17 @@ export default function ProductSingle({ product, onAdd }) {
       <div className="mt-[18px] flex items-center justify-between gap-3">
         <span className="text-sm">{formatPrice(product.price, product.unit)}</span>
         <button
+          type="button"
           onClick={handleAdd}
+          disabled={!available}
+          aria-label={available ? `Ajouter ${product.name} au panier` : undefined}
           className={`caps relative z-0 shrink-0 overflow-hidden border px-4 py-2.5 text-[9px] transition-colors duration-400 ease-lux
             before:absolute before:inset-0 before:-z-10 before:bg-(--fg) before:transition-transform before:duration-[450ms] before:ease-lux
             hover:border-current hover:text-(--card) hover:before:translate-y-0
-            ${added ? 'border-current text-(--card) before:translate-y-0' : 'border-current/35 before:translate-y-[101%]'}`}
+            ${added ? 'border-current text-(--card) before:translate-y-0' : 'border-current/35 before:translate-y-[101%]'}
+            disabled:pointer-events-none disabled:opacity-50`}
         >
-          <span className="relative">{added ? 'Ajouté' : 'Ajouter'}</span>
+          <span className="relative">{!available ? 'Bientôt' : added ? 'Ajouté' : 'Ajouter'}</span>
         </button>
       </div>
     </article>

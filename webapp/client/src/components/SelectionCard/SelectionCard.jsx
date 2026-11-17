@@ -1,5 +1,5 @@
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
-import { formatPrice, productImages } from '../../data/houses.js'
+import { formatPrice, productImages, maisonHref } from '../../data/houses.js'
 
 /**
  * Grande carte de la Sélection : Image + Maison · Marque + Nom + Prix (sans bouton).
@@ -17,7 +17,7 @@ export default function SelectionCard({ product, tone = 'bg-cream' }) {
         images={productImages(product)}
         fit={product.boxed ? 'bleed' : 'contain'}
         alt={product.name}
-        href={`#produit/${product.id}`}
+        href={maisonHref(house.id)}
         className={`mb-5 aspect-[4/5] ${tone}`}
         swipe={false}
       />

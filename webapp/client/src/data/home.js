@@ -27,7 +27,6 @@ export const services = [
   { label: 'Livraison', text: 'Le jour même à Gombe, à moto. 4 $.' },
   { label: 'Retrait', text: 'En boutique, gratuit, dès 9h00.' },
   { label: 'Paiement', text: 'Mobile money, carte ou à la livraison.' },
-  { label: 'Concierge', text: 'Commander sur WhatsApp', href: 'https://wa.me/243818592999' },
 ]
 
 // Coordonnées (reprises de brands.js)
@@ -40,15 +39,15 @@ export const contact = {
 
 // Pied de page
 export const footer = {
-  signature: ['par Kenny’s International', 'Le luxe de votre vie, partagé depuis 1995.'],
+  signature: ['par Kenny’s International', 'Le luxe de votre vie, partagé depuis 1993.'],
   columns: [
     {
       title: 'Maisons',
       links: [
         { label: 'Kyra', href: '#maison/kyra' },
         { label: 'Patchi', href: '#maison/patchi' },
-        { label: 'adidas', href: '#maison/adidas' },
-        { label: 'Celio', href: '#maison/celio' },
+        { label: 'adidas', href: '#adidas' },
+        { label: 'Celio', href: '#celio' },
       ],
     },
     {
@@ -62,4 +61,30 @@ export const footer = {
     },
   ],
   copyright: '© 2026 Kenny’s Group',
+}
+
+// Kenny's International : texte et chiffres clés
+export const about = {
+  eyebrow: 'Kenny’s International',
+  title: 'Nous ne vendons pas un catalogue. Nous vous',
+  accent: 'recevons.',
+  text: 'Depuis nos boutiques de Kinshasa, Pointe-Noire et Lubumbashi, kclick prolonge l’expérience Kenny’s en ligne : les mêmes maisons, le même service, livrés à votre porte.',
+  stats: [
+    { value: '20', suffix: '+', label: 'Marques distribuées' },
+    { value: '16', label: 'Franchises à Kinshasa' },
+    { value: '3', label: 'Villes' },
+    { value: '24', suffix: 'h', label: 'Livraison à Kinshasa' },
+  ],
+  link: { label: 'Notre histoire', href: '#notre-histoire' },
+}
+
+// Conciergerie WhatsApp
+export const concierge = {
+  eyebrow: 'Conciergerie',
+  title: 'Préférez commander en',
+  accent: 'parlant',
+  titleEnd: 'à quelqu’un ?',
+  text: 'Un conseiller vous répond sur WhatsApp, prépare votre commande et organise la livraison ou le retrait en boutique.',
+  phone: '+243 818 592 999',
+  href: 'https://wa.me/243818592999',
 }

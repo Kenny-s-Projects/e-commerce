@@ -3,14 +3,14 @@ import { motion } from 'framer-motion'
 const ease = [0.22, 1, 0.36, 1]
 
 /**
- * Bandeau services : Livraison · Retrait · Paiement · Concierge.
+ * Bandeau services : Livraison · Retrait · Paiement.
  *  items : [{ label, text, href? }] (voir data/home.js)
  */
 export default function Services({ items }) {
   return (
     <section className="bg-[#f3f2ee] px-gutter py-[clamp(40px,5vw,64px)] text-ink">
       <motion.ul
-        className="grid grid-cols-4 gap-8 max-[900px]:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-6"
+        className="grid grid-cols-3 gap-8 max-[900px]:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-6"
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.5 }}
