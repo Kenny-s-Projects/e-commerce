@@ -8,9 +8,9 @@ export const maisons = {
     id: 'kyra',
     name: 'Kyra',
     wordmark: 'kyra',
-    // Hero : l'icône Kyra (flacon) à la place du nom en texte
-    logo: '/img/logos/kyra-icon.webp',
-    logoClass: 'mx-auto h-[clamp(150px,19vw,250px)] w-auto drop-shadow-[0_20px_30px_rgba(20,11,6,0.25)]',
+    // Hero : le logo officiel Kyra (blanc, sur l'orange) à la place du nom en texte
+    logo: '/img/logos/logo-kyra.png',
+    logoClass: 'mx-auto h-auto w-[clamp(220px,30vw,440px)] drop-shadow-[0_12px_24px_rgba(20,11,6,0.25)]',
     next: 'patchi',
     // Couleurs : hero sur l'orange officiel, catalogue sur une base claire
     heroClass: 'bg-kyra text-kyra-ink',
