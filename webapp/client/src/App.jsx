@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Loader from './components/Loader/Loader.jsx'
 import Header from './components/Header/Header.jsx'
@@ -22,6 +22,8 @@ import HistoirePage from './pages/Histoire/HistoirePage.jsx'
 import AidePage from './pages/Aide/AidePage.jsx'
 import QuickViewModal from './components/QuickView/QuickViewModal.jsx'
 import { QuickViewContext } from './context/quickView.js'
+import CheckoutPage from './pages/Checkout/CheckoutPage.jsx'
+import { LangContext, readLang, saveLang } from './i18n/lang.js'
 import { houses } from './data/houses.js'
 import { maisons } from './data/maisons.js'
 import { selection, gifts, services, contact, footer, about, concierge } from './data/home.js'
@@ -35,6 +37,17 @@ export default function App() {
   const [ready, setReady] = useState(hasSeenIntro)
   const route = useHashRoute()
   const pageKey = pageKeyOf(route)
+
+  // Langue FR / EN, gardée d'une visite à l'autre
+  const [lang, setLangState] = useState(readLang)
+  const setLang = useCallback((l) => {
+    setLangState(l)
+    saveLang(l)
+  }, [])
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+  const langValue = useMemo(() => ({ lang, setLang }), [lang, setLang])
 
   // Aperçu rapide : produit affiché dans la popup (null = fermée)
   const [quickProduct, setQuickProduct] = useState(null)
@@ -53,6 +66,21 @@ export default function App() {
         ? c.map((l) => (l.product.id === product.id ? { ...l, qty: l.qty + 1 } : l))
         : [...c, { product, qty: 1 }]
     })
+  }, [])
+
+  // Commande : tout le panier (bouton « Commander » du panier) ou un seul article (« Commander maintenant »)
+  const [buyNow, setBuyNow] = useState(null) // [{ product, qty }] ou null = le panier
+  const checkoutCart = useCallback(() => {
+    setBuyNow(null)
+    setCartOpen(false)
+    window.location.hash = 'checkout'
+  }, [])
+  const checkoutOne = useCallback((product, qty) => {
+    setBuyNow([{ product, qty }])
+    window.location.hash = 'checkout'
+  }, [])
+  const onOrdered = useCallback((fromCart) => {
+    if (fromCart) setCart([])
   }, [])
 
   const setQty = useCallback((id, qty) => {
@@ -80,6 +108,7 @@ export default function App() {
   }, [])
 
   return (
+    <LangContext.Provider value={langValue}>
     <QuickViewContext.Provider value={setQuickProduct}>
       <AnimatePresence>
         {!ready && <Loader key="loader" onComplete={() => setReady(true)} />}
@@ -100,7 +129,9 @@ export default function App() {
           {route.page === 'maison' ? (
             <MaisonPage id={route.id} onAdd={addToCart} />
           ) : route.page === 'produit' ? (
-            <ProductPage id={route.id} onAdd={addToCart} />
+            <ProductPage id={route.id} onAdd={addToCart} onBuyNow={checkoutOne} />
+          ) : route.page === 'checkout' ? (
+            <CheckoutPage items={buyNow ?? cart} fromCart={!buyNow} onDone={onOrdered} />
           ) : route.page === 'offrir' ? (
             <OffrirPage tab={route.id} onAdd={addToCart} />
           ) : route.page === 'histoire' ? (
@@ -126,10 +157,11 @@ export default function App() {
         </motion.main>
       </AnimatePresence>
 
-      <Footer footer={footer} contact={contact} />
-      <CartDrawer open={cartOpen} items={cart} onQty={setQty} onClose={closeCart} />
+      <Footer footer={footer} contact={contact} lang={lang} onLang={setLang} />
+      <CartDrawer open={cartOpen} items={cart} onQty={setQty} onClose={closeCart} onCheckout={checkoutCart} />
       <QuickViewModal product={quickProduct} onClose={closeQuickView} onAdd={addToCart} />
     </QuickViewContext.Provider>
+    </LangContext.Provider>
   )
 }
 

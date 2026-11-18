@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import useMediaQuery from '../../hooks/useMediaQuery.js'
+import { useT } from '../../i18n/lang.js'
 
 /**
  * Galerie d'une carte produit.
@@ -26,13 +27,14 @@ export default function ProductMedia({
   className = '',
   swipe = true,
 }) {
+  const t = useT()
   const canHover = useMediaQuery('(hover: hover) and (pointer: fine)')
   const [loaded, setLoaded] = useState(false)
 
   if (images.length === 0) {
     return (
       <a href={href} className={`relative grid place-items-center overflow-hidden ${className}`}>
-        <span className="caps text-[8px] opacity-50">Photo à venir</span>
+        <span className="caps text-[8px] opacity-50">{t('Photo à venir')}</span>
       </a>
     )
   }

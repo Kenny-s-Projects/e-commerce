@@ -11,6 +11,7 @@ import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import FilterPanel from '../../components/maison/FilterPanel.jsx'
 import { maisons, optionsOf } from '../../data/maisons.js'
 import { formatPrice, maisonHref } from '../../data/houses.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -38,6 +39,7 @@ const SORTS = [
  *  onAdd  : ajout au panier
  */
 export default function Maison({ maison, onAdd }) {
+  const t = useT()
   const [sel, setSel] = useState({}) // { brand: 'dior', cls: 'perfume' } …
   const [sort, setSort] = useState('selection')
   const gridRef = useRef(null)
@@ -75,10 +77,10 @@ export default function Maison({ maison, onAdd }) {
           transition={{ duration: 0.9, ease }}
         >
           <h2 className="text-[clamp(36px,4.6vw,64px)] font-light leading-[1.05] tracking-[-0.015em]">
-            Les <span className="accent text-[1.08em]">{chapters.label.toLowerCase()}</span>
+            {t('Les')} <span className="accent text-[1.08em]">{t(chapters.label).toLowerCase()}</span>
           </h2>
           <p className="max-w-[360px] text-sm leading-[1.75] opacity-80">
-            {maison.products.length} produits, {chapters.options.length} {chapters.label.toLowerCase()}.
+            {t('{n} produits, {m} {label}.', { n: maison.products.length, m: chapters.options.length, label: t(chapters.label).toLowerCase() })}
           </p>
         </motion.div>
 
@@ -118,8 +120,8 @@ export default function Maison({ maison, onAdd }) {
                     />
                   )}
                 </span>
-                <span className="accent text-[clamp(20px,1.8vw,26px)] leading-tight">{o.label}</span>
-                <span className="caps -mt-1.5 text-[9px] opacity-70">{o.count} produit{o.count > 1 ? 's' : ''}</span>
+                <span className="accent text-[clamp(20px,1.8vw,26px)] leading-tight">{t(o.label)}</span>
+                <span className="caps -mt-1.5 text-[9px] opacity-70">{t(o.count > 1 ? '{n} produits' : '{n} produit', { n: o.count })}</span>
               </motion.button>
             )
           })}
@@ -136,14 +138,14 @@ export default function Maison({ maison, onAdd }) {
           round={maison.id === 'patchi'}
           sort={
             <label className="flex items-center gap-2 text-[12px]">
-              <span className="opacity-80 max-sm:sr-only">Trier</span>
+              <span className="opacity-80 max-sm:sr-only">{t('Trier')}</span>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
                 className={`h-9 border border-current/25 bg-transparent px-3 text-[12px] ${maison.id === 'patchi' ? 'rounded-full' : ''}`}
               >
                 {SORTS.map(([v, l]) => (
-                  <option key={v} value={v}>{l}</option>
+                  <option key={v} value={v}>{t(l)}</option>
                 ))}
               </select>
             </label>
@@ -151,7 +153,7 @@ export default function Maison({ maison, onAdd }) {
         >
           {maison.filters.map((g, gi) => (
             <div key={g.key} className={`flex flex-wrap items-center gap-2 ${gi > 0 ? 'border-l border-current/15 pl-6 max-md:border-0 max-md:pl-0' : ''}`}>
-              <span className="caps w-full opacity-70 md:hidden">{g.label}</span>
+              <span className="caps w-full opacity-70 md:hidden">{t(g.label)}</span>
               {optionsOf(maison, g).map((o) => {
                 const on = sel[g.key] === o.id
                 return (
@@ -164,7 +166,7 @@ export default function Maison({ maison, onAdd }) {
                       maison.id === 'patchi' ? 'rounded-full' : ''
                     } ${on ? 'border-current bg-(--fg) text-(--card)' : 'border-current/25 hover:border-current'}`}
                   >
-                    {o.label}
+                    {t(o.label)}
                   </button>
                 )
               })}
@@ -184,9 +186,9 @@ export default function Maison({ maison, onAdd }) {
       <a href={maisonHref(next.id)} className={`group block px-gutter py-[clamp(72px,9vw,120px)] ${next.heroClass}`}>
         <div className="flex items-center justify-between gap-8 max-sm:flex-col max-sm:items-start">
           <div>
-            <p className="caps mb-5 opacity-80">Maison suivante</p>
+            <p className="caps mb-5 opacity-80">{t('Maison suivante')}</p>
             <p className="text-[clamp(44px,6.4vw,96px)] font-light leading-none tracking-[-0.03em]">
-              Continuer chez <span className="accent text-[1.06em] inline-block pr-[0.1em]">{next.name}</span>
+              {t('Continuer chez')} <span className="accent text-[1.06em] inline-block pr-[0.1em]">{next.name}</span>
             </p>
           </div>
           <span aria-hidden className="text-[clamp(32px,4vw,56px)] transition-transform duration-500 ease-lux group-hover:translate-x-3">
@@ -200,6 +202,7 @@ export default function Maison({ maison, onAdd }) {
 
 /* ---------- Hero : les produits en apesanteur autour du logo ---------- */
 function MaisonHero({ maison, onBrowse }) {
+  const t = useT()
   const reduce = useReducedMotion()
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
@@ -245,7 +248,7 @@ function MaisonHero({ maison, onBrowse }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.25, ease }}
         >
-          {maison.title} <span className="accent text-[1.08em]">{maison.accent}</span>
+          {t(maison.title)} <span className="accent text-[1.08em]">{t(maison.accent)}</span>
         </motion.p>
         <motion.p
           className="mt-3 max-w-[520px] text-[14px] leading-[1.7]"
@@ -253,7 +256,7 @@ function MaisonHero({ maison, onBrowse }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease }}
         >
-          {maison.story}
+          {t(maison.story)}
         </motion.p>
       </div>
 
@@ -262,7 +265,7 @@ function MaisonHero({ maison, onBrowse }) {
         onClick={onBrowse}
         className="caps absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2.5"
       >
-        Voir les produits
+        {t('Voir les produits')}
         <span className="block h-9 w-px overflow-hidden bg-current/30">
           <span className="block h-1/3 w-full animate-scroll-cue bg-current" />
         </span>
@@ -325,6 +328,7 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
 
 /* ---------- Grille de produits, 3 par ligne ---------- */
 function ProductGrid({ items, maison, onAdd }) {
+  const t = useT()
   return (
     <section className="px-gutter py-[clamp(48px,6vw,88px)]">
       <motion.div layout className="grid grid-cols-3 gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)] max-[900px]:grid-cols-2">
@@ -343,13 +347,14 @@ function ProductGrid({ items, maison, onAdd }) {
           ))}
         </AnimatePresence>
       </motion.div>
-      {items.length === 0 && <p className="py-10 text-sm opacity-70">Aucun produit pour ces filtres.</p>}
+      {items.length === 0 && <p className="py-10 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
     </section>
   )
 }
 
 /* ---------- Respiration éditoriale entre deux rangées ---------- */
 function Edito({ maison }) {
+  const t = useT()
   const e = maison.edito
   return (
     <section className={`px-gutter py-[clamp(64px,8vw,110px)] ${e.bg}`}>
@@ -369,9 +374,9 @@ function Edito({ maison }) {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 1, delay: 0.15, ease }}
         >
-          <p className="caps mb-6 opacity-80">{e.eyebrow}</p>
+          <p className="caps mb-6 opacity-80">{t(e.eyebrow)}</p>
           <p className="text-[clamp(34px,4vw,56px)] font-light leading-[1.12]">
-            {e.title} <span className="accent text-[1.08em] inline-block pr-[0.1em]">{e.accent}</span>
+            {t(e.title)} <span className="accent text-[1.08em] inline-block pr-[0.1em]">{t(e.accent)}</span>
           </p>
         </motion.div>
       </div>

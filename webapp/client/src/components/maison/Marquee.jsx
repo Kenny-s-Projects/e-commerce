@@ -9,6 +9,7 @@ import {
   useTransform,
   useVelocity,
 } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 // Ramène v dans l'intervalle [min, max[ (pour boucler sans fin)
 const wrap = (min, max, v) => {
@@ -24,6 +25,7 @@ const wrap = (min, max, v) => {
  *  separator : élément entre deux mots
  */
 export default function Marquee({ items, speed = 2.5, separator = '✕', className = '' }) {
+  const t = useT()
   const reduce = useReducedMotion()
   const baseX = useMotionValue(0)
   const { scrollY } = useScroll()
@@ -42,12 +44,12 @@ export default function Marquee({ items, speed = 2.5, separator = '✕', classNa
 
   // Deux copies identiques côte à côte : quand la 1re sort, la 2e prend sa place
   const row = items.flatMap((w, i) => [
-    <span key={`w${i}`}>{w}</span>,
+    <span key={`w${i}`}>{t(w)}</span>,
     <span key={`s${i}`} aria-hidden className="opacity-40">{separator}</span>,
   ])
 
   return (
-    <div className={`overflow-hidden whitespace-nowrap ${className}`} aria-label={items.join(', ')}>
+    <div className={`overflow-hidden whitespace-nowrap ${className}`} aria-label={items.map((w) => t(w)).join(', ')}>
       <motion.div className="flex w-max gap-12" style={{ x }} aria-hidden>
         <div className="flex gap-12">{row}</div>
         <div className="flex gap-12">{row}</div>

@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -9,6 +10,7 @@ const ease = [0.22, 1, 0.36, 1]
  * et la photo zoome doucement.
  */
 export default function CelioHero({ intro }) {
+  const t = useT()
   const ref = useRef(null)
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
@@ -25,7 +27,7 @@ export default function CelioHero({ intro }) {
       >
         <p className="flex max-w-[330px] gap-2.5 text-[13px] leading-[1.7]">
           <span aria-hidden className="mt-[7px] size-[7px] flex-none bg-celio" />
-          {intro}
+          {t(intro)}
         </p>
       </motion.div>
 
@@ -57,7 +59,7 @@ export default function CelioHero({ intro }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.9, delay: 0.9 }}
       >
-        <span>Mode homme</span>
+        <span>{t('Mode homme')}</span>
         <span>Kinshasa · Gombe</span>
       </motion.div>
 
@@ -69,7 +71,7 @@ export default function CelioHero({ intro }) {
         transition={{ duration: 1.4, delay: 0.6, ease }}
       >
         <motion.div className="grid aspect-[21/8] place-items-center bg-[#ecebe8] max-sm:aspect-[4/3]" style={{ scale: reduce ? 1 : imgScale }}>
-          <span className="caps text-[9px] text-ink/60">[Photo campagne Celio, plein cadre, à fournir]</span>
+          <span className="caps text-[9px] text-ink/60">{t('[Photo campagne Celio, plein cadre, à fournir]')}</span>
         </motion.div>
       </motion.div>
     </section>

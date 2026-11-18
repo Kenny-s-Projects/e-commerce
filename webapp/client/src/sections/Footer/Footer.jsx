@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -12,6 +13,7 @@ const link =
  *  lang, onLang : langue courante et changement FR | EN
  */
 export default function Footer({ footer, contact, lang = 'fr', onLang }) {
+  const t = useT()
   return (
     <footer className="bg-black px-gutter pt-[clamp(56px,7vw,96px)] pb-8 text-white">
       <motion.div
@@ -26,7 +28,7 @@ export default function Footer({ footer, contact, lang = 'fr', onLang }) {
           <p className="text-2xl font-medium">kclick</p>
           <p className="mt-4 text-xs leading-[1.8] text-white/60">
             {footer.signature.map((line) => (
-              <span key={line} className="block">{line}</span>
+              <span key={line} className="block">{t(line)}</span>
             ))}
           </p>
         </div>
@@ -34,11 +36,11 @@ export default function Footer({ footer, contact, lang = 'fr', onLang }) {
         {/* Colonnes de liens */}
         {footer.columns.map((col) => (
           <nav key={col.title}>
-            <p className="caps mb-5 text-[9px] text-gold">{col.title}</p>
+            <p className="caps mb-5 text-[9px] text-gold">{t(col.title)}</p>
             <ul className="space-y-2.5">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className={link}>{l.label}</a>
+                  <a href={l.href} className={link}>{t(l.label)}</a>
                 </li>
               ))}
             </ul>
@@ -47,7 +49,7 @@ export default function Footer({ footer, contact, lang = 'fr', onLang }) {
 
         {/* Contact */}
         <div>
-          <p className="caps mb-5 text-[9px] text-gold">Contact</p>
+          <p className="caps mb-5 text-[9px] text-gold">{t('Contact')}</p>
           <ul className="space-y-2.5 text-[13px] text-white/80">
             <li>{contact.address}</li>
             <li><a href={contact.phoneHref} className={link}>{contact.phone}</a></li>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -8,6 +9,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  about : { eyebrow, title, accent, text, stats: [{ value, suffix?, label }], link } (voir data/home.js)
  */
 export default function About({ about }) {
+  const t = useT()
   return (
     <section id="kennys" className="bg-black px-gutter pt-[clamp(80px,10vw,150px)] pb-[clamp(56px,7vw,110px)] text-white">
       <div className="grid grid-cols-12 gap-x-12 gap-y-14 max-[900px]:grid-cols-1">
@@ -20,7 +22,7 @@ export default function About({ about }) {
             viewport={{ once: true, amount: 0.6 }}
             transition={{ duration: 0.9, delay: 0.3, ease }}
           >
-            {about.text}
+            {t(about.text)}
           </motion.p>
         </div>
 
@@ -44,7 +46,7 @@ export default function About({ about }) {
                 {s.value}
                 {s.suffix && <span className="text-gold">{s.suffix}</span>}
               </dd>
-              <dt className="caps mt-5 text-white/70">{s.label}</dt>
+              <dt className="caps mt-5 text-white/70">{t(s.label)}</dt>
             </motion.div>
           ))}
         </motion.dl>
@@ -54,7 +56,7 @@ export default function About({ about }) {
         href={about.link.href}
         className="caps mt-[clamp(64px,8vw,120px)] inline-block border-b border-white pb-2 transition-opacity duration-400 hover:opacity-70"
       >
-        {about.link.label}
+        {t(about.link.label)}
       </a>
     </section>
   )

@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductSingle from '../ProductSingle/ProductSingle.jsx'
 import FilterPanel from './FilterPanel.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -24,6 +25,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
   { products, total, groups, value, onChange, barClass = '', pill = 'square', cols = 3, house, onAdd, insert = null, insertAfter = 6, title = null },
   ref
 ) {
+  const t = useT()
   const radius = pill === 'round' ? 'rounded-full' : ''
   const first = insert ? products.slice(0, insertAfter) : products
   const rest = insert ? products.slice(insertAfter) : []
@@ -41,7 +43,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
         >
           {groups.map((g, gi) => (
             <div key={g.key} className={`flex flex-wrap items-center gap-2 ${gi > 0 ? 'border-l border-current/15 pl-6 max-md:border-0 max-md:pl-0' : ''}`}>
-              {g.label && <span className="caps w-full opacity-70 md:hidden">{g.label}</span>}
+              {g.label && <span className="caps w-full opacity-70 md:hidden">{t(g.label)}</span>}
               {g.options.map((o) => {
                 const on = value[g.key] === o.id
                 return (
@@ -62,7 +64,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
                         transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                       />
                     )}
-                    <span className="relative">{o.label}</span>
+                    <span className="relative">{t(o.label)}</span>
                   </button>
                 )
               })}
@@ -74,7 +76,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
       <Grid items={first} cols={cols} house={house} onAdd={onAdd} />
       {insert && rest.length > 0 && insert}
       {rest.length > 0 && <Grid items={rest} cols={cols} house={house} onAdd={onAdd} />}
-      {products.length === 0 && <p className="px-gutter py-16 text-sm opacity-70">Aucun produit pour ces filtres.</p>}
+      {products.length === 0 && <p className="px-gutter py-16 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
     </div>
   )
 })

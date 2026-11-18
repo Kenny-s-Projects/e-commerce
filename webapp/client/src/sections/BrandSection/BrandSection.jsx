@@ -4,6 +4,7 @@ import TitleCta from '../../components/TitleCta/TitleCta.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import { sectionThemes } from '../../data/themes.js'
 import { maisonHref } from '../../data/houses.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -12,6 +13,7 @@ const ease = [0.22, 1, 0.36, 1]
  * Même composant pour Kyra, Patchi, adidas et Celio : seules les données changent.
  */
 export default function BrandSection({ house, index, total, onAdd }) {
+  const t = useT()
   return (
     <section
       id={house.id}
@@ -29,7 +31,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
         <TitleCta
           name={house.name}
           logo={house.logo}
-          label={`Entrer chez ${house.name}`}
+          label={t('Entrer chez {m}', { m: house.name })}
           href={maisonHref(house.id)}
         />
       </div>

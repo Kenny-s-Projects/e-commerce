@@ -23,11 +23,12 @@ export const gifts = {
   ],
 }
 
-// Bandeau services
+// Bandeau services (accueil) : une icône, une ligne normale, une ligne en gras
 export const services = [
-  { label: 'Livraison', text: 'Le jour même à Gombe, à moto. 4 $.' },
-  { label: 'Retrait', text: 'En boutique, gratuit, dès 9h00.' },
-  { label: 'Paiement', text: 'Mobile money, carte ou à la livraison.' },
+  { icon: 'delivery', line: 'Livraison', bold: 'le jour même à Gombe' },
+  { icon: 'store', line: 'Retrait en boutique', bold: 'gratuit, dès 9h00' },
+  { icon: 'payment', line: 'Mobile money, carte', bold: 'ou à la livraison' },
+  { icon: 'concierge', line: 'Un conseil ?', bold: 'Concierge WhatsApp', href: 'https://wa.me/243856486993' },
 ]
 
 // Coordonnées (reprises de brands.js)

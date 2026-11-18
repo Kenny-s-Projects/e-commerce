@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -10,6 +11,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  who, onWho : public choisi · options : [{ id, label, count }] · onSee : aller à la grille
  */
 export default function AdidasHero({ who, onWho, options, onSee }) {
+  const t = useT()
   const ref = useRef(null)
   const reduce = useReducedMotion()
 
@@ -56,7 +58,7 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
         ))}
       </motion.div>
 
-      <span className="caps absolute right-[clamp(20px,4vw,64px)] top-6 text-[9px] text-white/50">[Vidéo campagne adidas, en boucle, à fournir]</span>
+      <span className="caps absolute right-[clamp(20px,4vw,64px)] top-6 text-[9px] text-white/50">{t('[Vidéo campagne adidas, en boucle, à fournir]')}</span>
 
       {/* Titre */}
       <motion.div className="relative max-w-[980px]" style={{ y: titleY, opacity: titleOpacity }}>
@@ -71,12 +73,12 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
         <h1 className="mt-9 text-[clamp(60px,9.4vw,152px)] font-medium uppercase leading-[0.9] tracking-[-0.035em]">
           <span className="block overflow-hidden">
             <motion.span className="block" initial={{ y: '105%' }} animate={{ y: '0%' }} transition={{ duration: 1.1, delay: 0.25, ease }}>
-              Le sport,
+              {t('Le sport,')}
             </motion.span>
           </span>
           <span className="block overflow-hidden pb-[0.06em]">
             <motion.span className="accent block normal-case tracking-[-0.01em]" initial={{ y: '105%' }} animate={{ y: '0%' }} transition={{ duration: 1.1, delay: 0.4, ease }}>
-              en style.
+              {t('en style.')}
             </motion.span>
           </span>
         </h1>
@@ -86,7 +88,7 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.7, ease }}
         >
-          Chaussures, vêtements et accessoires pour homme, femme et enfant.
+          {t('Chaussures, vêtements et accessoires pour homme, femme et enfant.')}
         </motion.p>
       </motion.div>
 
@@ -97,7 +99,7 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.9, ease }}
       >
-        <div className="flex flex-wrap gap-[clamp(20px,4vw,56px)]" role="tablist" aria-label="Pour qui">
+        <div className="flex flex-wrap gap-[clamp(20px,4vw,56px)]" role="tablist" aria-label={t('Pour qui')}>
           {options.map((o) => {
             const on = o.id === who
             return (
@@ -109,7 +111,7 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
                 onClick={() => onWho(o.id)}
                 className={`relative flex items-baseline gap-2.5 pb-2 text-[clamp(30px,4.4vw,64px)] font-medium uppercase tracking-[-0.02em] transition-colors duration-500 ${on ? 'text-white' : 'text-white/35 hover:text-white/70'}`}
               >
-                {o.label}
+                {t(o.label)}
                 <span className="text-[12px] font-normal tracking-[0.1em]">{o.count}</span>
                 {on && <motion.span layoutId="adidas-who" className="absolute inset-x-0 -bottom-px h-[3px] bg-white" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
               </button>
@@ -117,7 +119,7 @@ export default function AdidasHero({ who, onWho, options, onSee }) {
           })}
         </div>
         <button type="button" onClick={onSee} className="caps border border-white px-6 py-4 transition-colors duration-300 hover:bg-white hover:text-black">
-          Voir {current?.label} ⟶
+          {t('Voir')} {t(current?.label ?? '')} ⟶
         </button>
       </motion.div>
     </section>

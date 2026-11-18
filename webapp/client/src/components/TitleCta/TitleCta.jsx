@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 /**
  * CTA à droite du titre de section : nom (ou logo) de la Maison + lien.
@@ -8,6 +9,7 @@ import { motion } from 'framer-motion'
  *  href  : destination
  */
 export default function TitleCta({ name, logo, label, href = '#' }) {
+  const t = useT()
   return (
     <motion.div
       className="flex flex-col items-end gap-3.5 max-sm:items-start"
@@ -29,7 +31,7 @@ export default function TitleCta({ name, logo, label, href = '#' }) {
         href={href}
         className="caps group relative inline-flex items-center gap-[18px] pb-2 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-current hover:after:animate-redraw"
       >
-        <span>{label}</span>
+        <span>{typeof label === 'string' ? t(label) : label}</span>
         <span aria-hidden className="text-sm transition-transform duration-500 ease-lux group-hover:translate-x-1.5">
           ⟶
         </span>

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -13,6 +14,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  flavors : pralines (data/maisonPages.js) · weights : quantités · pricePerKg · onAdd
  */
 export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd }) {
+  const t = useT()
   const [index, setIndex] = useState(0)
   const [weight, setWeight] = useState(0)
   const [dir, setDir] = useState(1)
@@ -43,17 +45,17 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
     >
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <Reveal as="p" className="caps opacity-80">Les pralines · au poids</Reveal>
+          <Reveal as="p" className="caps opacity-80">{t('Les pralines · au poids')}</Reveal>
           <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(34px,4.4vw,60px)] font-light leading-[1.1]">
-            Six pralines, <span className="accent text-[1.06em]">six caractères.</span>
+            {t('Six pralines,')} <span className="accent text-[1.06em]">{t('six caractères.')}</span>
           </Reveal>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-[28px] font-light tabular-nums">
             {String(index + 1).padStart(2, '0')} <span className="text-[11px] opacity-60">/ {String(flavors.length).padStart(2, '0')}</span>
           </span>
-          <button type="button" onClick={() => go(index - 1)} aria-label="Praline précédente" className="grid size-12 place-items-center border border-current transition-colors hover:bg-current/10">⟵</button>
-          <button type="button" onClick={() => go(index + 1)} aria-label="Praline suivante" className="grid size-12 place-items-center border border-current bg-current">
+          <button type="button" onClick={() => go(index - 1)} aria-label={t('Praline précédente')} className="grid size-12 place-items-center border border-current transition-colors hover:bg-current/10">⟵</button>
+          <button type="button" onClick={() => go(index + 1)} aria-label={t('Praline suivante')} className="grid size-12 place-items-center border border-current bg-current">
             <span style={{ color: f.bg }}>⟶</span>
           </button>
         </div>
@@ -80,21 +82,21 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
               <Praline choco={f.choco} className="aspect-square w-full" />
             </motion.div>
           </AnimatePresence>
-          <span className="caps absolute right-5 top-5 opacity-70">Réf. {f.ref}</span>
-          <span className="caps absolute bottom-5 left-5 text-[9px] opacity-60">[Photo {f.ref}.webp à fournir]</span>
+          <span className="caps absolute right-5 top-5 opacity-70">{t('Réf.')} {f.ref}</span>
+          <span className="caps absolute bottom-5 left-5 text-[9px] opacity-60">{t('[Photo {ref}.webp à fournir]', { ref: f.ref })}</span>
         </div>
 
         {/* Fiche */}
         <div>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={f.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5, ease }}>
-              <p className="caps opacity-80">{f.coll}</p>
-              <h3 className="accent mt-3 text-[clamp(48px,5.6vw,84px)] leading-none">{f.name}</h3>
-              <p className="mt-5 text-[14px] leading-[1.75] opacity-85">{f.erp} · [Notes de dégustation à fournir]</p>
+              <p className="caps opacity-80">{t(f.coll)}</p>
+              <h3 className="accent mt-3 text-[clamp(48px,5.6vw,84px)] leading-none">{t(f.name)}</h3>
+              <p className="mt-5 text-[14px] leading-[1.75] opacity-85">{f.erp} · {t('[Notes de dégustation à fournir]')}</p>
             </motion.div>
           </AnimatePresence>
 
-          <p className="caps mb-3 mt-9 opacity-80">Quantité</p>
+          <p className="caps mb-3 mt-9 opacity-80">{t('Quantité')}</p>
           <div className="flex flex-wrap gap-2">
             {weights.map((wt, i) => (
               <button
@@ -122,10 +124,10 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
                   </motion.span>
                 </AnimatePresence>
               </p>
-              <p className="mt-1 text-[11px] opacity-70">${pricePerKg} / kg · {f.stock} kg en stock</p>
+              <p className="mt-1 text-[11px] opacity-70">{t('${p} / kg · {n} kg en stock', { p: pricePerKg, n: f.stock })}</p>
             </div>
             <motion.button type="button" onClick={add} whileTap={{ scale: 0.96 }} className="caps px-7 py-4" style={{ background: f.fg, color: f.bg }}>
-              Ajouter au panier
+              {t('Ajouter au panier')}
             </motion.button>
           </div>
         </div>
@@ -142,7 +144,7 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
             className={`flex items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 text-[12px] transition-colors ${i === index ? 'border-current' : 'border-transparent hover:border-current/40'}`}
           >
             <Praline choco={fl.choco} className="size-6" />
-            {fl.name}
+            {t(fl.name)}
           </button>
         ))}
       </div>

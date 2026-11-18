@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../../i18n/lang.js'
 
 /**
  * Contenu de la barre de filtres des pages Maison.
@@ -13,11 +14,12 @@ import { useState } from 'react'
  *  round       : pastilles arrondies (Patchi)
  */
 export default function FilterPanel({ children, activeCount = 0, total, sort = null, onClear, round = false, id = 'filtres' }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const radius = round ? 'rounded-full' : ''
   const count = (
     <span className="text-[12px] opacity-80">
-      {total} produit{total > 1 ? 's' : ''}
+      {t(total > 1 ? '{n} produits' : '{n} produit', { n: total })}
     </span>
   )
 
@@ -33,7 +35,7 @@ export default function FilterPanel({ children, activeCount = 0, total, sort = n
           className={`flex h-9 items-center gap-2 border border-current/30 px-4 text-[12px] ${radius}`}
         >
           <FilterIcon />
-          Filtres
+          {t('Filtres')}
           {activeCount > 0 && (
             <span className="grid size-5 place-items-center rounded-full bg-(--fg) text-[10px] text-(--card)">{activeCount}</span>
           )}
@@ -64,10 +66,10 @@ export default function FilterPanel({ children, activeCount = 0, total, sort = n
                 disabled={activeCount === 0}
                 className="text-[12px] underline underline-offset-4 disabled:no-underline disabled:opacity-40"
               >
-                Effacer
+                {t('Effacer')}
               </button>
               <button type="button" onClick={() => setOpen(false)} className={`h-10 bg-(--fg) px-5 text-[12px] text-(--card) ${radius}`}>
-                Voir {total} produit{total > 1 ? 's' : ''}
+                {t(total > 1 ? 'Voir {n} produits' : 'Voir {n} produit', { n: total })}
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import Reveal from '../../components/maison/Reveal.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -9,11 +10,12 @@ const ease = [0.22, 1, 0.36, 1]
  * colonnes qui arrivent l'une après l'autre.
  */
 export default function MaisonCode({ pillars }) {
+  const t = useT()
   return (
     <section className="px-gutter py-[clamp(80px,10vw,140px)] text-center">
-      <Reveal as="p" className="caps text-cacao/80">Le code de la Maison</Reveal>
+      <Reveal as="p" className="caps text-cacao/80">{t('Le code de la Maison')}</Reveal>
       <Reveal as="h2" delay={0.1} className="mx-auto mt-5 max-w-[820px] text-[clamp(34px,4.4vw,60px)] font-light leading-[1.1]">
-        Un chocolat se choisit <span className="accent text-[1.06em]">à la praline près.</span>
+        {t('Un chocolat se choisit')} <span className="accent text-[1.06em]">{t('à la praline près.')}</span>
       </Reveal>
 
       <motion.div
@@ -33,8 +35,8 @@ export default function MaisonCode({ pillars }) {
               variants={{ hidden: { scaleX: 0 }, show: { scaleX: 1, transition: { duration: 1.1, ease } } }}
             />
             <span className="accent block text-[44px] leading-none text-gold">{p.n}</span>
-            <h3 className="mt-4 text-lg font-normal">{p.title}</h3>
-            <p className="mt-2 text-[13px] leading-[1.7] opacity-75">{p.text}</p>
+            <h3 className="mt-4 text-lg font-normal">{t(p.title)}</h3>
+            <p className="mt-2 text-[13px] leading-[1.7] opacity-75">{t(p.text)}</p>
           </motion.div>
         ))}
       </motion.div>

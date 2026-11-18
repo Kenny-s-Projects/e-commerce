@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import useScrollDirection from '../../hooks/useScrollDirection.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -38,15 +39,22 @@ const fade = {
  *  as           : balise du titre (h2 par défaut)
  */
 export default function SectionTitle({
-  eyebrow,
+  eyebrow: eyebrowFr,
   index,
   total,
-  title,
-  accent,
+  title: titleFr,
+  accent: accentFr,
   accentInline = false,
-  subtitle,
+  subtitle: subtitleFr,
   as: Tag = 'h2',
 }) {
+  // Les textes arrivent en français et sont traduits ici (une seule fois pour toutes les sections)
+  const t = useT()
+  const tr = (v) => (typeof v === 'string' ? t(v) : v)
+  const eyebrow = tr(eyebrowFr)
+  const title = tr(titleFr)
+  const accent = tr(accentFr)
+  const subtitle = tr(subtitleFr)
   const ref = useRef(null)
   const dir = useScrollDirection()
 

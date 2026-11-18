@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { photoFit } from './theme.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -11,10 +12,11 @@ const textOf = (solid) => solid.split(' ').find((c) => c.startsWith('text-')) ??
  * Choix du poids (produits au kilo) : chaque option affiche son prix.
  */
 export function WeightPicker({ weights, value, onChange, pricePerKg, solid, compact = false }) {
+  const t = useT()
   return (
     <div>
-      <p className="caps mb-2.5">Poids</p>
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Poids">
+      <p className="caps mb-2.5">{t('Poids')}</p>
+      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('Poids')}>
         {weights.map((w, i) => {
           const on = i === value
           return (
@@ -41,11 +43,12 @@ export function WeightPicker({ weights, value, onChange, pricePerKg, solid, comp
  * − 1 + (quantité)
  */
 export function QtyStepper({ value, onChange }) {
+  const t = useT()
   return (
     <div className="flex h-[54px] items-center rounded-full border border-current/30">
-      <button type="button" aria-label="Moins" onClick={() => onChange(value - 1)} className="grid h-full w-11 place-items-center text-lg">−</button>
+      <button type="button" aria-label={t('Moins')} onClick={() => onChange(value - 1)} className="grid h-full w-11 place-items-center text-lg">−</button>
       <span className="w-6 text-center tabular-nums" aria-live="polite">{value}</span>
-      <button type="button" aria-label="Plus" onClick={() => onChange(value + 1)} className="grid h-full w-11 place-items-center text-lg">+</button>
+      <button type="button" aria-label={t('Plus')} onClick={() => onChange(value + 1)} className="grid h-full w-11 place-items-center text-lg">+</button>
     </div>
   )
 }
@@ -55,6 +58,7 @@ export function QtyStepper({ value, onChange }) {
  *  layout : 'side' (vignettes à gauche, ordinateur) | 'below' (vignettes dessous, aperçu rapide et mobile)
  */
 export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rounded-2xl' }) {
+  const t = useT()
   const [index, setIndex] = useState(0)
   const [zoom, setZoom] = useState(null) // position de la souris en % pour le zoom
   const fit = photoFit(product)
@@ -84,7 +88,7 @@ export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rou
           />
         </AnimatePresence>
       ) : (
-        <span className="caps absolute inset-0 grid place-items-center text-[9px] opacity-60">Photo à venir</span>
+        <span className="caps absolute inset-0 grid place-items-center text-[9px] opacity-60">{t('Photo à venir')}</span>
       )}
       {photos.length > 1 && (
         <span className="caps absolute bottom-4 left-4 rounded-full bg-white/85 px-3 py-1.5 text-[9px] text-ink">
@@ -101,7 +105,7 @@ export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rou
       key={p}
       type="button"
       onClick={() => setIndex(i)}
-      aria-label={`Photo ${i + 1}`}
+      aria-label={`${t('Photo')} ${i + 1}`}
       aria-pressed={i === index}
       className={`relative aspect-square shrink-0 overflow-hidden rounded-lg outline outline-1 outline-offset-[3px] transition-[opacity,outline-color] duration-300 ${tone} ${
         i === index ? 'opacity-100 outline-current' : 'opacity-60 outline-transparent hover:opacity-90'

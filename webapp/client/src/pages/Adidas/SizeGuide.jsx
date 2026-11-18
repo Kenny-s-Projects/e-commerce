@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -8,20 +9,21 @@ const ease = [0.22, 1, 0.36, 1]
  * Les correspondances UK et cm sont à reprendre du guide officiel adidas.
  */
 export default function SizeGuide({ sizes }) {
+  const t = useT()
   const rows = [
     { label: 'EU', values: sizes },
     { label: 'UK', values: sizes.map(() => '[ ]') },
-    { label: 'Pied (cm)', values: sizes.map(() => '[ ]') },
+    { label: t('Pied (cm)'), values: sizes.map(() => '[ ]') },
   ]
   return (
     <section id="taille" className="flex scroll-mt-16 flex-wrap items-center gap-12 bg-[#f3f3f1] px-gutter py-[clamp(64px,8vw,104px)] text-black">
       <div className="flex-[1_1_320px]">
-        <Reveal as="p" className="caps text-black/60">Bien choisir</Reveal>
+        <Reveal as="p" className="caps text-black/60">{t('Bien choisir')}</Reveal>
         <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(32px,3.6vw,48px)] font-medium uppercase tracking-[-0.02em]">
-          La bonne <span className="accent normal-case">pointure.</span>
+          {t('La bonne')} <span className="accent normal-case">{t('pointure.')}</span>
         </Reveal>
         <FadeUp as="p" delay={0.2} className="mt-4 text-[14px] leading-[1.7] text-black/75">
-          Un doute ? Écrivez au concierge sur WhatsApp avant de commander.
+          {t('Un doute ? Écrivez au concierge sur WhatsApp avant de commander.')}
         </FadeUp>
       </div>
       <div className="flex-[2_1_520px] overflow-x-auto">
@@ -44,7 +46,7 @@ export default function SizeGuide({ sizes }) {
             ))}
           </tbody>
         </table>
-        <p className="mt-2.5 text-[11px] text-black/60">Correspondances à reprendre du guide officiel adidas.</p>
+        <p className="mt-2.5 text-[11px] text-black/60">{t('Correspondances à reprendre du guide officiel adidas.')}</p>
       </div>
     </section>
   )

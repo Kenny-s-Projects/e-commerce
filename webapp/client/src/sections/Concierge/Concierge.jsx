@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -7,6 +8,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  concierge : { eyebrow, title, accent, titleEnd, text, phone, href } (voir data/home.js)
  */
 export default function Concierge({ concierge }) {
+  const t = useT()
   return (
     <section id="conciergerie" className="bg-black px-gutter pb-[clamp(80px,10vw,140px)] text-white">
       <motion.div
@@ -17,11 +19,11 @@ export default function Concierge({ concierge }) {
         transition={{ duration: 1, ease }}
       >
         <div className="max-w-[760px]">
-          <p className="caps mb-7 text-gold">{concierge.eyebrow}</p>
+          <p className="caps mb-7 text-gold">{t(concierge.eyebrow)}</p>
           <h2 className="text-[clamp(32px,3.6vw,50px)] font-light leading-[1.15]">
-            {concierge.title} <span className="accent text-[1.08em]">{concierge.accent}</span> {concierge.titleEnd}
+            {t(concierge.title)} <span className="accent text-[1.08em]">{t(concierge.accent)}</span> {t(concierge.titleEnd)}
           </h2>
-          <p className="mt-7 max-w-[620px] text-[15px] leading-[1.75] text-white/70">{concierge.text}</p>
+          <p className="mt-7 max-w-[620px] text-[15px] leading-[1.75] text-white/70">{t(concierge.text)}</p>
         </div>
 
         <a

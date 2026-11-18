@@ -4,6 +4,8 @@ import BagIcon from '../icons/BagIcon.jsx'
 import SearchIcon from '../icons/SearchIcon.jsx'
 import MenuPanel from './MenuPanel.jsx'
 import SearchBar from './SearchBar.jsx'
+import LangSwitch from '../LangSwitch/LangSwitch.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -24,6 +26,7 @@ const pill = 'pointer-events-auto flex h-10 items-center rounded-md bg-[#f4f4f4]
  */
 export default function Header({ cartCount = 0, ready = true, onCart }) {
   const [scrolled, setScrolled] = useState(false)
+  const t = useT()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -95,7 +98,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                 className={`${pill} justify-between gap-10 px-4 ${scrolled ? 'w-[min(280px,52vw)]' : 'w-[min(400px,46vw)] max-sm:w-[44vw]'}`}
                 transition={{ duration: 0.5, ease }}
               >
-                <motion.span layout="position" className="text-[14px]">Menu</motion.span>
+                <motion.span layout="position" className="text-[14px]">{t('Menu')}</motion.span>
                 <motion.span layout="position" aria-hidden className="flex w-[60px] flex-col gap-[6px] max-sm:w-8">
                   <span className="block h-px bg-current" />
                   <span className="block h-px bg-current" />
@@ -108,7 +111,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     key="search-pill"
                     type="button"
                     onClick={openSearch}
-                    aria-label="Rechercher"
+                    aria-label={t('Rechercher')}
                     className={`${pill} w-10 justify-center`}
                     initial={{ opacity: 0, scale: 0.6 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -123,7 +126,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     key="cart-pill"
                     type="button"
                     onClick={onCart}
-                    aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
+                    aria-label={t('Panier, {n} article(s)', { n: cartCount })}
                     className={`${pill} gap-2 px-3`}
                     initial={{ opacity: 0, scale: 0.6 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -133,6 +136,18 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     <BagIcon className="size-[18px]" />
                     <CartCount count={cartCount} />
                   </motion.button>
+                )}
+                {scrolled && (
+                  <motion.span
+                    key="lang-pill"
+                    className={`${pill} w-10 justify-center`}
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                    transition={{ duration: 0.35, delay: 0.1, ease }}
+                  >
+                    <LangSwitch compact className="size-full" />
+                  </motion.span>
                 )}
               </AnimatePresence>
             </motion.div>
@@ -148,16 +163,18 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                   exit={{ opacity: 0, x: 12 }}
                   transition={{ duration: 0.4, ease }}
                 >
-                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={openSearch}>Recherche</button>
+                  <LangSwitch className="caps max-sm:hidden" />
+                  <LangSwitch compact className="sm:hidden" />
+                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={openSearch}>{t('Recherche')}</button>
                   <button type="button" className={`${linkClass} max-sm:hidden`} onClick={onCart}>
-                    Panier (<CartCount count={cartCount} />)
+                    {t('Panier')} (<CartCount count={cartCount} />)
                   </button>
                   {/* Mobile : icône sac + pastille */}
                   <button
                     type="button"
                     className="relative -m-2 p-2 sm:hidden"
                     onClick={onCart}
-                    aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
+                    aria-label={t('Panier, {n} article(s)', { n: cartCount })}
                   >
                     <BagIcon className="size-[22px]" />
                     <span className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-ink text-[9px] leading-none text-cream">

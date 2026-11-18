@@ -37,6 +37,12 @@ export default function usePurchase(product, onAdd) {
     setTimeout(() => setAdded(false), 1800)
   }
 
+  // « Commander maintenant » : uniquement cet article, directement vers la page de commande
+  const buyNow = (onBuyNow) => {
+    if (!available) return
+    onBuyNow?.(line, qty)
+  }
+
   const whatsapp = whatsappFor(
     `Bonjour, je souhaite commander : ${qty} × ${product.name}${byWeight ? ` (${w.label})` : ''}` +
       `${available ? ` à ${formatPrice(unitPrice)}` : ''} chez ${product.house.name}.`
@@ -46,6 +52,6 @@ export default function usePurchase(product, onAdd) {
     byWeight, weights: WEIGHTS, weight, setWeight,
     qty, setQty: (n) => setQty(Math.max(1, n)),
     gift, setGift, note, setNote,
-    unitPrice, total, available, added, add, whatsapp,
+    unitPrice, total, available, added, add, buyNow, whatsapp,
   }
 }

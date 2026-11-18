@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import { patchiFlavors, patchiPage } from '../../data/maisonPages.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const SLOTS = 12 // pralines visibles dans le coffret (4 × 3)
@@ -15,6 +16,7 @@ const SLOTS = 12 // pralines visibles dans le coffret (4 × 3)
  * Avec « réduire les animations », le coffret est montré ouvert, sans défilement piloté.
  */
 export default function BoxReveal({ onCompose }) {
+  const t = useT()
   const ref = useRef(null)
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
@@ -58,7 +60,7 @@ export default function BoxReveal({ onCompose }) {
           transition={{ duration: 0.9, delay: 0.3, ease }}
         >
           {hero.labels.map((l) => (
-            <span key={l} className="max-sm:[&:nth-child(2)]:hidden">{l}</span>
+            <span key={l} className="max-sm:[&:nth-child(2)]:hidden">{t(l)}</span>
           ))}
         </motion.div>
 
@@ -108,23 +110,23 @@ export default function BoxReveal({ onCompose }) {
               className="accent absolute inset-x-0 top-0 text-[clamp(30px,3.6vw,52px)] leading-tight"
               style={{ opacity: captions[i] }}
             >
-              {c}
+              {t(c)}
             </motion.p>
           ))}
 
           <motion.div className="absolute inset-x-0 top-0 flex flex-col items-center" style={{ opacity: finale, y: finaleY }}>
             <p className="text-[clamp(24px,2.6vw,36px)] font-light leading-tight">
-              {hero.title} <span className="accent text-[1.08em]">{hero.accent}</span>
+              {t(hero.title)} <span className="accent text-[1.08em]">{t(hero.accent)}</span>
             </p>
-            <p className="mt-2 max-w-[520px] text-[14px] leading-[1.7] text-paper/80">{hero.text}</p>
+            <p className="mt-2 max-w-[520px] text-[14px] leading-[1.7] text-paper/80">{t(hero.text)}</p>
             <button type="button" onClick={onCompose} className="caps mt-4 border-b border-gold pb-1.5">
-              Composer un coffret ⟶
+              {t('Composer un coffret')} ⟶
             </button>
           </motion.div>
 
           {!reduce && (
             <motion.div className="caps absolute inset-x-0 bottom-0 flex flex-col items-center gap-2.5 text-paper/80" style={{ opacity: cue }}>
-              Faites défiler pour ouvrir le coffret
+              {t('Faites défiler pour ouvrir le coffret')}
               <span className="block h-9 w-px overflow-hidden bg-current/30">
                 <span className="block h-1/3 w-full animate-scroll-cue bg-current" />
               </span>

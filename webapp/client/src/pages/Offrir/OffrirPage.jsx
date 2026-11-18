@@ -3,6 +3,7 @@ import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { offrir } from '../../data/pages.js'
 import { getProduct } from '../../data/products.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -13,30 +14,31 @@ const ease = [0.22, 1, 0.36, 1]
  *  tab : id de l'onglet actif · onAdd : ajout au panier
  */
 export default function OffrirPage({ tab, onAdd }) {
-  const current = offrir.tabs.find((t) => t.id === tab) ?? offrir.tabs[0]
+  const t = useT()
+  const current = offrir.tabs.find((x) => x.id === tab) ?? offrir.tabs[0]
   const products = current.ids.map(getProduct).filter(Boolean)
 
   return (
     <div className="bg-white text-ink [--card:#f6f3ee] [--fg:var(--color-ink)]">
       {/* En-tête */}
       <section className="px-gutter pb-10 pt-[clamp(56px,7vw,104px)] text-center">
-        <Reveal as="p" className="caps text-gold">Toutes Maisons confondues</Reveal>
-        <Reveal as="h1" delay={0.1} className="accent mt-4 text-[clamp(64px,9vw,128px)] leading-[0.95]">{offrir.title}</Reveal>
-        <FadeUp as="p" delay={0.2} className="mx-auto mt-5 max-w-[460px] text-[15px] leading-[1.7] text-ink/75">{offrir.text}</FadeUp>
+        <Reveal as="p" className="caps text-gold">{t('Toutes Maisons confondues')}</Reveal>
+        <Reveal as="h1" delay={0.1} className="accent mt-4 text-[clamp(64px,9vw,128px)] leading-[0.95]">{t(offrir.title)}</Reveal>
+        <FadeUp as="p" delay={0.2} className="mx-auto mt-5 max-w-[460px] text-[15px] leading-[1.7] text-ink/75">{t(offrir.text)}</FadeUp>
 
         {/* Onglets */}
-        <nav aria-label="Idées cadeaux" className="mt-10 inline-flex flex-wrap justify-center gap-1.5 rounded-full bg-[#f4f1ec] p-1.5">
-          {offrir.tabs.map((t) => {
-            const on = t.id === current.id
+        <nav aria-label={t('Idées cadeaux')} className="mt-10 inline-flex flex-wrap justify-center gap-1.5 rounded-full bg-[#f4f1ec] p-1.5">
+          {offrir.tabs.map((tb) => {
+            const on = tb.id === current.id
             return (
               <a
-                key={t.id}
-                href={`#offrir/${t.id}`}
+                key={tb.id}
+                href={`#offrir/${tb.id}`}
                 aria-current={on ? 'page' : undefined}
                 className={`relative rounded-full px-6 py-3 text-[14px] transition-colors duration-300 ${on ? 'text-ink' : 'text-ink/60 hover:text-ink'}`}
               >
                 {on && <motion.span layoutId="offrir-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.08)]" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
-                <span className="relative">{t.label}</span>
+                <span className="relative">{t(tb.label)}</span>
               </a>
             )
           })}
@@ -65,8 +67,8 @@ export default function OffrirPage({ tab, onAdd }) {
                 transition={{ duration: 1.2, ease }}
               />
               <div className="relative rounded-xl bg-white/92 p-6">
-                <p className="accent text-[38px] leading-none">{current.label}</p>
-                <p className="mt-2.5 text-[13px] leading-[1.7] text-ink/75">{current.text}</p>
+                <p className="accent text-[38px] leading-none">{t(current.label)}</p>
+                <p className="mt-2.5 text-[13px] leading-[1.7] text-ink/75">{t(current.text)}</p>
               </div>
             </div>
 
@@ -85,7 +87,7 @@ export default function OffrirPage({ tab, onAdd }) {
       {/* Services cadeau */}
       <section className="bg-ink px-gutter py-[clamp(56px,6vw,88px)] text-cream">
         <Reveal as="h2" className="text-[clamp(30px,3.4vw,46px)] font-light">
-          Le cadeau, <span className="accent">jusqu’au bout</span>
+          {t('Le cadeau,')} <span className="accent">{t('jusqu’au bout')}</span>
         </Reveal>
         <motion.div
           className="mt-10 grid grid-cols-3 gap-8 max-md:grid-cols-1"
@@ -97,12 +99,12 @@ export default function OffrirPage({ tab, onAdd }) {
           {offrir.services.map((s) => (
             <motion.div key={s.n} className="border-t border-cream/25 pt-5" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease } } }}>
               <p className="accent text-[32px] text-gold">{s.n}</p>
-              <p className="mt-2.5 text-[17px]">{s.title}</p>
-              <p className="mt-1.5 text-[13px] leading-[1.7] text-cream/70">{s.text}</p>
+              <p className="mt-2.5 text-[17px]">{t(s.title)}</p>
+              <p className="mt-1.5 text-[13px] leading-[1.7] text-cream/70">{t(s.text)}</p>
             </motion.div>
           ))}
         </motion.div>
-        <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="caps mt-10 inline-block border-b border-gold pb-1.5">Composer un cadeau avec le concierge ⟶</a>
+        <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="caps mt-10 inline-block border-b border-gold pb-1.5">{t('Composer un cadeau avec le concierge')} ⟶</a>
       </section>
     </div>
   )

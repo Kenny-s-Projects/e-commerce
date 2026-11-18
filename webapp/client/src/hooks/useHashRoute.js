@@ -10,6 +10,7 @@ import { offrir, aide } from '../data/pages.js'
  *   offrir/pour-elle   → page Offrir, onglet choisi (offrir seul → 1er onglet)
  *   notre-histoire     → page Notre histoire
  *   aide/paiement      → page Aide, rubrique choisie (aide seul → Livraison ; contact → rubrique Contact)
+ *   checkout           → page de commande
  *   sinon              → accueil, avec une ancre éventuelle (#patchi…)
  */
 const parse = () => {
@@ -23,6 +24,7 @@ const parse = () => {
     return { page: 'offrir', id: tab.id, anchor: '' }
   }
   if (head === 'notre-histoire') return { page: 'histoire', id: '', anchor: '' }
+  if (head === 'checkout') return { page: 'checkout', id: '', anchor: '' }
   if (head === 'aide' || head === 'contact') {
     const id = head === 'contact' ? 'contact' : sub
     const section = aide.sections.find((s) => s.id === id) ?? aide.sections[0]

@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const HOUSE = { id: 'celio', name: 'Celio' }
@@ -12,16 +13,17 @@ const HOUSE = { id: 'celio', name: 'Celio' }
  *  products · title · view ('grid' | 'list') · onView · onAdd · onShirts (tuile éditoriale)
  */
 const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView, onAdd, onShirts }, ref) {
+  const t = useT()
   return (
     <section ref={ref} id="grille" className="scroll-mt-16 bg-white px-gutter py-[clamp(72px,9vw,120px)] text-ink [--card:#f3f2ef] [--fg:#111111]">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45, ease }}>
-            <Reveal as="h2" className="text-[clamp(34px,4.4vw,60px)] tracking-[-0.02em]">{title}</Reveal>
+            <Reveal as="h2" className="text-[clamp(34px,4.4vw,60px)] tracking-[-0.02em]">{t(title)}</Reveal>
           </motion.div>
         </AnimatePresence>
         <div className="flex items-center gap-4 text-[12px]">
-          <span className="accent text-base">Affichage</span>
+          <span className="accent text-base">{t('Affichage')}</span>
           {[
             ['grid', 'Grille'],
             ['list', 'Liste'],
@@ -29,7 +31,7 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
             <span key={id} className="flex items-center gap-4">
               {i > 0 && <span className="text-ink/30">/</span>}
               <button type="button" aria-pressed={view === id} onClick={() => onView(id)} className={`relative py-1 transition-colors ${view === id ? 'text-ink' : 'text-ink/40 hover:text-ink/70'}`}>
-                {label}
+                {t(label)}
                 {view === id && <motion.span layoutId="celio-view" className="absolute inset-x-0 bottom-0 h-px bg-ink" />}
               </button>
             </span>
@@ -72,11 +74,11 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, ease }}
               >
-                <span className="caps text-celio">La pièce maîtresse</span>
+                <span className="caps text-celio">{t('La pièce maîtresse')}</span>
                 <span className="text-[clamp(24px,2.2vw,30px)] leading-[1.15]">
-                  La chemise <span className="accent">Oxford</span>, du lundi au samedi.
+                  {t('La chemise')} <span className="accent">Oxford</span>{t(', du lundi au samedi.')}
                 </span>
-                <span className="caps">Voir les chemises <span className="inline-block transition-transform duration-500 ease-lux group-hover:translate-x-1.5">⟶</span></span>
+                <span className="caps">{t('Voir les chemises')} <span className="inline-block transition-transform duration-500 ease-lux group-hover:translate-x-1.5">⟶</span></span>
               </motion.button>
             </AnimatePresence>
           </motion.div>
@@ -91,15 +93,15 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
                 transition={{ duration: 0.5, delay: i * 0.04, ease }}
               >
                 <span className="block aspect-[3/4] bg-[#f3f2ef]" />
-                <span className="accent text-[clamp(22px,2.4vw,30px)] transition-transform duration-500 ease-lux group-hover:translate-x-2">{p.name}</span>
-                <span className="text-[12px] text-ink/60 max-sm:hidden">{p.store}</span>
-                <span className="text-right text-[14px]">[Prix]</span>
+                <span className="accent text-[clamp(22px,2.4vw,30px)] transition-transform duration-500 ease-lux group-hover:translate-x-2">{t(p.name)}</span>
+                <span className="text-[12px] text-ink/60 max-sm:hidden">{t(p.store)}</span>
+                <span className="text-right text-[14px]">{t('[Prix]')}</span>
               </motion.div>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
-      {products.length === 0 && <p className="py-12 text-sm opacity-70">Aucun produit dans ce rayon pour le moment.</p>}
+      {products.length === 0 && <p className="py-12 text-sm opacity-70">{t('Aucun produit dans ce rayon pour le moment.')}</p>}
     </section>
   )
 })

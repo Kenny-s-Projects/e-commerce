@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
 import { markIntroSeen } from '../../utils/intro.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const DURATION = 2.2 // durée du compteur 0 → 100 %, en secondes
@@ -10,6 +11,7 @@ const DURATION = 2.2 // durée du compteur 0 → 100 %, en secondes
  * À 100 %, appelle onComplete ; App le retire et le panneau remonte comme un rideau.
  */
 export default function Loader({ onComplete }) {
+  const t = useT()
   const [count, setCount] = useState(0)
   const progress = useMotionValue(0)
   const barScale = useTransform(progress, [0, 100], [0, 1]) // 0–100 → 0–1 pour la barre
@@ -72,7 +74,7 @@ export default function Loader({ onComplete }) {
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 1, ease }}
         >
-          par Kenny’s International
+          {t('par Kenny’s International')}
         </motion.p>
       </div>
 

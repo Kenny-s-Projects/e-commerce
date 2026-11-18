@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { kyraCatalog, patchiCatalog, adidasCatalog, celioCatalog } from '../../data/catalog.js'
 import { formatPrice } from '../../data/houses.js'
 import SearchIcon from '../icons/SearchIcon.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -30,6 +31,7 @@ export default function SearchBar({ open, onClose }) {
 }
 
 function SearchPanel({ onClose }) {
+  const t = useT()
   const [q, setQ] = useState('')
 
   const results = useMemo(() => {
@@ -42,10 +44,10 @@ function SearchPanel({ onClose }) {
   }, [q])
 
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Recherche">
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={t('Recherche')}>
       <motion.button
         type="button"
-        aria-label="Fermer la recherche"
+        aria-label={t('Fermer la recherche')}
         className="absolute inset-0 cursor-default bg-ink/30 backdrop-blur-[2px]"
         onClick={onClose}
         initial={{ opacity: 0 }}
@@ -75,7 +77,7 @@ function SearchPanel({ onClose }) {
             className="flex items-center gap-3 rounded-md bg-[#f4f4f4] px-4"
           >
             <SearchIcon className="size-5 shrink-0 opacity-60" />
-            <label htmlFor="kclick-search" className="sr-only">Rechercher un produit</label>
+            <label htmlFor="kclick-search" className="sr-only">{t('Rechercher un produit')}</label>
             <input
               id="kclick-search"
               type="search"
@@ -83,16 +85,16 @@ function SearchPanel({ onClose }) {
               autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Rechercher un produit, une Maison…"
+              placeholder={t('Rechercher un produit, une Maison…')}
               className="h-14 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-ink/45 [&::-webkit-search-cancel-button]:appearance-none"
             />
-            <button type="button" onClick={onClose} className="caps shrink-0 py-2 opacity-70 hover:opacity-100">Fermer</button>
+            <button type="button" onClick={onClose} className="caps shrink-0 py-2 opacity-70 hover:opacity-100">{t('Fermer')}</button>
           </form>
 
           {/* Suggestions (champ vide) ou résultats */}
           {q.trim() === '' ? (
             <motion.div className="mt-5 flex flex-wrap items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-              <span className="caps mr-1 text-ink/60">Suggestions</span>
+              <span className="caps mr-1 text-ink/60">{t('Suggestions')}</span>
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" onClick={() => setQ(s)} className="rounded-full border border-ink/20 px-3.5 py-1.5 text-[12px] transition-colors hover:border-ink">
                   {s}
@@ -102,7 +104,7 @@ function SearchPanel({ onClose }) {
           ) : (
             <div className="mt-4" aria-live="polite">
               <p className="caps mb-2 text-ink/60">
-                {results.length ? `${results.length} résultat${results.length > 1 ? 's' : ''}` : 'Aucun résultat'}
+                {results.length ? t('{n} résultat(s)', { n: results.length }) : t('Aucun résultat')}
               </p>
               <ul>
                 <AnimatePresence initial={false}>

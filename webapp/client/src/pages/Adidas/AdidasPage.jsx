@@ -8,6 +8,7 @@ import CatalogueGrid from '../../components/maison/CatalogueGrid.jsx'
 import NextMaison from '../../components/maison/NextMaison.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { adidasPage } from '../../data/maisonPages.js'
+import { useT } from '../../i18n/lang.js'
 
 const HOUSE = { id: 'adidas', name: 'adidas' }
 
@@ -18,6 +19,7 @@ const HOUSE = { id: 'adidas', name: 'adidas' }
  * 5. Grille sur fond clair             6. Guide des tailles      7. Maison suivante (Celio)
  */
 export default function AdidasPage({ onAdd }) {
+  const t = useT()
   const [filter, setFilter] = useState({ who: 'homme' })
   const barRef = useRef(null)
   const { products, who, rayons } = adidasPage
@@ -44,8 +46,8 @@ export default function AdidasPage({ onAdd }) {
           ref={barRef}
           title={
             <div className="flex flex-wrap items-end justify-between gap-6 px-gutter pb-8 pt-[clamp(72px,9vw,120px)]">
-              <Reveal as="h2" className="text-[clamp(44px,5.6vw,80px)] font-medium uppercase leading-none tracking-[-0.03em]">{whoLabel}</Reveal>
-              <p className="text-[12px] text-black/60">Photos et prix à venir</p>
+              <Reveal as="h2" className="text-[clamp(44px,5.6vw,80px)] font-medium uppercase leading-none tracking-[-0.03em]">{t(whoLabel)}</Reveal>
+              <p className="text-[12px] text-black/60">{t('Photos et prix à venir')}</p>
             </div>
           }
           products={list}

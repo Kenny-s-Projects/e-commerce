@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { maisonHref } from '../../data/houses.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -12,6 +13,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  visual    : élément affiché à droite (photo, logo…)
  */
 export default function NextMaison({ id, name, className = '', visual = null }) {
+  const t = useT()
   const ref = useRef(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
   const y = useTransform(scrollYProgress, [0, 1], [50, -50])
@@ -23,7 +25,7 @@ export default function NextMaison({ id, name, className = '', visual = null }) 
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }}>
           <div className="overflow-hidden">
             <motion.p className="caps mb-5 opacity-80" variants={{ hidden: { y: '100%' }, show: { y: '0%', transition: { duration: 0.8, ease } } }}>
-              Maison suivante
+              {t('Maison suivante')}
             </motion.p>
           </div>
           <div className="overflow-hidden pb-[0.1em]">
@@ -31,7 +33,7 @@ export default function NextMaison({ id, name, className = '', visual = null }) 
               className="text-[clamp(44px,6.4vw,96px)] font-light leading-none tracking-[-0.03em]"
               variants={{ hidden: { y: '100%' }, show: { y: '0%', transition: { duration: 1.1, delay: 0.1, ease } } }}
             >
-              Continuer chez <span className="accent inline-block pr-[0.1em] text-[1.06em]">{name}</span>
+              {t('Continuer chez')} <span className="accent inline-block pr-[0.1em] text-[1.06em]">{name}</span>
               <span aria-hidden className="ml-4 inline-block text-[0.5em] opacity-0 transition-all duration-500 ease-lux group-hover:translate-x-2 group-hover:opacity-100">⟶</span>
             </motion.p>
           </div>

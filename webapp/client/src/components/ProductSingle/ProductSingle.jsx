@@ -3,6 +3,7 @@ import ProductMedia from '../ProductMedia/ProductMedia.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { getProduct, productHref } from '../../data/products.js'
 import { useQuickView } from '../../context/quickView.js'
+import { useT } from '../../i18n/lang.js'
 
 /**
  * Carte produit : Image + Store + Name + Price + CTA.
@@ -16,6 +17,7 @@ import { useQuickView } from '../../context/quickView.js'
  *  href : lien de repli pour les produits sans fiche (produits fictifs de l'accueil)
  */
 export default function ProductSingle({ product, onAdd, href = '#' }) {
+  const t = useT()
   const available = product.price != null
   const [added, setAdded] = useState(false)
   const openQuickView = useQuickView()
@@ -48,14 +50,14 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
             className="caps absolute right-3 top-3 rounded-full bg-white/90 px-3.5 py-2 text-[9px] text-ink shadow-sm transition-all duration-500 ease-lux hover:bg-ink hover:text-white
               [@media(hover:hover)]:-translate-y-1 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:none)]:hidden"
           >
-            Aperçu
+            {t('Aperçu')}
           </button>
         )}
       </div>
 
       {/* Store + Name */}
-      <p className="caps text-[9px] opacity-60">{product.store}</p>
-      <h3 className="mt-1.5 text-sm font-normal">{product.name}</h3>
+      <p className="caps text-[9px] opacity-60">{t(product.store)}</p>
+      <h3 className="mt-1.5 text-sm font-normal">{t(product.name)}</h3>
 
       {/* Price + CTA */}
       <div className="mt-[18px] flex items-center justify-between gap-3">
@@ -64,14 +66,14 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
           type="button"
           onClick={handleAdd}
           disabled={!available}
-          aria-label={available ? `Ajouter ${product.name} au panier` : undefined}
+          aria-label={available ? t('Ajouter {p} au panier', { p: t(product.name) }) : undefined}
           className={`caps relative z-0 shrink-0 overflow-hidden border px-4 py-2.5 text-[9px] transition-colors duration-400 ease-lux
             before:absolute before:inset-0 before:-z-10 before:bg-(--fg) before:transition-transform before:duration-[450ms] before:ease-lux
             hover:border-current hover:text-(--card) hover:before:translate-y-0
             ${added ? 'border-current text-(--card) before:translate-y-0' : 'border-current/35 before:translate-y-[101%]'}
             disabled:pointer-events-none disabled:opacity-50`}
         >
-          <span className="relative">{!available ? 'Bientôt' : added ? 'Ajouté' : 'Ajouter'}</span>
+          <span className="relative">{t(!available ? 'Bientôt' : added ? 'Ajouté' : 'Ajouter')}</span>
         </button>
       </div>
     </article>

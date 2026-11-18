@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { useT } from '../../i18n/lang.js'
 
 /**
  * Compteur "01 / 06" + flèches précédent / suivant.
@@ -7,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion'
  *  onPrev, onNext : actions des flèches
  */
 export default function CarouselNav({ current, total, onPrev, onNext }) {
+  const t = useT()
   const pad = (n) => String(n).padStart(2, '0')
   const btn =
     'grid size-11 place-items-center border border-ink transition-colors duration-400 ease-lux disabled:cursor-default disabled:opacity-30'
@@ -36,7 +38,7 @@ export default function CarouselNav({ current, total, onPrev, onNext }) {
           type="button"
           onClick={onPrev}
           disabled={current === 0}
-          aria-label="Précédent"
+          aria-label={t('Précédent')}
           className={`${btn} hover:enabled:bg-ink hover:enabled:text-white`}
         >
           ⟵
@@ -45,7 +47,7 @@ export default function CarouselNav({ current, total, onPrev, onNext }) {
           type="button"
           onClick={onNext}
           disabled={current === total - 1}
-          aria-label="Suivant"
+          aria-label={t('Suivant')}
           className={`${btn} bg-ink text-white hover:enabled:bg-transparent hover:enabled:text-ink`}
         >
           ⟶

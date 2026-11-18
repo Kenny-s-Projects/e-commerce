@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPrice, maisonHref } from '../../data/houses.js'
 import { heroThemes } from '../../data/themes.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const AUTOPLAY_MS = 5000
 
 export default function Hero({ houses, ready = true }) {
+  const t = useT()
   const [active, setActive] = useState(houses.length - 1) // Celio ouvert, comme la maquette
   const [paused, setPaused] = useState(false)
 
   // La colonne ouverte change toute seule tant que la souris n'est pas sur le hero
   useEffect(() => {
     if (paused || !ready) return
-    const t = setInterval(() => setActive((i) => (i + 1) % houses.length), AUTOPLAY_MS)
-    return () => clearInterval(t)
+    const timer = setInterval(() => setActive((i) => (i + 1) % houses.length), AUTOPLAY_MS)
+    return () => clearInterval(timer)
   }, [paused, ready, houses.length])
 
   return (
@@ -40,7 +42,7 @@ export default function Hero({ houses, ready = true }) {
         animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.8, delay: 1.2, ease }}
       >
-        Quatre maisons, une seule adresse
+        {t('Quatre maisons, une seule adresse')}
       </motion.p>
     </section>
   )
@@ -48,6 +50,7 @@ export default function Hero({ houses, ready = true }) {
 
 function HeroColumn({ house, index, ready, isActive, onActivate }) {
   const { hero } = house
+  const t = useT()
 
   return (
     <motion.article
@@ -108,14 +111,14 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
               house.theme === 'black' ? 'w-[min(60%,160px)]' : 'w-[min(80%,280px)]'
             }`}
           >
-            Photo produit<br />à venir
+            {t('Photo produit')}<br />{t('à venir')}
           </div>
         )}
       </motion.div>
 
       {/* Bas : catégorie + détails du produit quand la colonne est ouverte */}
       <footer className="min-h-[110px] max-md:min-h-0">
-        <p className="caps max-w-[180px] leading-[1.7]">{house.tagline}</p>
+        <p className="caps max-w-[180px] leading-[1.7]">{t(house.tagline)}</p>
 
         <AnimatePresence>
           {isActive && (
@@ -132,7 +135,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
                 href={maisonHref(house.id)}
                 className="caps group mt-3.5 inline-flex items-center gap-2.5 whitespace-nowrap border-b border-current pb-1.5"
               >
-                Entrer chez {house.name}
+                {t('Entrer chez {m}', { m: house.name })}
                 <span aria-hidden className="transition-transform duration-400 ease-lux group-hover:translate-x-1.5">
                   ⟶
                 </span>

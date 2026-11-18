@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -9,13 +10,14 @@ const ease = [0.22, 1, 0.36, 1]
  *  cats : [{ id, label }] · active : id · onPick(id)
  */
 export default function Vestiaire({ cats, active, onPick }) {
+  const t = useT()
   return (
     <section className="bg-white px-gutter pb-14 text-ink">
       <div className="flex flex-wrap items-end justify-between gap-6 pb-4">
         <Reveal as="h2" className="text-[clamp(34px,4.4vw,60px)] tracking-[-0.02em]">
-          Le <span className="accent text-[1.06em]">vestiaire</span>
+          {t('Le')} <span className="accent text-[1.06em]">{t('vestiaire')}</span>
         </Reveal>
-        <p className="text-[12px]">{cats.length} rayons</p>
+        <p className="text-[12px]">{t('{n} rayons', { n: cats.length })}</p>
       </div>
       <DrawLine className="bg-ink" />
 
@@ -38,9 +40,9 @@ export default function Vestiaire({ cats, active, onPick }) {
               variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } }}
             >
               <span className={`block aspect-[3/4] overflow-hidden bg-[#ecebe8] outline outline-1 outline-offset-[3px] transition-[outline-color] duration-500 ${on ? 'outline-ink' : 'outline-transparent'}`}>
-                <span className="caps grid size-full place-items-center text-[8px] text-ink/60 transition-transform duration-700 ease-lux group-hover:scale-105">[Photo]</span>
+                <span className="caps grid size-full place-items-center text-[8px] text-ink/60 transition-transform duration-700 ease-lux group-hover:scale-105">[{t('Photo')}]</span>
               </span>
-              <span className={`mt-2.5 block text-[12px] ${on ? 'font-medium' : ''}`}>{c.label}</span>
+              <span className={`mt-2.5 block text-[12px] ${on ? 'font-medium' : ''}`}>{t(c.label)}</span>
             </motion.button>
           )
         })}

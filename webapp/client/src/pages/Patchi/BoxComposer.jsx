@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -12,6 +13,7 @@ const ease = [0.22, 1, 0.36, 1]
  * le total défile. « Ajouter le coffret » le met au panier ; WhatsApp pour le composer avec le concierge.
  */
 const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg, onAdd }, ref) {
+  const t = useT()
   const [size, setSize] = useState(1)
   const [picked, setPicked] = useState(['ccn01', 'ccn02', 'ccd01'])
   const [note, setNote] = useState('')
@@ -21,14 +23,14 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
   const chosen = flavors.filter((f) => picked.includes(f.id))
   const pool = chosen.length ? chosen : flavors
   const price = Math.round(pricePerKg * s.kg)
-  const names = chosen.length ? chosen.map((f) => f.name).join(', ') : 'Assortiment de la Maison'
+  const names = chosen.length ? chosen.map((f) => t(f.name)).join(', ') : t('Assortiment de la Maison')
 
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
 
   const add = () => {
     onAdd({
       id: `coffret-${s.id}-${picked.slice().sort().join('-') || 'maison'}`,
-      name: `Coffret composé ${s.label} ${s.weight} (${names})${note ? ` · Carte : « ${note} »` : ''}`,
+      name: t('Coffret composé {size} {weight} ({names})', { size: t(s.label), weight: s.weight, names }) + (note ? t(' · Carte : « {note} »', { note }) : ''),
       price,
       img: PATCHI_IMG,
       boxed: true,
@@ -44,14 +46,14 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
     <section ref={ref} id="coffret" className="scroll-mt-16 px-gutter py-[clamp(80px,10vw,140px)]">
       <div className="flex flex-wrap gap-[clamp(32px,5vw,80px)]">
         <div className="min-w-0 flex-[999_1_560px]">
-          <Reveal as="p" className="caps text-cacao/80">Sur mesure</Reveal>
+          <Reveal as="p" className="caps text-cacao/80">{t('Sur mesure')}</Reveal>
           <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(34px,4.4vw,60px)] font-light leading-[1.1]">
-            Un coffret se <span className="accent text-[1.06em]">compose,</span>
+            {t('Un coffret se')} <span className="accent text-[1.06em]">{t('compose,')}</span>
           </Reveal>
-          <Reveal as="p" delay={0.2} className="text-[clamp(34px,4.4vw,60px)] font-light leading-[1.1]">comme un bouquet.</Reveal>
+          <Reveal as="p" delay={0.2} className="text-[clamp(34px,4.4vw,60px)] font-light leading-[1.1]">{t('comme un bouquet.')}</Reveal>
 
           <FadeUp>
-            <p className="caps mb-3.5 mt-12">1 · La taille</p>
+            <p className="caps mb-3.5 mt-12">{t('1 · La taille')}</p>
             <div className="grid grid-cols-3 gap-3">
               {sizes.map((z, i) => (
                 <button
@@ -62,7 +64,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
                   className={`relative flex flex-col gap-1.5 border p-5 text-left transition-colors duration-300 ${i === size ? 'border-forest-deep text-paper' : 'border-forest/25 hover:border-forest'}`}
                 >
                   {i === size && <motion.span layoutId="box-size" className="absolute inset-[-1px] bg-forest-deep" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}
-                  <span className="accent relative text-[26px] leading-none">{z.label}</span>
+                  <span className="accent relative text-[26px] leading-none">{t(z.label)}</span>
                   <span className="relative text-[12px] opacity-75">{z.weight}</span>
                 </button>
               ))}
@@ -70,7 +72,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
           </FadeUp>
 
           <FadeUp delay={0.1}>
-            <p className="caps mb-3.5 mt-9">2 · Les pralines</p>
+            <p className="caps mb-3.5 mt-9">{t('2 · Les pralines')}</p>
             <div className="flex flex-wrap gap-2">
               {flavors.map((f) => {
                 const on = picked.includes(f.id)
@@ -84,7 +86,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
                     className={`flex items-center gap-2.5 rounded-full border py-2 pl-2 pr-4 text-[13px] transition-colors duration-300 ${on ? 'border-forest-deep bg-forest-deep text-paper' : 'border-forest/30 hover:border-forest'}`}
                   >
                     <Praline choco={f.choco} className="size-6" />
-                    {f.name}
+                    {t(f.name)}
                   </motion.button>
                 )
               })}
@@ -92,15 +94,15 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="caps mb-3.5 mt-9">3 · Le mot pour la carte</p>
-            <label htmlFor="mot-carte" className="mb-2 block text-[12px] opacity-75">Facultatif, glissé dans le coffret</label>
+            <p className="caps mb-3.5 mt-9">{t('3 · Le mot pour la carte')}</p>
+            <label htmlFor="mot-carte" className="mb-2 block text-[12px] opacity-75">{t('Facultatif, glissé dans le coffret')}</label>
             <input
               id="mot-carte"
               type="text"
               value={note}
               maxLength={120}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Joyeux anniversaire, maman…"
+              placeholder={t('Joyeux anniversaire, maman…')}
               className="w-full border border-forest/30 bg-transparent px-4 py-4 text-[14px] outline-none transition-colors focus:border-forest"
             />
           </FadeUp>
@@ -108,7 +110,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
 
         {/* Récapitulatif, avec le coffret qui se remplit */}
         <FadeUp as="aside" className="flex flex-[1_1_320px] flex-col gap-4 self-start bg-forest-deep p-8 text-paper">
-          <p className="caps text-gold">Votre coffret</p>
+          <p className="caps text-gold">{t('Votre coffret')}</p>
           <div className="rounded-xl bg-green p-[5%]">
             <motion.div layout className={`grid gap-1.5 rounded-lg bg-paper p-2.5 ${s.slots > 12 ? 'grid-cols-5' : s.slots > 6 ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <AnimatePresence mode="popLayout">
@@ -130,11 +132,11 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
               </AnimatePresence>
             </motion.div>
           </div>
-          <div className="flex justify-between text-[14px]"><span>Taille</span><span>{s.label} · {s.weight}</span></div>
-          <div className="flex justify-between gap-4 text-[14px]"><span>Pralines</span><span className="text-right">{names}</span></div>
+          <div className="flex justify-between text-[14px]"><span>{t('Taille')}</span><span>{t(s.label)} · {s.weight}</span></div>
+          <div className="flex justify-between gap-4 text-[14px]"><span>{t('Pralines')}</span><span className="text-right">{names}</span></div>
           <span className="h-px bg-paper/20" />
           <div className="flex items-baseline justify-between">
-            <span className="text-[14px]">Total</span>
+            <span className="text-[14px]">{t('Total')}</span>
             <span className="flex overflow-hidden text-[34px] font-light">
               $
               <AnimatePresence mode="popLayout" initial={false}>
@@ -143,10 +145,10 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
             </span>
           </div>
           <motion.button type="button" onClick={add} whileTap={{ scale: 0.97 }} className="caps bg-gold py-4 text-forest-deep">
-            {added ? 'Ajouté au panier ✓' : 'Ajouter le coffret'}
+            {added ? t('Ajouté au panier ✓') : t('Ajouter le coffret')}
           </motion.button>
           <a href={whatsapp} target="_blank" rel="noreferrer" className="text-center text-[12px] underline underline-offset-4">
-            ou le composer avec notre concierge sur WhatsApp
+            {t('ou le composer avec notre concierge sur WhatsApp')}
           </a>
         </FadeUp>
       </div>

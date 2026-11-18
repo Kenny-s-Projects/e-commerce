@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import GiftTile from '../../components/GiftTile/GiftTile.jsx'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -9,6 +10,7 @@ const ease = [0.22, 1, 0.36, 1]
  *  gifts : { title, text, items } (voir data/home.js)
  */
 export default function Gifts({ gifts }) {
+  const t = useT()
   return (
     <section className="bg-white px-gutter pb-[clamp(80px,10vw,140px)] text-ink">
       {/* Filet de séparation avec la Sélection */}
@@ -23,7 +25,7 @@ export default function Gifts({ gifts }) {
           viewport={{ once: true, amount: 0.8 }}
           transition={{ duration: 0.8, delay: 0.2, ease }}
         >
-          {gifts.text}
+          {t(gifts.text)}
         </motion.p>
       </div>
 

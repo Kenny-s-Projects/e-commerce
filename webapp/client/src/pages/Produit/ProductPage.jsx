@@ -7,6 +7,7 @@ import { PRODUCT_THEMES } from '../../components/Purchase/theme.js'
 import usePurchase from '../../hooks/usePurchase.js'
 import { getProduct, productGallery, relatedProducts } from '../../data/products.js'
 import { formatPrice } from '../../data/houses.js'
+import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -22,7 +23,8 @@ const SERVICES = [
  * panier, WhatsApp, services, accordéons) · bande éditoriale Patchi · « Vous aimerez aussi »
  * · barre d'achat collée en bas de l'écran sur mobile.
  */
-export default function ProductPage({ id, onAdd }) {
+export default function ProductPage({ id, onAdd, onBuyNow }) {
+  const t = useT()
   const product = getProduct(id)
   const theme = PRODUCT_THEMES[product.maison]
   const buy = usePurchase(product, onAdd)
@@ -30,31 +32,31 @@ export default function ProductPage({ id, onAdd }) {
   const related = relatedProducts(product)
   const isPatchi = product.maison === 'patchi'
 
-  const description = [product.desc, product.ref && `Réf. ${product.ref}`, product.store && `Collection ${product.store}`].filter(Boolean).join(' · ')
+  const description = [t(product.desc), product.ref && `${t('Réf.')} ${product.ref}`, product.store && `${t('Collection')} ${t(product.store)}`].filter(Boolean).join(' · ')
   const panels = [
     {
-      title: 'Description',
+      title: t('Description'),
       content: isPatchi
-        ? `${description}. ${product.unit === 'kg' ? 'Vendu au poids : 250 g, 500 g ou 1 kg. Prix de référence : 96 $ le kg.' : ''} [Notes de dégustation à fournir par Patchi]`
-        : description || '[Description à fournir]',
+        ? `${description}. ${product.unit === 'kg' ? t('Vendu au poids : 250 g, 500 g ou 1 kg. Prix de référence : 96 $ le kg.') : ''} ${t('[Notes de dégustation à fournir par Patchi]')}`
+        : description || t('[Description à fournir]'),
     },
     ...(isPatchi
       ? [
-          { title: 'Ingrédients et allergènes', content: '[Liste des ingrédients et allergènes à fournir par Patchi]' },
-          { title: 'Conservation', content: '[Conseils de conservation à fournir par Patchi]' },
+          { title: t('Ingrédients et allergènes'), content: t('[Liste des ingrédients et allergènes à fournir par Patchi]') },
+          { title: t('Conservation'), content: t('[Conseils de conservation à fournir par Patchi]') },
         ]
       : []),
-    { title: 'Livraison et retrait', content: 'Livraison à Gombe le jour même, à moto, 4 $. Retrait en boutique gratuit, dès 9h00. Paiement par mobile money, carte ou à la livraison.' },
+    { title: t('Livraison et retrait'), content: t('Livraison à Gombe le jour même, à moto, 4 $. Retrait en boutique gratuit, dès 9h00. Paiement par mobile money, carte ou à la livraison.') },
   ]
 
-  const addLabel = !buy.available ? 'Prix à venir' : buy.added ? 'Ajouté au panier ✓' : `Ajouter au panier · ${formatPrice(buy.total)}`
+  const addLabel = !buy.available ? t('Prix à venir') : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter au panier')} · ${formatPrice(buy.total)}`
 
   return (
     <div className="bg-white text-ink [--card:#ffffff] [--fg:var(--color-ink)]">
       {/* Fil d'Ariane */}
-      <nav aria-label="Fil d’Ariane" className="px-gutter pt-6 text-[12px] text-ink/60">
+      <nav aria-label={t('Fil d’Ariane')} className="px-gutter pt-6 text-[12px] text-ink/60">
         <a href={`#maison/${product.maison}`} className="hover:text-ink">{product.house.name}</a>
-        {product.store && <> / <span>{product.store}</span></>} / <span className="text-ink">{product.name}</span>
+        {product.store && <> / <span>{t(product.store)}</span></>} / <span className="text-ink">{t(product.name)}</span>
       </nav>
 
       {/* ============ Galerie + achat ============ */}
@@ -72,16 +74,16 @@ export default function ProductPage({ id, onAdd }) {
           <div>
             <p className={`caps ${theme.eyebrow}`}>
               {product.house.name}
-              {product.store ? ` · ${product.store}` : ''}
-              {product.ref ? ` · Réf. ${product.ref}` : ''}
+              {product.store ? ` · ${t(product.store)}` : ''}
+              {product.ref ? ` · ${t('Réf.')} ${product.ref}` : ''}
             </p>
-            <h1 className="mt-3 text-[clamp(32px,3.4vw,46px)] font-light leading-[1.08] tracking-[-0.015em]">{product.name}</h1>
-            {product.desc && <p className="mt-3 text-[15px] leading-[1.7] text-ink/75">{product.desc}</p>}
+            <h1 className="mt-3 text-[clamp(32px,3.4vw,46px)] font-light leading-[1.08] tracking-[-0.015em]">{t(product.name)}</h1>
+            {product.desc && <p className="mt-3 text-[15px] leading-[1.7] text-ink/75">{t(product.desc)}</p>}
           </div>
 
           <div className="flex items-baseline gap-3">
             <span className="text-[34px] font-light">{buy.available ? formatPrice(buy.unitPrice) : '[Prix]'}</span>
-            {buy.byWeight && <span className="text-[12px] text-ink/60">pour {buy.weights[buy.weight].label} · soit 96 $ le kg</span>}
+            {buy.byWeight && <span className="text-[12px] text-ink/60">{t('pour {w} · soit 96 $ le kg', { w: buy.weights[buy.weight].label })}</span>}
           </div>
 
           {buy.byWeight && <WeightPicker weights={buy.weights} value={buy.weight} onChange={buy.setWeight} pricePerKg={product.price} solid={theme.solid} />}
@@ -92,20 +94,20 @@ export default function ProductPage({ id, onAdd }) {
               <label className="flex cursor-pointer items-start gap-3">
                 <input type="checkbox" checked={buy.gift} onChange={(e) => buy.setGift(e.target.checked)} className="mt-1 accent-current" />
                 <span>
-                  <span className="block text-[14px]">C’est pour offrir</span>
-                  <span className="block text-[12px] text-ink/65">Un mot glissé dans la boîte · emballage cadeau [à confirmer]</span>
+                  <span className="block text-[14px]">{t('C’est pour offrir')}</span>
+                  <span className="block text-[12px] text-ink/65">{t('Un mot glissé dans la boîte · emballage cadeau [à confirmer]')}</span>
                 </span>
               </label>
               {buy.gift && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.4, ease }} className="overflow-hidden">
-                  <label htmlFor="mot-produit" className="mb-2 mt-4 block text-[12px]">Votre mot (120 caractères)</label>
+                  <label htmlFor="mot-produit" className="mb-2 mt-4 block text-[12px]">{t('Votre mot (120 caractères)')}</label>
                   <input
                     id="mot-produit"
                     type="text"
                     maxLength={120}
                     value={buy.note}
                     onChange={(e) => buy.setNote(e.target.value)}
-                    placeholder="Joyeux anniversaire…"
+                    placeholder={t('Joyeux anniversaire…')}
                     className="w-full rounded-lg border border-ink/25 bg-white px-4 py-3 text-[14px] outline-none focus:border-ink"
                   />
                 </motion.div>
@@ -126,23 +128,29 @@ export default function ProductPage({ id, onAdd }) {
               {addLabel}
             </motion.button>
           </div>
-          <a href={buy.whatsapp} target="_blank" rel="noreferrer" className="flex h-[52px] items-center justify-center rounded-full border border-ink text-[14px] transition-colors hover:bg-ink hover:text-white">
-            Commander avec le concierge WhatsApp
-          </a>
+          {/* Commander maintenant : cet article seul, directement vers la page de commande */}
+          <button
+            type="button"
+            onClick={() => buy.buyNow(onBuyNow)}
+            disabled={!buy.available}
+            className="flex h-[52px] items-center justify-center rounded-full border border-ink text-[14px] transition-colors hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t('Commander maintenant')}
+          </button>
 
           {/* Services */}
           <div className="grid grid-cols-3 gap-2.5">
             {SERVICES.map((s) => (
               <div key={s.kicker} className="rounded-xl border border-ink/10 p-3.5">
-                <p className="caps text-[9px] text-gold">{s.kicker}</p>
-                <p className="mt-1.5 text-[12px] leading-snug">{s.text}</p>
+                <p className="caps text-[9px] text-gold">{t(s.kicker)}</p>
+                <p className="mt-1.5 text-[12px] leading-snug">{t(s.text)}</p>
               </div>
             ))}
           </div>
           {product.stock != null && (
             <p className="flex items-center gap-2 text-[12px]">
               <span className="size-[7px] rounded-full bg-[#3f8a4f]" />
-              {product.stock} {product.unit === 'kg' ? 'kg ' : ''}en stock à Gombe
+              {t('{n} en stock à Gombe', { n: `${product.stock}${product.unit === 'kg' ? ' kg' : ''}` })}
             </p>
           )}
 
@@ -163,12 +171,12 @@ export default function ProductPage({ id, onAdd }) {
             />
           </motion.div>
           <div className="flex flex-col justify-center px-[clamp(32px,5vw,80px)] py-[clamp(48px,6vw,96px)]">
-            <Reveal as="p" className="caps text-gold">Le geste Patchi</Reveal>
+            <Reveal as="p" className="caps text-gold">{t('Le geste Patchi')}</Reveal>
             <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(30px,3.4vw,46px)] font-light leading-[1.12]">
-              Une praline se choisit <span className="accent">une à une</span>, puis se compose.
+              {t('Une praline se choisit')} <span className="accent">{t('une à une')}</span>{t(', puis se compose.')}
             </Reveal>
-            <p className="mt-5 max-w-[420px] text-[14px] leading-[1.75] text-paper/80">Mélangez les pralines Patchi pour composer un coffret sur mesure, du petit au grand format.</p>
-            <a href="#maison/patchi" className="caps mt-7 self-start border-b border-gold pb-1.5">Composer un coffret ⟶</a>
+            <p className="mt-5 max-w-[420px] text-[14px] leading-[1.75] text-paper/80">{t('Mélangez les pralines Patchi pour composer un coffret sur mesure, du petit au grand format.')}</p>
+            <a href="#maison/patchi" className="caps mt-7 self-start border-b border-gold pb-1.5">{t('Composer un coffret')} ⟶</a>
           </div>
         </section>
       )}
@@ -178,9 +186,9 @@ export default function ProductPage({ id, onAdd }) {
         <section className={`px-gutter py-[clamp(72px,8vw,120px)] ${theme.tone} [--card:#ffffff]`}>
           <div className="flex flex-wrap items-end justify-between gap-5">
             <Reveal as="h2" className="text-[clamp(32px,4vw,56px)] font-light">
-              Vous aimerez <span className="accent">aussi</span>
+              {t('Vous aimerez')} <span className="accent">{t('aussi')}</span>
             </Reveal>
-            <a href={`#maison/${product.maison}`} className="caps border-b border-current pb-1">Toute la Maison {product.house.name}</a>
+            <a href={`#maison/${product.maison}`} className="caps border-b border-current pb-1">{t('Toute la Maison {m}', { m: product.house.name })}</a>
           </div>
           <div className="mt-10 grid grid-cols-4 gap-6 max-[1000px]:grid-cols-2">
             {related.map((p, i) => (
@@ -198,11 +206,11 @@ export default function ProductPage({ id, onAdd }) {
           <p className="text-[20px] font-light leading-none">{buy.available ? formatPrice(buy.total) : '[Prix]'}</p>
           {buy.byWeight && <p className="mt-1 text-[11px] text-ink/60">{buy.weights[buy.weight].label}</p>}
         </div>
-        <a href={buy.whatsapp} target="_blank" rel="noreferrer" aria-label="Commander sur WhatsApp" className="grid size-12 shrink-0 place-items-center rounded-full border border-ink text-[11px]">
-          WA
-        </a>
-        <button type="button" onClick={buy.add} disabled={!buy.available} className={`h-12 flex-1 rounded-full text-[14px] disabled:opacity-50 ${theme.solid}`}>
-          {!buy.available ? 'Prix à venir' : buy.added ? 'Ajouté ✓' : 'Ajouter au panier'}
+        <button type="button" onClick={buy.add} disabled={!buy.available} aria-label={t('Ajouter au panier')} className="grid h-12 shrink-0 place-items-center rounded-full border border-ink px-4 text-[13px] disabled:opacity-40">
+          {buy.added ? '✓' : t('+ Panier')}
+        </button>
+        <button type="button" onClick={() => buy.buyNow(onBuyNow)} disabled={!buy.available} className={`h-12 flex-1 rounded-full text-[14px] disabled:opacity-50 ${theme.solid}`}>
+          {!buy.available ? t('Prix à venir') : t('Commander maintenant')}
         </button>
       </div>
       <div className="h-24 md:hidden" aria-hidden />
