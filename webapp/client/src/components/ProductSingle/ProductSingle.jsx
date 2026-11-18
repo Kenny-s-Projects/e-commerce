@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
+import { getProduct, productHref } from '../../data/products.js'
+import { useQuickView } from '../../context/quickView.js'
 
 /**
  * Carte produit : Image + Store + Name + Price + CTA.
@@ -10,10 +12,17 @@ import { formatPrice, productImages } from '../../data/houses.js'
  *
  * Image : changement au survol (ordinateur), défilement au doigt + barre (mobile) → voir ProductMedia.
  * Les couleurs suivent la section : fond de carte = var(--card), texte = var(--fg).
+ * Un clic sur l'image ouvre la fiche produit (#produit/<id>) ; « Aperçu » ouvre la popup d'aperçu rapide.
+ *  href : lien de repli pour les produits sans fiche (produits fictifs de l'accueil)
  */
 export default function ProductSingle({ product, onAdd, href = '#' }) {
   const available = product.price != null
   const [added, setAdded] = useState(false)
+  const openQuickView = useQuickView()
+  // Version complète du produit (Maison, vraies photos Patchi) quand il a une fiche
+  const full = getProduct(product.id)
+  const images = full?.images ?? productImages(product)
+  const fit = full?.images ? 'bleed' : product.boxed ? 'boxed' : 'contain'
 
   const handleAdd = () => {
     onAdd?.(product)
@@ -23,14 +32,26 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
 
   return (
     <article className="group flex flex-col">
-      {/* Image */}
-      <ProductMedia
-        images={productImages(product)}
-        fit={product.boxed ? 'boxed' : 'contain'}
-        alt={product.name}
-        href={href}
-        className="mb-[18px] aspect-[4/5] bg-(--card)"
-      />
+      {/* Image + bouton Aperçu (apparaît au survol sur ordinateur) */}
+      <div className="relative mb-[18px]">
+        <ProductMedia
+          images={images}
+          fit={fit}
+          alt={product.name}
+          href={productHref(product.id) ?? href}
+          className="aspect-[4/5] bg-(--card)"
+        />
+        {full && (
+          <button
+            type="button"
+            onClick={() => openQuickView(full)}
+            className="caps absolute right-3 top-3 rounded-full bg-white/90 px-3.5 py-2 text-[9px] text-ink shadow-sm transition-all duration-500 ease-lux hover:bg-ink hover:text-white
+              [@media(hover:hover)]:-translate-y-1 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:none)]:hidden"
+          >
+            Aperçu
+          </button>
+        )}
+      </div>
 
       {/* Store + Name */}
       <p className="caps text-[9px] opacity-60">{product.store}</p>

@@ -1,11 +1,33 @@
 import { useEffect, useState } from 'react'
 import { MAISON_PAGES } from '../data/houses.js'
+import { getProduct } from '../data/products.js'
+import { offrir, aide } from '../data/pages.js'
 
-// Lit l'adresse après le # : « maison/kyra » → page Maison, sinon accueil (avec une ancre éventuelle)
+/*
+ * Lit l'adresse après le # :
+ *   maison/kyra        → page Maison
+ *   produit/ccd01      → fiche produit
+ *   offrir/pour-elle   → page Offrir, onglet choisi (offrir seul → 1er onglet)
+ *   notre-histoire     → page Notre histoire
+ *   aide/paiement      → page Aide, rubrique choisie (aide seul → Livraison ; contact → rubrique Contact)
+ *   sinon              → accueil, avec une ancre éventuelle (#patchi…)
+ */
 const parse = () => {
   const hash = decodeURIComponent(window.location.hash.slice(1))
-  const m = hash.match(/^maison\/([a-z]+)$/)
-  if (m && MAISON_PAGES.includes(m[1])) return { page: 'maison', id: m[1], anchor: '' }
+  const [head, sub] = hash.split('/')
+
+  if (head === 'maison' && MAISON_PAGES.includes(sub)) return { page: 'maison', id: sub, anchor: '' }
+  if (head === 'produit' && getProduct(sub)) return { page: 'produit', id: sub, anchor: '' }
+  if (head === 'offrir') {
+    const tab = offrir.tabs.find((t) => t.id === sub) ?? offrir.tabs[0]
+    return { page: 'offrir', id: tab.id, anchor: '' }
+  }
+  if (head === 'notre-histoire') return { page: 'histoire', id: '', anchor: '' }
+  if (head === 'aide' || head === 'contact') {
+    const id = head === 'contact' ? 'contact' : sub
+    const section = aide.sections.find((s) => s.id === id) ?? aide.sections[0]
+    return { page: 'aide', id: section.id, anchor: '' }
+  }
   return { page: 'home', id: '', anchor: hash }
 }
 
@@ -18,4 +40,13 @@ export default function useHashRoute() {
     return () => window.removeEventListener('hashchange', onChange)
   }, [])
   return route
+}
+
+/*
+ * Clé de page : une nouvelle clé = nouvelle page (fondu + retour en haut).
+ * Changer d'onglet (Offrir) ou de rubrique (Aide) garde la même page.
+ */
+export const pageKeyOf = (route) => {
+  if (route.page === 'maison' || route.page === 'produit') return `${route.page}-${route.id}`
+  return route.page
 }

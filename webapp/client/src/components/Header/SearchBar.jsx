@@ -6,12 +6,12 @@ import SearchIcon from '../icons/SearchIcon.jsx'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Tous les produits, avec leur Maison et le lien vers sa page
+// Tous les produits, avec leur Maison et le lien vers leur fiche produit
 const INDEX = [
-  ...kyraCatalog.map((p) => ({ ...p, maison: 'Kyra', href: '#maison/kyra' })),
-  ...patchiCatalog.map((p) => ({ ...p, maison: 'Patchi', href: '#maison/patchi' })),
-  ...adidasCatalog.map((p) => ({ ...p, maison: 'adidas', href: '#maison/adidas' })),
-  ...celioCatalog.map((p) => ({ ...p, maison: 'Celio', href: '#maison/celio' })),
+  ...kyraCatalog.map((p) => ({ ...p, maison: 'Kyra', href: `#produit/${p.id}` })),
+  ...patchiCatalog.map((p) => ({ ...p, maison: 'Patchi', href: `#produit/${p.id}` })),
+  ...adidasCatalog.map((p) => ({ ...p, maison: 'adidas', href: `#produit/${p.id}` })),
+  ...celioCatalog.map((p) => ({ ...p, maison: 'Celio', href: `#produit/${p.id}` })),
 ]
 
 // Minuscules et sans accents : « hermes » trouve « Hermès »

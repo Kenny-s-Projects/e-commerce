@@ -1,4 +1,5 @@
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
+import { productHref } from '../../data/products.js'
 import { formatPrice, productImages, maisonHref } from '../../data/houses.js'
 
 /**
@@ -17,7 +18,7 @@ export default function SelectionCard({ product, tone = 'bg-cream' }) {
         images={productImages(product)}
         fit={product.boxed ? 'bleed' : 'contain'}
         alt={product.name}
-        href={maisonHref(house.id)}
+        href={productHref(product.id) ?? maisonHref(house.id)}
         className={`mb-5 aspect-[4/5] ${tone}`}
         swipe={false}
       />

@@ -16,11 +16,17 @@ import Maison from './pages/Maison/Maison.jsx'
 import PatchiPage from './pages/Patchi/PatchiPage.jsx'
 import AdidasPage from './pages/Adidas/AdidasPage.jsx'
 import CelioPage from './pages/Celio/CelioPage.jsx'
+import ProductPage from './pages/Produit/ProductPage.jsx'
+import OffrirPage from './pages/Offrir/OffrirPage.jsx'
+import HistoirePage from './pages/Histoire/HistoirePage.jsx'
+import AidePage from './pages/Aide/AidePage.jsx'
+import QuickViewModal from './components/QuickView/QuickViewModal.jsx'
+import { QuickViewContext } from './context/quickView.js'
 import { houses } from './data/houses.js'
 import { maisons } from './data/maisons.js'
 import { selection, gifts, services, contact, footer, about, concierge } from './data/home.js'
 import { hasSeenIntro } from './utils/intro.js'
-import useHashRoute from './hooks/useHashRoute.js'
+import useHashRoute, { pageKeyOf } from './hooks/useHashRoute.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -28,7 +34,11 @@ export default function App() {
   // Préchargeur une seule fois par session
   const [ready, setReady] = useState(hasSeenIntro)
   const route = useHashRoute()
-  const pageKey = route.page === 'maison' ? `maison-${route.id}` : 'home'
+  const pageKey = pageKeyOf(route)
+
+  // Aperçu rapide : produit affiché dans la popup (null = fermée)
+  const [quickProduct, setQuickProduct] = useState(null)
+  const closeQuickView = useCallback(() => setQuickProduct(null), [])
 
   // Panier : [{ product, qty }]
   const [cart, setCart] = useState([])
@@ -70,7 +80,7 @@ export default function App() {
   }, [])
 
   return (
-    <>
+    <QuickViewContext.Provider value={setQuickProduct}>
       <AnimatePresence>
         {!ready && <Loader key="loader" onComplete={() => setReady(true)} />}
       </AnimatePresence>
@@ -89,6 +99,14 @@ export default function App() {
         >
           {route.page === 'maison' ? (
             <MaisonPage id={route.id} onAdd={addToCart} />
+          ) : route.page === 'produit' ? (
+            <ProductPage id={route.id} onAdd={addToCart} />
+          ) : route.page === 'offrir' ? (
+            <OffrirPage tab={route.id} onAdd={addToCart} />
+          ) : route.page === 'histoire' ? (
+            <HistoirePage />
+          ) : route.page === 'aide' ? (
+            <AidePage section={route.id} />
           ) : (
             <>
               <Hero houses={houses} ready={ready} />
@@ -110,7 +128,8 @@ export default function App() {
 
       <Footer footer={footer} contact={contact} />
       <CartDrawer open={cartOpen} items={cart} onQty={setQty} onClose={closeCart} />
-    </>
+      <QuickViewModal product={quickProduct} onClose={closeQuickView} onAdd={addToCart} />
+    </QuickViewContext.Provider>
   )
 }
 
