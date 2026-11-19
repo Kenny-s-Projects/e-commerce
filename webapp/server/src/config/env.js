@@ -1,4 +1,10 @@
+import { existsSync } from 'node:fs'
 import { z } from 'zod'
+
+// Charge webapp/server/.env s'il existe (npm start comme npm run dev).
+// Sur Railway / Render, les variables viennent de la plateforme : pas de fichier .env.
+const envFile = new URL('../../.env', import.meta.url)
+if (existsSync(envFile)) process.loadEnvFile(envFile)
 
 // Toutes les variables d'environnement sont vérifiées au démarrage :
 // si une valeur manque, le serveur s'arrête tout de suite avec un message clair.
@@ -18,6 +24,7 @@ const schema = z.object({
 const parsed = schema.safeParse(process.env)
 if (!parsed.success) {
   console.error('Configuration invalide :')
+  if (!existsSync(envFile)) console.error('  (aucun fichier .env trouvé : copiez .env.example en .env dans webapp/server et remplissez-le)')
   for (const issue of parsed.error.issues) console.error(`  - ${issue.path.join('.')} : ${issue.message}`)
   process.exit(1)
 }
