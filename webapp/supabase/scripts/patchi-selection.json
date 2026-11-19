@@ -1,0 +1,33 @@
+{
+  "_source": "ERP_Product_Master_Patchi_October_2026.xlsx — 28 produits sélectionnés. Prix de vente (USD) et stock reçus du fichier ; noms FR/EN rédigés pour le site.",
+  "products": [
+    { "code": "GSB0010", "erp": "SMALL BOX FILLED 100 GR CHOCOLATE OUNCE", "category": "smallboxes", "unit": "piece", "price": 17.83, "stock": 37, "size": "100 g", "fr": "Petite boîte garnie Ounce, 100 g", "en": "Small filled box Ounce, 100 g" },
+    { "code": "GSB0013", "erp": "GREEN BOX FILLED 200 GR CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 36.09, "stock": 37, "size": "200 g", "fr": "Boîte verte garnie, 200 g", "en": "Green filled box, 200 g" },
+    { "code": "GSB0014", "erp": "SMALL BOX FILLED 135 GR CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 25.22, "stock": 31, "size": "135 g", "fr": "Petite boîte garnie, 135 g", "en": "Small filled box, 135 g" },
+    { "code": "CCN30", "erp": "CHOCOLATE WAFER PATCHI GOLD", "category": "classic", "unit": "kg", "price": 96.09, "stock": 21.5, "fr": "Gaufrette Patchi Gold", "en": "Patchi Gold wafer" },
+    { "code": "CCD04", "erp": "CHOCOLATE WAFER MILK SQUARE", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 16, "fr": "Gaufrette carrée au lait", "en": "Milk square wafer" },
+    { "code": "CCD05", "erp": "PRESTIGE - CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 15, "fr": "Prestige", "en": "Prestige" },
+    { "code": "CCD44", "erp": "CROQ ALMOND - CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 105.22, "stock": 15, "fr": "Croq’ Amande", "en": "Croq Almond" },
+    { "code": "CCD45", "erp": "CROQ HAZELNUT - CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 105.22, "stock": 15, "fr": "Croq’ Noisette", "en": "Croq Hazelnut" },
+    { "code": "CCD46", "erp": "CHOCOLATE CROQ PISTACHIO + RAISIN - BRONZE", "category": "deluxe", "unit": "kg", "price": 105.22, "stock": 15, "fr": "Croq’ Pistache et raisin, bronze", "en": "Croq Pistachio and raisin, bronze" },
+    { "code": "CCD153", "erp": "CHOCOLATE ECLAT", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 14, "fr": "Éclat", "en": "Eclat" },
+    { "code": "GGF0016", "erp": "ORANGE BOX FILLED 465 GR CHOCOLATE", "category": "giftboxes", "unit": "piece", "price": 77.83, "stock": 12, "size": "465 g", "fr": "Coffret orange garni, 465 g", "en": "Orange filled gift box, 465 g" },
+    { "code": "GGF0017", "erp": "BRICK BOX FILLED 470 GR CHOCOLATE", "category": "giftboxes", "unit": "piece", "price": 76.52, "stock": 12, "size": "470 g", "fr": "Coffret brique garni, 470 g", "en": "Brick filled gift box, 470 g" },
+    { "code": "GGF0018", "erp": "BOX FILLED 445 GR CHOCOLATE", "category": "giftboxes", "unit": "piece", "price": 75.22, "stock": 12, "size": "445 g", "fr": "Coffret garni, 445 g", "en": "Filled gift box, 445 g" },
+    { "code": "GSB0004", "erp": "ORANGE BOX FILLED 195 GR CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 38.7, "stock": 12, "size": "195 g", "fr": "Boîte orange garnie, 195 g", "en": "Orange filled box, 195 g" },
+    { "code": "GSB0005", "erp": "BOX FILLED 205GRS CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 37.83, "stock": 12, "size": "205 g", "fr": "Boîte garnie, 205 g", "en": "Filled box, 205 g" },
+    { "code": "GSB0011", "erp": "LARGE BOX FILLED 250 GR CHOCOLATE OUNCE", "category": "smallboxes", "unit": "piece", "price": 38.26, "stock": 12, "size": "250 g", "fr": "Grande boîte garnie Ounce, 250 g", "en": "Large filled box Ounce, 250 g" },
+    { "code": "GSB0012", "erp": "SMALL GREEN BOX FILLED 315 GR CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 54.35, "stock": 12, "size": "315 g", "fr": "Boîte verte garnie, 315 g", "en": "Green filled box, 315 g" },
+    { "code": "GSB0015", "erp": "BOX FILLED WITH 160 GRS CHOCOLATE", "category": "smallboxes", "unit": "piece", "price": 33.48, "stock": 12, "size": "160 g", "fr": "Boîte garnie, 160 g", "en": "Filled box, 160 g" },
+    { "code": "CCD03", "erp": "CAPRICIO - CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Capricio", "en": "Capricio" },
+    { "code": "CCD11", "erp": "PARFAIT - CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Parfait", "en": "Parfait" },
+    { "code": "CCD13", "erp": "AMANDINE CHOCOLATE", "category": "deluxe", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Amandine", "en": "Amandine" },
+    { "code": "CCF03", "erp": "NO ADDED SUGAR MILK CHOCO. W/NUTS", "category": "sansucre", "unit": "kg", "price": 114.35, "stock": 10, "fr": "Lait aux fruits secs, sans sucre ajouté", "en": "Milk chocolate with nuts, no added sugar" },
+    { "code": "CCF04", "erp": "NO ADDED SUGAR BITTER CHOCO. W/ALMOND", "category": "sansucre", "unit": "kg", "price": 114.35, "stock": 10, "fr": "Noir aux amandes, sans sucre ajouté", "en": "Dark chocolate with almonds, no added sugar" },
+    { "code": "CCN01", "erp": "FINESSE - CHOCOLATE", "category": "classic", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Finesse", "en": "Finesse" },
+    { "code": "CCN02", "erp": "NOBLESSE - CHOCOLATE", "category": "classic", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Noblesse", "en": "Noblesse" },
+    { "code": "CCN03", "erp": "AUDACE - CHOCOLATE", "category": "classic", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Audace", "en": "Audace" },
+    { "code": "CCN04", "erp": "DIAMANTINE - CHOCOLATE", "category": "classic", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Diamantine", "en": "Diamantine" },
+    { "code": "CCN19", "erp": "CROQUET - CHOCOLATE", "category": "classic", "unit": "kg", "price": 96.09, "stock": 10, "fr": "Croquet", "en": "Croquet" }
+  ]
+}
