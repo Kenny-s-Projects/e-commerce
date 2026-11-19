@@ -1,6 +1,7 @@
 // Index de tous les produits des 4 Maisons, pour la fiche produit, l'aperçu rapide,
 // la recherche et la page Offrir. Les catalogues restent dans catalog.js.
 import { kyraCatalog, patchiCatalog, adidasCatalog, celioCatalog } from './catalog.js'
+import { isLiveBrand, liveProduct, liveState } from './live.js'
 
 export const MAISONS = {
   kyra: { id: 'kyra', name: 'Kyra' },
@@ -48,17 +49,30 @@ export const allProducts = [
 
 const byId = new Map(allProducts.map((p) => [p.id, p]))
 
-export const getProduct = (id) => byId.get(id) ?? null
+/**
+ * Produit par identifiant : le catalogue réel (API) d'abord, puis les fiches du site.
+ * Les anciens produits de démonstration d'une Maison servie par l'API (Patchi) ne sont plus proposés.
+ */
+export const getProduct = (id) => {
+  const live = liveProduct(id)
+  if (live) return live
+  const local = byId.get(id) ?? null
+  if (local && isLiveBrand(local.maison) && liveState().status === 'ready') return null
+  return local
+}
+
+/** Tous les produits : catalogue réel + fiches du site des Maisons « bientôt disponibles » */
+export const catalogProducts = () => [...liveState().products, ...allProducts.filter((p) => !isLiveBrand(p.maison))]
 
 // Lien vers la fiche produit (null si le produit n'a pas de fiche, ex. produits fictifs de l'accueil)
-export const productHref = (id) => (byId.has(id) ? `#produit/${id}` : null)
+export const productHref = (id) => (getProduct(id) ? `#produit/${id}` : null)
 
 // Toutes les photos d'un produit
 export const productGallery = (p) => p.images ?? (p.img ? [p.img] : [])
 
 // 4 produits de la même Maison, la même collection d'abord
 export const relatedProducts = (p, n = 4) => {
-  const same = allProducts.filter((x) => x.maison === p.maison && x.id !== p.id)
+  const same = catalogProducts().filter((x) => x.maison === p.maison && x.id !== p.id)
   const key = p.cat ?? p.brand
   const first = same.filter((x) => (x.cat ?? x.brand) === key)
   const rest = same.filter((x) => (x.cat ?? x.brand) !== key)

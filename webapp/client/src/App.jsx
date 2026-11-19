@@ -33,6 +33,7 @@ import { houses } from './data/houses.js'
 import { maisons } from './data/maisons.js'
 import { selection, gifts, services, contact, footer, about, concierge } from './data/home.js'
 import { hasSeenIntro } from './utils/intro.js'
+import { useLive } from './data/live.js'
 import useHashRoute, { pageKeyOf } from './hooks/useHashRoute.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -58,18 +59,23 @@ export default function App() {
   const [quickProduct, setQuickProduct] = useState(null)
   const closeQuickView = useCallback(() => setQuickProduct(null), [])
 
-  // Panier : [{ product, qty }]
-  const [cart, setCart] = useState([])
+  // Catalogue réel (API) : chargé dès l'arrivée sur le site
+  useLive()
+
+  // Panier : [{ product, qty }], product = ligne de panier (data/live.js cartLine : une variante du catalogue réel).
+  // Gardé dans le navigateur d'une visite à l'autre.
+  const [cart, setCart] = useState(readCart)
   const [cartOpen, setCartOpen] = useState(false)
   const cartCount = cart.reduce((n, l) => n + l.qty, 0)
+  useEffect(() => saveCart(cart), [cart])
 
-  const addToCart = useCallback((product) => {
-    if (product.price == null) return
+  const addToCart = useCallback((line, qty = 1) => {
+    if (!line?.variantId || line.price == null) return
     setCart((c) => {
-      const line = c.find((l) => l.product.id === product.id)
-      return line
-        ? c.map((l) => (l.product.id === product.id ? { ...l, qty: l.qty + 1 } : l))
-        : [...c, { product, qty: 1 }]
+      const found = c.find((l) => l.product.id === line.id)
+      return found
+        ? c.map((l) => (l.product.id === line.id ? { ...l, qty: Math.min(50, l.qty + qty) } : l))
+        : [...c, { product: line, qty }]
     })
   }, [])
 
@@ -86,6 +92,7 @@ export default function App() {
   }, [])
   const onOrdered = useCallback((fromCart) => {
     if (fromCart) setCart([])
+    setBuyNow(null)
   }, [])
 
   const setQty = useCallback((id, qty) => {
@@ -186,4 +193,22 @@ function MaisonPage({ id, onAdd }) {
   if (id === 'adidas') return <AdidasPage onAdd={onAdd} />
   if (id === 'celio') return <CelioPage onAdd={onAdd} />
   return <Maison maison={maisons[id]} onAdd={onAdd} />
+}
+
+// Panier gardé dans le navigateur (seules les lignes du catalogue réel, avec leur variante)
+const CART_KEY = 'kclick-cart'
+function readCart() {
+  try {
+    const lines = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]')
+    return Array.isArray(lines) ? lines.filter((l) => l?.product?.variantId && l.qty > 0) : []
+  } catch {
+    return []
+  }
+}
+function saveCart(cart) {
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart))
+  } catch {
+    /* stockage indisponible : le panier reste en mémoire */
+  }
 }

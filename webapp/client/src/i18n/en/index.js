@@ -5,5 +5,6 @@ import home from './home.js'
 import maisons from './maisons.js'
 import pages from './pages.js'
 import account from './account.js'
+import live from './live.js'
 
-export default { ...home, ...maisons, ...pages, ...account, ...core }
+export default { ...home, ...maisons, ...pages, ...account, ...live, ...core }

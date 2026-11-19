@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, OutlineButton, PrimaryButton, fadeUp, inputClass, readSession, underline, writeSession } from './accountUi.jsx'
+import { authAvailable, authMessage, requestCode, savePending } from './auth.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -10,15 +11,26 @@ export default function LoginPage() {
   const t = useT()
   const [email, setEmail] = useState(() => readSession(EMAIL_KEY) ?? '')
   const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
+    if (sending) return
     if (!EMAIL_RE.test(email.trim())) {
       setError(t('Saisissez une adresse e-mail valide.'))
       return
     }
-    writeSession(EMAIL_KEY, email.trim())
-    window.location.hash = 'compte/code'
+    setSending(true)
+    try {
+      await requestCode({ email: email.trim(), mode: 'login' })
+      writeSession(EMAIL_KEY, email.trim())
+      savePending({ mode: 'login' })
+      window.location.hash = 'compte/code'
+    } catch (err) {
+      setError(t(authMessage(err)))
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -49,7 +61,8 @@ export default function LoginPage() {
             className={inputClass(error)}
           />
         </Field>
-        <PrimaryButton type="submit">{t('Recevoir mon code')}</PrimaryButton>
+        {!authAvailable() && <p className="text-[13px] text-celio">{t(authMessage(null))}</p>}
+        <PrimaryButton type="submit" disabled={sending}>{sending ? t('Envoi du code…') : t('Recevoir mon code')}</PrimaryButton>
       </motion.form>
 
       <motion.div className="mt-8 flex flex-col items-center gap-7" {...fadeUp(0.18)}>

@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
-import { DEMO_EMAIL } from '../../data/account.js'
 import { AuthShell, EMAIL_KEY, PrimaryButton, fadeUp, readSession, underline } from './accountUi.jsx'
+import { authMessage, confirmCode, readPending, requestCode } from './auth.js'
 
 const LENGTH = 6
 const RESEND_DELAY = 30
 
-/** Code reçu par e-mail (#compte/code) : 6 cases, renvoi après 30 s. Démonstration : tout code à 6 chiffres est accepté. */
+/** Code reçu par e-mail (#compte/code) : 6 cases, renvoi après 30 s, vérification par Supabase Auth */
 export default function CodePage() {
   const t = useT()
-  const email = readSession(EMAIL_KEY) || DEMO_EMAIL
+  const email = readSession(EMAIL_KEY) || ''
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(false)
+
+  // Sans e-mail (page ouverte directement) : retour à la connexion
+  useEffect(() => {
+    if (!email) window.location.hash = 'compte'
+  }, [email])
   const [digits, setDigits] = useState(() => Array(LENGTH).fill(''))
   const [wait, setWait] = useState(RESEND_DELAY)
   const [sent, setSent] = useState(false)
@@ -57,14 +64,32 @@ export default function CodePage() {
     fill(i, e.clipboardData.getData('text'))
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    if (complete) window.location.hash = 'compte/profil'
+    if (!complete || checking) return
+    setChecking(true)
+    setError('')
+    try {
+      window.location.hash = (await confirmCode(email, digits.join(''))).replace(/^#/, '')
+    } catch (err) {
+      setError(t(authMessage(err)))
+      setDigits(Array(LENGTH).fill(''))
+      inputs.current[0]?.focus()
+    } finally {
+      setChecking(false)
+    }
   }
 
-  const resend = () => {
+  const resend = async () => {
+    setError('')
+    try {
+      const pending = readPending() ?? { mode: 'login' }
+      await requestCode({ email, mode: pending.mode, fullName: pending.fullName, phone: pending.phone })
+      setSent(true)
+    } catch (err) {
+      setError(t(authMessage(err)))
+    }
     setWait(RESEND_DELAY)
-    setSent(true)
     setDigits(Array(LENGTH).fill(''))
     inputs.current[0]?.focus()
   }
@@ -109,8 +134,9 @@ export default function CodePage() {
             ))}
           </div>
         </fieldset>
-        <PrimaryButton type="submit" disabled={!complete}>
-          {t('Valider')}
+        {error && <p role="alert" className="text-[13px] text-celio">{error}</p>}
+        <PrimaryButton type="submit" disabled={!complete || checking}>
+          {checking ? t('Vérification…') : t('Valider')}
         </PrimaryButton>
       </motion.form>
 

@@ -84,8 +84,12 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="caps text-[9px] opacity-60">{product.house?.name ?? product.store}</p>
-                        <p className="mt-1 text-sm leading-snug">{t(product.name)}</p>
-                        <p className="mt-1 text-xs text-ink/60">{formatPrice(product.price, product.unit)}</p>
+                        <p className="mt-1 text-sm leading-snug">
+                          {t(product.productName ?? product.name)}
+                          {product.variantLabel && <span className="text-ink/60"> · {product.variantLabel}</span>}
+                        </p>
+                        {product.giftMessage && <p className="mt-1 text-xs italic text-ink/60">« {product.giftMessage} »</p>}
+                        <p className="mt-1 text-xs text-ink/60">{formatPrice(product.price)}</p>
                         <div className="mt-3 flex items-center gap-4">
                           <div className="flex items-center border border-ink/20">
                             <button type="button" aria-label={t('Moins')} className="grid size-8 place-items-center" onClick={() => onQty(product.id, qty - 1)}>−</button>
@@ -97,7 +101,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                           </button>
                         </div>
                       </div>
-                      <span className="shrink-0 text-sm">${(product.price ?? 0) * qty}</span>
+                      <span className="shrink-0 text-sm">{formatPrice(Math.round((product.price ?? 0) * qty * 100) / 100)}</span>
                     </motion.li>
                   ))}
                 </AnimatePresence>
@@ -107,7 +111,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
             <div className="mt-auto border-t border-ink pt-5">
               <div className="flex justify-between text-[15px]">
                 <span>{t('Sous-total')}</span>
-                <span>${subtotal}</span>
+                <span>{formatPrice(Math.round(subtotal * 100) / 100)}</span>
               </div>
               <p className="mt-2 mb-5 text-xs leading-relaxed text-ink/60">
                 {t('Livraison à Gombe le jour même (4 $) ou retrait gratuit en boutique, dès 9h00.')}

@@ -275,6 +275,9 @@ function MaisonHero({ maison, onBrowse }) {
 }
 
 function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
+  const t = useT()
+  // Produits des Maisons hors catalogue réel : pas encore en vente
+  const price = product.live ? formatPrice(product.price, product.unit) : t('Bientôt disponible')
   const [hover, setHover] = useState(false)
   const x = useTransform(sx, (v) => v * -34 * spot.d)
   const y = useTransform(sy, (v) => v * -26 * spot.d)
@@ -294,7 +297,7 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
         onMouseLeave={() => setHover(false)}
         onFocus={() => setHover(true)}
         onBlur={() => setHover(false)}
-        aria-label={`${product.name}, ${formatPrice(product.price, product.unit)}`}
+        aria-label={`${product.name}, ${price}`}
         className={`block w-full p-2.5 text-left text-current shadow-[0_30px_60px_rgba(0,0,0,0.16)] ${maison.floatClass}`}
         animate={reduce ? {} : { y: [0, -14, 0] }}
         transition={{ duration: 5 + index * 0.7, delay: index * 0.45, repeat: Infinity, ease: 'easeInOut' }}
@@ -317,7 +320,7 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
               transition={{ duration: 0.4, ease }}
             >
               <span className="block px-1 pt-2.5 text-[12px] font-medium leading-snug">{product.name}</span>
-              <span className="block px-1 pt-0.5 pb-1 text-[12px]">{formatPrice(product.price, product.unit)}</span>
+              <span className="block px-1 pt-0.5 pb-1 text-[12px]">{price}</span>
             </motion.span>
           )}
         </AnimatePresence>

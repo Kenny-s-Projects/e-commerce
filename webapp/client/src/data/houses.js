@@ -106,5 +106,7 @@ export const findProduct = (id) => {
 
 export const formatPrice = (price, unit) => {
   if (price == null) return '[Prix]'
-  return unit ? `$${price} / ${unit}` : `$${price}`
+  const n = Number(price)
+  const amount = Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`
+  return unit ? `${amount} / ${unit}` : amount
 }

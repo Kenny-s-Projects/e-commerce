@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLang, useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, PrimaryButton, fadeUp, inputClass, underline, writeSession } from './accountUi.jsx'
+import { authMessage, requestCode, savePending } from './auth.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -11,6 +12,8 @@ export default function SignupPage() {
   const { lang, setLang } = useLang()
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', terms: false, news: false })
   const [errors, setErrors] = useState({})
+  const [sending, setSending] = useState(false)
+  const [serverError, setServerError] = useState('')
 
   const set = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value
@@ -18,8 +21,9 @@ export default function SignupPage() {
     setErrors((er) => ({ ...er, [k]: undefined }))
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
+    if (sending) return
     const er = {}
     if (!form.firstName.trim()) er.firstName = t('Indiquez votre prénom.')
     if (!form.lastName.trim()) er.lastName = t('Indiquez votre nom.')
@@ -32,8 +36,20 @@ export default function SignupPage() {
       document.getElementById(`su-${first}`)?.focus()
       return
     }
-    writeSession(EMAIL_KEY, form.email.trim())
-    window.location.hash = 'compte/code'
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`
+    const phone = `+243 ${form.phone.replace(/\D/g, '').replace(/^243/, '')}`
+    setSending(true)
+    setServerError('')
+    try {
+      await requestCode({ email: form.email.trim(), mode: 'signup', fullName, phone })
+      writeSession(EMAIL_KEY, form.email.trim())
+      savePending({ mode: 'signup', fullName, phone, lang })
+      window.location.hash = 'compte/code'
+    } catch (err) {
+      setServerError(t(authMessage(err)))
+    } finally {
+      setSending(false)
+    }
   }
 
   const input = (k, props = {}) => (
@@ -133,8 +149,9 @@ export default function SignupPage() {
           </label>
         </div>
 
-        <PrimaryButton type="submit" className="mt-2">
-          {t('Créer mon compte')}
+        {serverError && <p role="alert" className="text-[13px] text-celio">{serverError}</p>}
+        <PrimaryButton type="submit" className="mt-2" disabled={sending}>
+          {sending ? t('Envoi du code…') : t('Créer mon compte')}
         </PrimaryButton>
         <p className="text-center text-[14px] text-ink/70">
           {t('Déjà un compte ?')}{' '}
