@@ -37,7 +37,7 @@ src/
 
 | Module | Rôle | État |
 |---|---|---|
-| catalog | brands, rayons, produits, variantes (public) | prêt (exemple de référence) |
+| catalog | `GET /catalog/brands` (brands + rayons), `GET /catalog/products` (filtres brand, category, tag, search, inStock, tri), `GET /catalog/products/:slug` (fiche + produits liés) | prêt |
 | orders | checkout, suivi, annulation ; `orders.status.js` = machine à statuts | statuts prêts et testés, routes à écrire |
 | parts | travail de chaque brand : accepter, préparer, refuser | à écrire |
 | deliveries | livreur : attribution, collecte, remise, cash | à écrire |

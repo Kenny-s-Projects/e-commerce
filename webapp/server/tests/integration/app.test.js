@@ -31,3 +31,14 @@ test('route protégée sans connexion : 401', async () => {
   assert.equal(res.status, 401)
   assert.equal(res.body.error.code, 'UNAUTHORIZED')
 })
+
+test('catalogue : recherche trop courte refusée avant la base', async () => {
+  const res = await request(app).get('/api/v1/catalog/products?search=a')
+  assert.equal(res.status, 400)
+  assert.equal(res.body.error.details[0].field, 'search')
+})
+
+test('catalogue : tri inconnu refusé', async () => {
+  const res = await request(app).get('/api/v1/catalog/products?sort=hasard')
+  assert.equal(res.status, 400)
+})
