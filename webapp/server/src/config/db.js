@@ -13,15 +13,21 @@ export const pool = new pg.Pool({
 
 pool.on('error', (err) => logger.error({ err }, 'Erreur sur une connexion PostgreSQL inactive'))
 
+// Les tests remplacent la base réelle par une base PostgreSQL en mémoire (voir tests/db.js)
+let source = pool
+export const useDatabase = (db) => {
+  source = db
+}
+
 /** Requête simple : const { rows } = await query('select … where id = $1', [id]) */
-export const query = (text, params) => pool.query(text, params)
+export const query = (text, params) => source.query(text, params)
 
 /**
  * Transaction : tout réussit ou rien n'est enregistré.
  *   await transaction(async (client) => { await client.query(…); await client.query(…) })
  */
 export async function transaction(work) {
-  const client = await pool.connect()
+  const client = await source.connect()
   try {
     await client.query('begin')
     const result = await work(client)
