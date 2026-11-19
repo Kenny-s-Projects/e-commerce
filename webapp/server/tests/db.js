@@ -11,7 +11,8 @@ export async function createTestDatabase() {
   const db = new PGlite({ parsers: { 1700: (v) => Number(v) } })
   // Ce que Supabase fournit d'habitude : rôles, schéma auth
   await db.exec(`
-    create role anon; create role authenticated; create schema auth;
+    create role anon; create role authenticated; create schema auth; create schema storage;
+    create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
     create table auth.users (id uuid primary key default gen_random_uuid(), phone text, email text,
                              raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as

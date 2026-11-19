@@ -1,2 +1,2 @@
-// Données des 4 dashboards : formats attendus (schémas Zod, à écrire)
+// Vue d'ensemble : pas de paramètres pour l'instant.
 export {}

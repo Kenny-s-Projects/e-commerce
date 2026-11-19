@@ -43,11 +43,45 @@ src/
 | deliveries | livreur : attribution, collecte, remise, cash | à écrire |
 | payments | `GET /payments?status=&kind=`, `POST /payments/:id/confirm` (paiement reçu, référence obligatoire), `POST /payments/:id/fail`, `GET /payments/refunds`, `POST /payments/refunds/:id/done` (super-admin) ; `POST /payments/webhooks/:provider` prêt à brancher ; mobile money et carte uniquement | prêt (sans prestataire) |
 | notifications | `channels/` app, WhatsApp, SMS | canal app prêt |
-| users | profil, rôles (super-admin) | à écrire |
-| brands | horaires, point de retrait | à écrire |
+| auth | `POST /auth/staff/check` (cet e-mail peut-il entrer dans l'espace équipe ?), `GET /auth/me` (profil, rôles, page d'arrivée) | prêt |
+| users | `GET/PATCH /users/me` ; super admin : `GET /users?role=&status=&search=`, `POST /users/invitations`, `GET/PATCH /users/:id`, `POST /users/:id/deactivate` et `/reactivate`, `DELETE /users/invitations/:id`, `POST /users/invitations/:id/resend` (e-mail à brancher) | prêt |
+| clients | super admin : `GET /clients?search=&filter=all\|account\|guest`, `GET /clients/:key` (commandes, adresses) | prêt |
+| settings | super admin : `GET /settings`, `PUT /settings/:section` (general, delivery, payments, notifications, security) ; public : `GET /settings/public` (zones de livraison, contacts, moyens de paiement) | prêt |
+| brands | `GET /brands`, `GET /brands/:slug` (public) ; `PATCH /brands/:slug` (ouverture « bientôt disponible », point de retrait — super admin) ; `GET/PUT /brands/:slug/hours` (super admin ou employé de la Maison) | prêt |
 | dashboards | données des 4 dashboards | à écrire |
 
 Une route pas encore écrite répond `501 NOT_IMPLEMENTED`.
+
+## Connexion (Supabase Auth, code à 6 chiffres par e-mail)
+
+Tout le monde se connecte avec un code reçu par e-mail, sans mot de passe. Le front utilise `supabase-js`
+(`signInWithOtp` puis `verifyOtp`) et envoie ensuite le jeton à l'API, qui le vérifie (`middlewares/auth.js`).
+
+- Équipe : le super admin invite la personne (`POST /users/invitations`). À sa première connexion, la base lui donne
+  son rôle (trigger `handle_new_user`). Avant d'envoyer le code, la page de connexion de l'équipe appelle
+  `POST /auth/staff/check`. Un compte désactivé reçoit `403 ACCOUNT_DISABLED`.
+- Super admin de départ : `ecommerce@kennysinternational.com` (invitation créée par la migration).
+
+À régler une fois dans Supabase (Authentication) :
+1. Providers › Email : activé, « Confirm email » activé.
+2. Email Templates › **Magic Link** : afficher le code au lieu du lien, par exemple
+   `<p>Votre code de connexion kclick : <strong>{{ .Token }}</strong> (valable 10 minutes)</p>`.
+   Faire de même pour **Confirm signup** (première connexion).
+3. Settings : longueur du code (OTP) **6**, expiration **600 s**.
+4. URL Configuration : Site URL = adresse du site (Netlify), et ajouter `http://localhost:5173` aux Redirect URLs.
+5. Plus tard : SMTP personnalisé (service d'e-mails) — l'envoi par défaut de Supabase est limité à quelques e-mails par heure.
+
+## Photos (Supabase Storage)
+
+Un bucket public par Maison (`kyra`, `patchi`, `adidas`, `celio`). Ranger les photos dans
+`webapp/supabase/images/<maison>/<CODE>/` (voir le README de ce dossier), ajouter `SUPABASE_SERVICE_ROLE_KEY`
+dans `.env`, puis :
+
+```bash
+npm run images:upload -- --dry-run    # vérifier
+npm run images:upload                 # envoyer et lier les photos aux produits
+npm run images:upload -- --from-site  # envoyer aussi les photos actuelles du site (/img/…)
+```
 
 ## Ajouter une fonctionnalité
 
