@@ -1,6 +1,3 @@
-import { events } from '../../shared/events.js'
-
-// Réactions des paiements aux événements des commandes.
-// part.refused / order.cancelled : créer le remboursement si la commande était déjà payée.
-events.on('part.refused', async () => {})
-events.on('order.cancelled', async () => {})
+// Les paiements ne réagissent à aucun événement : les commandes et les parts appellent directement
+// payments.service dans leur transaction (annulation, refus d'une part), pour que tout soit enregistré ensemble.
+// Ce module émet : payment.confirmed, payment.failed, refund.done (écoutés par les notifications).
