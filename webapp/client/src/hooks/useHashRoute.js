@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { MAISON_PAGES } from '../data/houses.js'
-import { getProduct } from '../data/products.js'
 import { offrir, aide } from '../data/pages.js'
 
 const PROFILE_TABS = ['commandes', 'adresses', 'favoris', 'infos']
@@ -22,7 +21,8 @@ const parse = () => {
   const [head, sub] = hash.split('/')
 
   if (head === 'maison' && MAISON_PAGES.includes(sub)) return { page: 'maison', id: sub, anchor: '' }
-  if (head === 'produit' && getProduct(sub)) return { page: 'produit', id: sub, anchor: '' }
+  // Fiche produit : le catalogue réel arrive après le chargement, la page gère « introuvable »
+  if (head === 'produit' && sub) return { page: 'produit', id: sub, anchor: '' }
   if (head === 'offrir') {
     const tab = offrir.tabs.find((t) => t.id === sub) ?? offrir.tabs[0]
     return { page: 'offrir', id: tab.id, anchor: '' }

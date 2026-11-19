@@ -7,6 +7,7 @@ import { PRODUCT_THEMES } from '../../components/Purchase/theme.js'
 import usePurchase from '../../hooks/usePurchase.js'
 import { getProduct, productGallery, relatedProducts } from '../../data/products.js'
 import { formatPrice } from '../../data/houses.js'
+import { loadLive, useLive } from '../../data/live.js'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -14,7 +15,7 @@ const ease = [0.22, 1, 0.36, 1]
 const SERVICES = [
   { kicker: 'Livraison', text: 'Gombe, le jour même, 4 $' },
   { kicker: 'Retrait', text: 'En boutique, gratuit, dès 9h00' },
-  { kicker: 'Paiement', text: 'Mobile money, carte ou à la livraison' },
+  { kicker: 'Paiement', text: 'Mobile money ou carte bancaire' },
 ]
 
 /**
@@ -25,7 +26,38 @@ const SERVICES = [
  */
 export default function ProductPage({ id, onAdd, onBuyNow }) {
   const t = useT()
+  const live = useLive()
   const product = getProduct(id)
+
+  if (!product) {
+    // Catalogue réel pas encore chargé, injoignable, ou produit inconnu
+    const loading = live.status === 'idle' || live.status === 'loading'
+    return (
+      <div className="grid min-h-[60svh] place-items-center bg-white px-gutter text-center text-ink">
+        <div className="max-w-md">
+          {loading ? (
+            <p className="text-[15px] text-ink/60">{t('Chargement du produit…')}</p>
+          ) : live.status === 'error' ? (
+            <>
+              <p className="text-[18px]">{t('Impossible de charger ce produit.')}</p>
+              <p className="mt-2 text-[14px] text-ink/60">{live.error?.message}</p>
+              <button type="button" onClick={loadLive} className="caps mt-6 border-b border-ink pb-1">{t('Réessayer')}</button>
+            </>
+          ) : (
+            <>
+              <p className="text-[18px]">{t('Ce produit n’est plus disponible.')}</p>
+              <a href="#maison/patchi" className="caps mt-6 inline-block border-b border-ink pb-1">{t('Voir la Maison Patchi')}</a>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+  return <ProductView key={product.id} product={product} onAdd={onAdd} onBuyNow={onBuyNow} />
+}
+
+function ProductView({ product, onAdd, onBuyNow }) {
+  const t = useT()
   const theme = PRODUCT_THEMES[product.maison]
   const buy = usePurchase(product, onAdd)
   const photos = productGallery(product)
@@ -37,7 +69,7 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
     {
       title: t('Description'),
       content: isPatchi
-        ? `${description}. ${product.unit === 'kg' ? t('Vendu au poids : 250 g, 500 g ou 1 kg. Prix de référence : 96 $ le kg.') : ''} ${t('[Notes de dégustation à fournir par Patchi]')}`
+        ? `${description}. ${product.byWeight ? t('Vendu au poids : 250 g, 500 g ou 1 kg.') : ''} ${t('[Notes de dégustation à fournir par Patchi]')}`
         : description || t('[Description à fournir]'),
     },
     ...(isPatchi
@@ -46,10 +78,11 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
           { title: t('Conservation'), content: t('[Conseils de conservation à fournir par Patchi]') },
         ]
       : []),
-    { title: t('Livraison et retrait'), content: t('Livraison à Gombe le jour même, à moto, 4 $. Retrait en boutique gratuit, dès 9h00. Paiement par mobile money, carte ou à la livraison.') },
+    { title: t('Livraison et retrait'), content: t('Livraison à Gombe le jour même, à moto, 4 $. Retrait en boutique gratuit, dès 9h00. Paiement en ligne par mobile money ou carte bancaire.') },
   ]
 
-  const addLabel = !buy.available ? t('Prix à venir') : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter au panier')} · ${formatPrice(buy.total)}`
+  const unavailableLabel = buy.comingSoon ? t('Bientôt disponible') : buy.unitPrice == null ? t('Prix à venir') : t('Épuisé')
+  const addLabel = !buy.available ? unavailableLabel : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter au panier')} · ${formatPrice(buy.total)}`
 
   return (
     <div className="bg-white text-ink [--card:#ffffff] [--fg:var(--color-ink)]">
@@ -82,11 +115,11 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="text-[34px] font-light">{buy.available ? formatPrice(buy.unitPrice) : '[Prix]'}</span>
-            {buy.byWeight && <span className="text-[12px] text-ink/60">{t('pour {w} · soit 96 $ le kg', { w: buy.weights[buy.weight].label })}</span>}
+            <span className="text-[34px] font-light">{buy.comingSoon ? t('Bientôt disponible') : formatPrice(buy.unitPrice)}</span>
+            {buy.byWeight && buy.variant && <span className="text-[12px] text-ink/60">{t('pour {w}', { w: buy.variant.label })}</span>}
           </div>
 
-          {buy.byWeight && <WeightPicker weights={buy.weights} value={buy.weight} onChange={buy.setWeight} pricePerKg={product.price} solid={theme.solid} />}
+          {buy.byWeight && <WeightPicker variants={buy.variants} value={buy.variant?.id} onChange={buy.setVariant} solid={theme.solid} />}
 
           {/* C'est pour offrir */}
           {buy.available && (
@@ -147,10 +180,14 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
               </div>
             ))}
           </div>
-          {product.stock != null && (
+          {product.live && !buy.comingSoon && (
             <p className="flex items-center gap-2 text-[12px]">
-              <span className="size-[7px] rounded-full bg-[#3f8a4f]" />
-              {t('{n} en stock à Gombe', { n: `${product.stock}${product.unit === 'kg' ? ' kg' : ''}` })}
+              <span className={`size-[7px] rounded-full ${product.available ? 'bg-[#3f8a4f]' : 'bg-[#b8382c]'}`} />
+              {!product.available
+                ? t('Épuisé pour le moment')
+                : product.byWeight
+                  ? t('{n} kg en stock à Gombe', { n: product.stockKg })
+                  : t('{n} en stock à Gombe', { n: buy.variant?.stock ?? product.stock })}
             </p>
           )}
 
@@ -203,14 +240,14 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
       {/* ============ Mobile : barre d'achat collée en bas ============ */}
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2.5 border-t border-ink/10 bg-white/95 px-4 pb-5 pt-3 backdrop-blur md:hidden">
         <div className="shrink-0">
-          <p className="text-[20px] font-light leading-none">{buy.available ? formatPrice(buy.total) : '[Prix]'}</p>
-          {buy.byWeight && <p className="mt-1 text-[11px] text-ink/60">{buy.weights[buy.weight].label}</p>}
+          <p className="text-[20px] font-light leading-none">{buy.available ? formatPrice(buy.total) : buy.comingSoon ? t('Bientôt') : '—'}</p>
+          {buy.byWeight && buy.variant && <p className="mt-1 text-[11px] text-ink/60">{buy.variant.label}</p>}
         </div>
         <button type="button" onClick={buy.add} disabled={!buy.available} aria-label={t('Ajouter au panier')} className="grid h-12 shrink-0 place-items-center rounded-full border border-ink px-4 text-[13px] disabled:opacity-40">
           {buy.added ? '✓' : t('+ Panier')}
         </button>
         <button type="button" onClick={() => buy.buyNow(onBuyNow)} disabled={!buy.available} className={`h-12 flex-1 rounded-full text-[14px] disabled:opacity-50 ${theme.solid}`}>
-          {!buy.available ? t('Prix à venir') : t('Commander maintenant')}
+          {!buy.available ? unavailableLabel : t('Commander maintenant')}
         </button>
       </div>
       <div className="h-24 md:hidden" aria-hidden />

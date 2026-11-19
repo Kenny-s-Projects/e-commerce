@@ -14,7 +14,7 @@ export const offrir = {
       hero: '/img/hermes-twilly-eau-ginger.webp',
       heroFit: 'contain',
       tone: 'bg-kyra-card',
-      ids: ['chanel-chance-eau-tendre', 'dior-miss-dior-parfum', 'versace-dylan-blue', 'hermes-eau-des-merveilles', 'ggf0005', 'ccd01'],
+      ids: ['chanel-chance-eau-tendre', 'dior-miss-dior-parfum', 'versace-dylan-blue', 'hermes-eau-des-merveilles', 'ggf0016', 'ccd03'],
     },
     {
       id: 'pour-lui',
@@ -23,7 +23,7 @@ export const offrir = {
       hero: '/img/ck-defy-parfum.webp',
       heroFit: 'contain',
       tone: 'bg-[#f4f1ec]',
-      ids: ['ck-defy-parfum', 'tomford-for-men-100', 'gbr0002', 'adidas-samba-og', 'celio-chemise-oxford', 'celio-ceinture'],
+      ids: ['ck-defy-parfum', 'tomford-for-men-100', 'gsb0013', 'adidas-samba-og', 'celio-chemise-oxford', 'celio-ceinture'],
     },
     {
       id: 'coffrets',
@@ -32,7 +32,7 @@ export const offrir = {
       hero: '/img/products/patchi/Chocolate Milk Filled with Praline/Product2.webp',
       heroFit: 'cover',
       tone: 'bg-paper',
-      ids: ['ggf0005', 'ggf0004', 'ggf0006', 'ccd01', 'gns0013', 'gsb0003'],
+      ids: ['ggf0016', 'ggf0017', 'ggf0018', 'gsb0012', 'ccd44', 'ccn02'],
     },
     {
       id: 'moins-de-50',
@@ -41,7 +41,7 @@ export const offrir = {
       hero: '/img/products/patchi/Chocolate Bar 100 g Noblesse/Offert.webp',
       heroFit: 'cover',
       tone: 'bg-paper',
-      ids: ['gbr0002', 'gbr0001', 'gns0013', 'gns0009', 'blackup-coil-me-up', 'blackup-cc-cream'],
+      ids: ['gsb0010', 'gsb0014', 'gsb0015', 'ccf03', 'blackup-coil-me-up', 'blackup-cc-cream'],
     },
   ],
   services: [

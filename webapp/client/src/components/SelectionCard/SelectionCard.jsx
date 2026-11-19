@@ -1,5 +1,6 @@
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
-import { productHref } from '../../data/products.js'
+import { getProduct, productHref } from '../../data/products.js'
+import { useLive } from '../../data/live.js'
 import { formatPrice, productImages, maisonHref } from '../../data/houses.js'
 import { useT } from '../../i18n/lang.js'
 
@@ -10,7 +11,11 @@ import { useT } from '../../i18n/lang.js'
  */
 export default function SelectionCard({ product, tone = 'bg-cream' }) {
   const t = useT()
+  useLive()
   const { house } = product
+  // Prix réel si le produit est vendu (catalogue de l'API), sinon « Bientôt disponible »
+  const live = getProduct(product.id)
+  const price = live?.live ? `${live.byWeight ? `${t('dès')} ` : ''}${formatPrice(live.price)}` : t('Bientôt disponible')
   // "KYRA · HERMÈS" pour Kyra (Maison + marque), "PATCHI" seul sinon
   const origin = product.store && house.id === 'kyra' ? `${house.name} · ${t(product.store)}` : house.name
 
@@ -28,7 +33,7 @@ export default function SelectionCard({ product, tone = 'bg-cream' }) {
       <p className="caps text-[9px] text-gold">{origin}</p>
       <div className="mt-1.5 flex items-baseline justify-between gap-4 text-sm">
         <h3 className="font-normal">{t(product.name)}</h3>
-        <span className="shrink-0">{formatPrice(product.price, product.unit)}</span>
+        <span className="shrink-0">{price}</span>
       </div>
     </article>
   )

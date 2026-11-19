@@ -23,7 +23,7 @@ export async function findBrands(brandSlug) {
   const { rows } = await query(
     `select b.id, b.slug, b.name, b.color, b.logo_url, b.is_open, b.is_pickup_point, b.pickup_address,
             coalesce((select json_agg(c order by c.position) from (
-              select c.slug, c.name_fr, c.name_en, c.parent_id,
+              select c.slug, c.name_fr, c.name_en, c.parent_id, c.position,
                      (select count(*)::int from public.products p where p.category_id = c.id and p.is_active) as products
                 from public.categories c where c.brand_id = b.id) c), '[]') as categories
        from public.brands b

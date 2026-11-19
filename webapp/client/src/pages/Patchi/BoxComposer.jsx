@@ -2,7 +2,7 @@ import { forwardRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
-import { PATCHI_IMG } from '../../data/maisonPages.js'
+import { whatsappFor } from '../../data/products.js'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -12,12 +12,11 @@ const ease = [0.22, 1, 0.36, 1]
  * Le coffret du récapitulatif se remplit en direct : chaque praline choisie vient se poser dans les cases,
  * le total défile. « Ajouter le coffret » le met au panier ; WhatsApp pour le composer avec le concierge.
  */
-const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg, onAdd }, ref) {
+const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg }, ref) {
   const t = useT()
   const [size, setSize] = useState(1)
   const [picked, setPicked] = useState(['ccn01', 'ccn02', 'ccd01'])
   const [note, setNote] = useState('')
-  const [added, setAdded] = useState(false)
 
   const s = sizes[size]
   const chosen = flavors.filter((f) => picked.includes(f.id))
@@ -27,20 +26,8 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
 
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
 
-  const add = () => {
-    onAdd({
-      id: `coffret-${s.id}-${picked.slice().sort().join('-') || 'maison'}`,
-      name: t('Coffret composé {size} {weight} ({names})', { size: t(s.label), weight: s.weight, names }) + (note ? t(' · Carte : « {note} »', { note }) : ''),
-      price,
-      img: PATCHI_IMG,
-      boxed: true,
-      house: { id: 'patchi', name: 'Patchi' },
-    })
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1800)
-  }
-
-  const whatsapp = `https://wa.me/243818592999?text=${encodeURIComponent(`Bonjour, je souhaite composer un coffret Patchi ${s.label} (${s.weight}) : ${names}.`)}`
+  // Le coffret sur mesure n'est pas un article du catalogue : il se commande avec le concierge
+  const whatsapp = whatsappFor(`Bonjour, je souhaite composer un coffret Patchi ${s.label} (${s.weight}) : ${names}${note ? `. Mot : « ${note} »` : ''}.`)
 
   return (
     <section ref={ref} id="coffret" className="scroll-mt-16 px-gutter py-[clamp(80px,10vw,140px)]">
@@ -144,12 +131,10 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
               </AnimatePresence>
             </span>
           </div>
-          <motion.button type="button" onClick={add} whileTap={{ scale: 0.97 }} className="caps bg-gold py-4 text-forest-deep">
-            {added ? t('Ajouté au panier ✓') : t('Ajouter le coffret')}
-          </motion.button>
-          <a href={whatsapp} target="_blank" rel="noreferrer" className="text-center text-[12px] underline underline-offset-4">
-            {t('ou le composer avec notre concierge sur WhatsApp')}
-          </a>
+          <motion.a href={whatsapp} target="_blank" rel="noreferrer" whileTap={{ scale: 0.97 }} className="caps bg-gold py-4 text-center text-forest-deep">
+            {t('Commander ce coffret sur WhatsApp')}
+          </motion.a>
+          <p className="text-center text-[12px] opacity-80">{t('Prix indicatif. Le coffret sur mesure est préparé avec notre concierge.')}</p>
         </FadeUp>
       </div>
     </section>

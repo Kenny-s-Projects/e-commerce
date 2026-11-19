@@ -71,17 +71,21 @@ function QuickViewBody({ product, onClose, onAdd }) {
         <p className={`caps pr-12 ${theme.eyebrow}`}>{product.house.name}{product.store ? ` · ${t(product.store)}` : ''}</p>
         <h2 className="-mt-2 text-[clamp(26px,2.6vw,34px)] font-light leading-[1.1]">{t(product.name)}</h2>
         <p className="text-[28px] font-light">
-          {buy.available ? formatPrice(buy.unitPrice) : '[Prix]'}
-          {buy.byWeight && <span className="ml-2 text-[12px] text-ink/60">· {t('96 $ le kg')}</span>}
+          {buy.comingSoon ? t('Bientôt disponible') : formatPrice(buy.unitPrice)}
+          {buy.byWeight && buy.variant && <span className="ml-2 text-[12px] text-ink/60">· {buy.variant.label}</span>}
         </p>
-        {buy.byWeight && <WeightPicker weights={buy.weights} value={buy.weight} onChange={buy.setWeight} pricePerKg={product.price} solid={theme.solid} compact />}
+        {buy.byWeight && <WeightPicker variants={buy.variants} value={buy.variant?.id} onChange={buy.setVariant} solid={theme.solid} compact />}
         <div className="flex gap-2.5">
           {buy.available && <QtyStepper value={buy.qty} onChange={buy.setQty} />}
           <button type="button" onClick={buy.add} disabled={!buy.available} className={`h-[54px] flex-1 rounded-full text-[14px] disabled:opacity-50 ${theme.solid}`}>
-            {!buy.available ? t('Prix à venir') : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter')} · ${formatPrice(buy.total)}`}
+            {!buy.available ? (buy.comingSoon ? t('Bientôt disponible') : t('Épuisé')) : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter')} · ${formatPrice(buy.total)}`}
           </button>
         </div>
-        {product.stock != null && <p className="text-[12px] text-ink/70">{t('{n} en stock · Livraison à Gombe le jour même', { n: `${product.stock}${product.unit === 'kg' ? ' kg' : ''}` })}</p>}
+        {product.live && product.available && !buy.comingSoon && (
+          <p className="text-[12px] text-ink/70">
+            {t('{n} en stock · Livraison à Gombe le jour même', { n: product.byWeight ? `${product.stockKg} kg` : buy.variant?.stock ?? product.stock })}
+          </p>
+        )}
         <a href={`#produit/${product.id}`} onClick={onClose} className="caps mt-auto self-start border-b border-current pb-1">
           {t('Voir la fiche complète')} ⟶
         </a>

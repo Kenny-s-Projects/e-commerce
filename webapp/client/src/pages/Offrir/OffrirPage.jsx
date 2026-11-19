@@ -3,6 +3,7 @@ import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { offrir } from '../../data/pages.js'
 import { getProduct } from '../../data/products.js'
+import { useLive } from '../../data/live.js'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -16,6 +17,7 @@ const ease = [0.22, 1, 0.36, 1]
 export default function OffrirPage({ tab, onAdd }) {
   const t = useT()
   const current = offrir.tabs.find((x) => x.id === tab) ?? offrir.tabs[0]
+  useLive() // les produits Patchi arrivent du catalogue réel
   const products = current.ids.map(getProduct).filter(Boolean)
 
   return (

@@ -17,9 +17,16 @@ export const HOUSE_NAMES = { kyra: 'Kyra', patchi: 'Patchi', adidas: 'adidas', c
 
 // Statuts affichés au client (mêmes couleurs que le dashboard)
 export const STATUS = {
+  en_attente: { label: 'Reçue', bg: '#e3ecf8', fg: '#1f4e8c' },
   en_preparation: { label: 'En préparation', bg: '#fbefd5', fg: '#7a5200' },
+  en_cours: { label: 'En préparation', bg: '#fbefd5', fg: '#7a5200' },
+  prete_retrait: { label: 'Prête', bg: '#e1eee2', fg: '#2f5a37' },
   en_route: { label: 'En route', bg: '#fbe4d8', fg: '#9a3f1c' },
+  en_livraison: { label: 'En route', bg: '#fbe4d8', fg: '#9a3f1c' },
   livree: { label: 'Livrée', bg: '#d7e9dc', fg: '#1f4a2c' },
+  retiree: { label: 'Retirée', bg: '#d7e9dc', fg: '#1f4a2c' },
+  refusee: { label: 'Refusée', bg: '#f7deda', fg: '#8e2118' },
+  annulee: { label: 'Annulée', bg: '#f7deda', fg: '#8e2118' },
 }
 
 export const currentOrder = { number: 'KC-0142', status: 'en_preparation', houses: ['kyra', 'patchi'], total: 130 }
@@ -35,7 +42,7 @@ export const addresses = [
 ]
 
 // Produits favoris (identifiants du catalogue du site)
-export const favorites = ['dior-miss-dior-parfum', 'versace-dylan-blue', 'chanel-chance-eau-tendre', 'ccd01']
+export const favorites = ['dior-miss-dior-parfum', 'versace-dylan-blue', 'chanel-chance-eau-tendre', 'ggf0016']
 
 /*
  * Suivi de commande : étapes avec l'heure (null = pas encore atteinte).

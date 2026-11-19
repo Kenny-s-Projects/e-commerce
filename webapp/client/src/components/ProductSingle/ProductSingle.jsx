@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { getProduct, productHref } from '../../data/products.js'
+import { cartLine, defaultVariant, isPurchasable, useLive } from '../../data/live.js'
 import { useQuickView } from '../../context/quickView.js'
 import { useT } from '../../i18n/lang.js'
 
@@ -18,16 +19,21 @@ import { useT } from '../../i18n/lang.js'
  */
 export default function ProductSingle({ product, onAdd, href = '#' }) {
   const t = useT()
-  const available = product.price != null
+  useLive() // se met à jour quand le catalogue réel arrive ou qu'une Maison s'ouvre
   const [added, setAdded] = useState(false)
   const openQuickView = useQuickView()
   // Version complète du produit (Maison, vraies photos Patchi) quand il a une fiche
   const full = getProduct(product.id)
+  const item = full ?? product
+  // Seuls les produits du catalogue réel d'une Maison ouverte sont achetables ; les autres : « Bientôt disponible »
+  const available = isPurchasable(item)
+  const variant = available ? defaultVariant(item) : null
   const images = full?.images ?? productImages(product)
-  const fit = full?.images ? 'bleed' : product.boxed ? 'boxed' : 'contain'
+  const fit = full?.live ? (full.hasPhoto ? 'bleed' : 'boxed') : full?.images ? 'bleed' : product.boxed ? 'boxed' : 'contain'
 
   const handleAdd = () => {
-    onAdd?.(product)
+    if (!variant) return
+    onAdd?.(cartLine(item, variant), 1)
     setAdded(true)
     setTimeout(() => setAdded(false), 1600)
   }
@@ -61,7 +67,13 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
 
       {/* Price + CTA */}
       <div className="mt-[18px] flex items-center justify-between gap-3">
-        <span className="text-sm">{formatPrice(product.price, product.unit)}</span>
+        <span className="text-sm">
+          {item.live && item.price != null
+            ? `${item.byWeight ? `${t('dès')} ` : ''}${formatPrice(item.price)}`
+            : item.live
+              ? t('Prix à venir')
+              : t('Bientôt disponible')}
+        </span>
         <button
           type="button"
           onClick={handleAdd}
@@ -73,7 +85,7 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
             ${added ? 'border-current text-(--card) before:translate-y-0' : 'border-current/35 before:translate-y-[101%]'}
             disabled:pointer-events-none disabled:opacity-50`}
         >
-          <span className="relative">{t(!available ? 'Bientôt' : added ? 'Ajouté' : 'Ajouter')}</span>
+          <span className="relative">{t(!available ? (item.live && !item.comingSoon ? 'Épuisé' : 'Bientôt') : added ? 'Ajouté' : 'Ajouter')}</span>
         </button>
       </div>
     </article>

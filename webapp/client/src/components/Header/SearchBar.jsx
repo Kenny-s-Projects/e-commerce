@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { kyraCatalog, patchiCatalog, adidasCatalog, celioCatalog } from '../../data/catalog.js'
+import { kyraCatalog, adidasCatalog, celioCatalog } from '../../data/catalog.js'
 import { formatPrice } from '../../data/houses.js'
+import { useLive } from '../../data/live.js'
 import SearchIcon from '../icons/SearchIcon.jsx'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
-// Tous les produits, avec leur Maison et le lien vers leur fiche produit
-const INDEX = [
+// Produits des Maisons pas encore en vente (fiches du site), avec leur lien
+const STATIC_INDEX = [
   ...kyraCatalog.map((p) => ({ ...p, maison: 'Kyra', href: `#produit/${p.id}` })),
-  ...patchiCatalog.map((p) => ({ ...p, maison: 'Patchi', href: `#produit/${p.id}` })),
   ...adidasCatalog.map((p) => ({ ...p, maison: 'adidas', href: `#produit/${p.id}` })),
   ...celioCatalog.map((p) => ({ ...p, maison: 'Celio', href: `#produit/${p.id}` })),
 ]
@@ -33,15 +33,21 @@ export default function SearchBar({ open, onClose }) {
 function SearchPanel({ onClose }) {
   const t = useT()
   const [q, setQ] = useState('')
+  const live = useLive()
+  // Catalogue réel (Patchi) + fiches des autres Maisons
+  const INDEX = useMemo(
+    () => [...live.products.map((p) => ({ ...p, maison: p.house.name, href: `#produit/${p.id}` })), ...STATIC_INDEX],
+    [live.products],
+  )
 
   const results = useMemo(() => {
     const words = norm(q).split(/\s+/).filter(Boolean)
     if (!words.length) return []
     return INDEX.filter((p) => {
-      const hay = norm(`${p.name} ${p.store ?? ''} ${p.maison}`)
+      const hay = norm(`${p.name} ${p.nameEn ?? ''} ${p.ref ?? ''} ${p.store ?? ''} ${p.maison}`)
       return words.every((w) => hay.includes(w))
     }).slice(0, 8)
-  }, [q])
+  }, [q, INDEX])
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={t('Recherche')}>
@@ -123,9 +129,11 @@ function SearchPanel({ onClose }) {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="caps block text-[9px] text-ink/60">{p.maison}{p.store ? ` · ${p.store}` : ''}</span>
-                          <span className="block truncate text-[15px] transition-transform duration-400 ease-lux group-hover:translate-x-1">{p.name}</span>
+                          <span className="block truncate text-[15px] transition-transform duration-400 ease-lux group-hover:translate-x-1">{t(p.name)}</span>
                         </span>
-                        <span className="shrink-0 text-[13px]">{formatPrice(p.price, p.unit)}</span>
+                        <span className="shrink-0 text-[13px]">
+                          {p.live ? `${p.byWeight ? `${t('dès')} ` : ''}${formatPrice(p.price)}` : t('Bientôt disponible')}
+                        </span>
                       </a>
                     </motion.li>
                   ))}

@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
-import { PATCHI_IMG } from '../../data/maisonPages.js'
+import { getProduct } from '../../data/products.js'
+import { cartLine, isPurchasable } from '../../data/live.js'
+import { formatPrice } from '../../data/houses.js'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -20,22 +22,21 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
   const [dir, setDir] = useState(1)
   const f = flavors[index]
   const w = weights[weight]
-  const price = Math.round(pricePerKg * w.kg)
+  // Prix, stock et ajout au panier : produit réel du catalogue (même code ERP), variante du même poids
+  const live = getProduct(f.id)
+  const variant = live?.live ? live.variants.find((v) => v.label === w.label) ?? live.variants[weight] : null
+  const canBuy = Boolean(variant?.available) && isPurchasable(live)
+  const price = variant?.price ?? Math.round(pricePerKg * w.kg)
+  const stockKg = live?.live ? live.stockKg : f.stock
 
   const go = (i) => {
     setDir(i > index ? 1 : -1)
     setIndex((i + flavors.length) % flavors.length)
   }
 
-  const add = () =>
-    onAdd({
-      id: `${f.id}-${w.label.replace(/\s/g, '')}`,
-      name: `${f.erp} · ${w.label}`,
-      price,
-      img: PATCHI_IMG,
-      boxed: true,
-      house: { id: 'patchi', name: 'Patchi' },
-    })
+  const add = () => {
+    if (canBuy) onAdd(cartLine(live, variant), 1)
+  }
 
   return (
     <motion.section
@@ -120,14 +121,14 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
                 $
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span key={price} initial={{ y: '100%' }} animate={{ y: '0%' }} exit={{ y: '-100%' }} transition={{ duration: 0.45, ease }}>
-                    {price}
+                    {formatPrice(price).slice(1)}
                   </motion.span>
                 </AnimatePresence>
               </p>
-              <p className="mt-1 text-[11px] opacity-70">{t('${p} / kg · {n} kg en stock', { p: pricePerKg, n: f.stock })}</p>
+              <p className="mt-1 text-[11px] opacity-70">{live?.live ? t('{n} kg en stock', { n: stockKg }) : t('${p} / kg · {n} kg en stock', { p: pricePerKg, n: stockKg })}</p>
             </div>
-            <motion.button type="button" onClick={add} whileTap={{ scale: 0.96 }} className="caps px-7 py-4" style={{ background: f.fg, color: f.bg }}>
-              {t('Ajouter au panier')}
+            <motion.button type="button" onClick={add} disabled={!canBuy} whileTap={{ scale: 0.96 }} className="caps px-7 py-4 disabled:opacity-50" style={{ background: f.fg, color: f.bg }}>
+              {canBuy ? t('Ajouter au panier') : live?.live ? t('Épuisé') : t('Bientôt disponible')}
             </motion.button>
           </div>
         </div>
