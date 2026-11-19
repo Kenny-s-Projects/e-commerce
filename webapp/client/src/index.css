@@ -19,6 +19,19 @@
 
   --font-sans: 'Jost', system-ui, sans-serif;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Dashboard (maquette « kclick dashboard ») */
+  --color-d-bg: #f6f4ef;      /* fond des pages */
+  --color-d-ink: #141414;     /* texte, menu latéral */
+  --color-d-muted: #5e5b55;   /* texte secondaire */
+  --color-d-line: #e2ddd3;    /* bordures des cartes */
+  --color-d-soft: #efebe3;    /* fonds doux, colonnes */
+  --color-d-border: #cfc9bd;  /* bordures des boutons */
+  --color-d-gold: #c9a55c;    /* pastille des compteurs, accent */
+  --color-d-gold-ink: #86671f;
+  --color-d-patchi: #93b993;  /* point Patchi */
+  --color-d-danger: #8e2118;
 
   --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -31,6 +44,16 @@
     50% { transform: scaleX(0); transform-origin: right; }
     51% { transform: scaleX(0); transform-origin: left; }
     100% { transform: scaleX(1); transform-origin: left; }
+  }
+
+  /* Dashboard : point « En direct », nouvelle commande qui arrive */
+  @keyframes livepulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  @keyframes slidein {
+    from { transform: translateY(-12px); opacity: 0; }
+    to { transform: none; opacity: 1; }
   }
 
   /* Segment qui descend le long du trait « Défiler » */
