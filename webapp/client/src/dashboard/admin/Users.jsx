@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BRANDS, ROLES } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
+import { api } from '../../lib/api.js'
 import { ago } from '../lib/format.js'
 import { Avatar, Brand, Button, Card, PageTitle, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -71,7 +72,17 @@ function Resend({ user, sent, onSend, className = '' }) {
 
 /** Utilisateurs de l'équipe et leurs rôles (super admin) */
 export default function Users() {
-  const { users, now } = useStore()
+  const { users, now, notify } = useStore()
+  // Renvoyer l'invitation (l'e-mail partira quand le service d'e-mails sera branché)
+  const resend = async (userId) => {
+    try {
+      const r = await api.post(`/users/invitations/${userId}/resend`)
+      if (r?.sent === false) notify(`Invitation notée. ${r.reason ?? ''}`.trim(), 'ok')
+      setResent(userId)
+    } catch (err) {
+      notify(err.message)
+    }
+  }
   const [filter, setFilter] = useState('tous')
   const [q, setQ] = useState('')
   const [resent, setResent] = useState(null) // id de la dernière invitation renvoyée
@@ -203,7 +214,7 @@ export default function Users() {
                       </td>
                       <td className="py-3.5 pl-3 pr-5 text-right align-middle">
                         <span className="flex items-center justify-end gap-4">
-                          <Resend user={u} sent={resent === u.id} onSend={setResent} />
+                          <Resend user={u} sent={resent === u.id} onSend={resend} />
                           <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 text-[13px] hover:border-d-ink" aria-label={`Modifier ${fullName(u)}`}>
                             Modifier
                           </a>
@@ -239,7 +250,7 @@ export default function Users() {
                         Dernière connexion : <LastSeen user={u} now={now} />
                       </span>
                       <span className="flex items-center gap-4">
-                        <Resend user={u} sent={resent === u.id} onSend={setResent} />
+                        <Resend user={u} sent={resent === u.id} onSend={resend} />
                         <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 hover:border-d-ink" aria-label={`Modifier ${fullName(u)}`}>
                           Modifier
                         </a>
@@ -259,7 +270,6 @@ export default function Users() {
           Chaque personne se connecte avec un code à 6 chiffres reçu par e-mail, sans mot de passe. Seul le super admin peut ajouter un utilisateur, changer un rôle ou désactiver un compte.
         </p>
       </div>
-      <p className="mt-4 text-xs text-d-muted">Données de démonstration.</p>
     </>
   )
 }

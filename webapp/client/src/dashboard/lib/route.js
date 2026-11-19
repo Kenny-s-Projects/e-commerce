@@ -8,7 +8,7 @@ import { BRANDS } from '../data/demo.js'
  *   admin/commandes               → toutes les commandes
  *   admin/commandes/KC-0142       → détail d'une commande
  *   admin/dispatch                → dispatch (et toute autre rubrique du menu : admin/livreurs…)
- *   employe/kyra                  → file des commandes de la Maison (employe seul → kyra)
+ *   employe/patchi                → file des commandes de la Maison (employe seul → Maison du compte)
  *   employe/kyra/retraits | disponibilites
  *   livreur                       → mes courses
  *   livreur/course/KC-0142        → une course
@@ -20,7 +20,7 @@ function parse() {
   const [space, a, b] = decodeURIComponent(window.location.hash.slice(1)).split('/')
   if (space === 'admin') return { space, section: a || 'vue', id: b ?? null }
   if (space === 'employe') {
-    const brand = BRANDS[a] ? a : 'kyra'
+    const brand = BRANDS[a] ? a : null // sans Maison : renvoi vers la Maison du compte (voir Guard)
     return { space, brand, section: (BRANDS[a] ? b : a) || 'file' }
   }
   if (space === 'livreur') return { space, section: a || 'courses', id: b ?? null }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { DashboardStore } from './store/store.jsx'
+import { DashboardStore, canEnter, useStore } from './store/store.jsx'
 import { useDashRoute } from './lib/route.js'
 import AdminLayout from './layouts/AdminLayout.jsx'
 import EmployeLayout from './layouts/EmployeLayout.jsx'
@@ -26,7 +26,7 @@ import { BRANDS } from './data/demo.js'
 
 /*
  * Dashboards kclick : super-admin, employé d'une Maison, livreur.
- * Données de démonstration pour l'instant (store/store.jsx), à brancher sur l'API Express.
+ * Données de l'API Express (store/store.jsx) ; connexion par code e-mail (Supabase Auth).
  */
 export default function DashboardApp() {
   const route = useDashRoute()
@@ -37,7 +37,80 @@ export default function DashboardApp() {
   }, [route.space])
 
   return (
-    <DashboardStore>
+    <DashboardStore key={`${route.space}-${route.brand ?? ''}`} space={route.space} brand={route.brand}>
+      <Guard route={route}>
+        <Screens route={route} />
+      </Guard>
+      <Toast />
+    </DashboardStore>
+  )
+}
+
+/**
+ * Accès : sans session → connexion ; mauvais rôle → page d'arrivée du compte.
+ * La page de connexion reste toujours accessible ; le choix des espaces n'existe qu'en développement.
+ */
+function Guard({ route, children }) {
+  const { auth, me, notify } = useStore()
+  const protectedSpace = ['admin', 'employe', 'livreur'].includes(route.space)
+  const allowed = !protectedSpace || canEnter(me, route.space, route.brand)
+
+  useEffect(() => {
+    if (route.space === 'dashboard' && !import.meta.env.DEV) window.location.hash = 'connexion'
+    if (!protectedSpace || auth.status === 'loading' || auth.status === 'error') return
+    if (auth.status === 'anon') window.location.hash = 'connexion'
+    else if (!allowed) {
+      notify('Cet espace n’est pas accessible avec votre compte.')
+      window.location.hash = (me?.home ?? '#connexion').replace(/^#/, '')
+    }
+  }, [route.space, protectedSpace, auth.status, allowed, me, notify])
+
+  if (protectedSpace && auth.status === 'error')
+    return (
+      <Centered>
+        <p className="text-[17px]">Le serveur ne répond pas.</p>
+        <p className="mt-2 max-w-sm text-sm text-d-muted">{auth.error} Réessayez dans un instant.</p>
+        <button type="button" onClick={() => window.location.reload()} className="mt-5 h-11 rounded-lg bg-d-ink px-5 text-sm text-white">
+          Réessayer
+        </button>
+      </Centered>
+    )
+  if (protectedSpace && (auth.status !== 'ok' || !allowed)) return <Centered><p className="text-sm text-d-muted">Chargement…</p></Centered>
+  return children
+}
+
+const Centered = ({ children }) => (
+  <div className="grid min-h-svh place-items-center bg-d-bg px-6 text-center font-sans text-d-ink">
+    <div className="flex flex-col items-center">{children}</div>
+  </div>
+)
+
+/** Bandeau de message (erreur de l'API, confirmation) */
+function Toast() {
+  const { toast, dismissToast } = useStore()
+  if (!toast) return null
+  const error = toast.kind === 'error'
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] flex justify-center px-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+      <div
+        key={toast.id}
+        role={error ? 'alert' : 'status'}
+        className={`pointer-events-auto flex max-w-[560px] animate-[slidein_.35s_ease] items-start gap-3 rounded-[12px] px-4 py-3 text-sm shadow-lg ${
+          error ? 'bg-[#f7deda] text-[#8e2118]' : 'bg-d-ink text-white'
+        }`}
+      >
+        <span className="flex-1 leading-relaxed">{toast.text}</span>
+        <button type="button" onClick={dismissToast} aria-label="Fermer le message" className="shrink-0 opacity-70 hover:opacity-100">
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Screens({ route }) {
+  return (
+    <>
       {route.space === 'admin' ? (
         <AdminLayout current={route.section === 'commande' ? 'commandes' : route.section}>
           {route.section === 'vue' ? (
@@ -84,14 +157,14 @@ export default function DashboardApp() {
         )
       ) : route.space === 'connexion' ? (
         <StaffLogin step={route.section} />
-      ) : (
+      ) : import.meta.env.DEV ? (
         <Spaces />
-      )}
-    </DashboardStore>
+      ) : null}
+    </>
   )
 }
 
-// Choix de l'espace (démonstration, en attendant la connexion avec les rôles)
+// Choix de l'espace (développement uniquement)
 function Spaces() {
   const spaces = [
     { href: '#connexion', title: 'Connexion de l’équipe', text: 'Écran de connexion par code e-mail (admin, employés, livreurs).' },
@@ -106,7 +179,7 @@ function Spaces() {
         <h1 className="mt-3 text-[clamp(32px,4vw,44px)] font-light leading-tight">
           Choisir un <span className="font-serif italic">espace</span>
         </h1>
-        <p className="mt-3 max-w-xl text-[15px] text-d-muted">Démonstration : chaque espace s’ouvrira selon le rôle du compte une fois la connexion branchée.</p>
+        <p className="mt-3 max-w-xl text-[15px] text-d-muted">Développement : chaque espace demande un compte avec le bon rôle.</p>
         <ul className="mt-10 grid gap-3 sm:grid-cols-2">
           {spaces.map((s) => (
             <li key={s.href}>

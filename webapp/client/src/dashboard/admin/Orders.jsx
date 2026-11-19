@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
 import { useMemo, useState } from 'react'
-import { RIDERS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { orderStatus } from '../lib/status.js'
 import { ago, hour, money, orderTotal, partTotal } from '../lib/format.js'
@@ -36,7 +35,7 @@ export const detailHref = (o) => `#admin/commandes/${o.number}`
 
 /** Colonne « Livreur » : nom + arrivée, à assigner, retrait en boutique, motif d'annulation */
 function RiderCell({ order, status }) {
-  const rider = RIDERS.find((r) => r.id === order.riderId)
+  const rider = order.riderName ? { name: order.riderName } : null
   if (status === 'annulee') return <span className="text-d-danger">{order.cancelled?.reason ?? 'Annulée'}</span>
   if (order.mode === 'retrait') return <span className="text-d-muted">Retrait en boutique</span>
   if (rider) {
@@ -230,7 +229,6 @@ export default function Orders() {
       <Card className="overflow-hidden">
         <OrdersTable orders={visible} highlight={lastNewOrder} />
       </Card>
-      <p className="mt-5 text-xs text-d-muted">Données de démonstration.</p>
     </>
   )
 }

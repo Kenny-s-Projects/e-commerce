@@ -1,13 +1,15 @@
-import { Avatar, Card, DemoNote, Mono, telHref } from '../ui/ui.jsx'
+import { Avatar, Card, Mono, telHref } from '../ui/ui.jsx'
+import { useStore } from '../store/store.jsx'
 import Icon from '../ui/Icon.jsx'
 import { AvailabilitySwitch } from './Courses.jsx'
-import { RIDER_PHONE, useRider } from './rider.js'
+import { useRider } from './rider.js'
 
 const AIDE = 'https://wa.me/243856486993?text=' + encodeURIComponent('Bonjour, je suis livreur kclick et j’ai une question.')
 
 /** Livreur · Profil */
 export default function RiderProfile() {
   const { rider, current, dispatch } = useRider()
+  const { logout } = useStore()
   if (!rider) return null
 
   return (
@@ -33,9 +35,13 @@ export default function RiderProfile() {
         <Card className="px-4 py-1.5">
           <div className="flex items-center justify-between gap-3 border-b border-d-soft py-3 text-sm">
             <span className="text-d-muted">Téléphone</span>
-            <a href={telHref(RIDER_PHONE)}>
-              <Mono>{RIDER_PHONE}</Mono>
-            </a>
+            {rider.phone ? (
+              <a href={telHref(rider.phone)}>
+                <Mono>{rider.phone}</Mono>
+              </a>
+            ) : (
+              <span className="text-d-muted">Non renseigné</span>
+            )}
           </div>
           <div className="flex items-center justify-between gap-3 border-b border-d-soft py-3 text-sm">
             <span className="text-d-muted">Véhicule</span>
@@ -55,15 +61,14 @@ export default function RiderProfile() {
             </span>
             <Icon name="back" className="size-4 rotate-180 text-d-muted" />
           </a>
-          <a href="#dashboard" className="flex items-center justify-between gap-3 py-3.5 text-sm">
+          <button type="button" onClick={logout} className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-sm">
             <span className="flex items-center gap-3">
               <Icon name="logout" className="size-[18px]" />
-              Démonstration : changer d’espace
+              Se déconnecter
             </span>
             <Icon name="back" className="size-4 rotate-180 text-d-muted" />
-          </a>
+          </button>
         </Card>
-        <DemoNote className="mx-1" />
       </div>
     </>
   )

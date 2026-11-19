@@ -1,5 +1,5 @@
 import { hour, money, orderTotal } from '../lib/format.js'
-import { Card, DemoNote, Mono } from '../ui/ui.jsx'
+import { Card, Mono } from '../ui/ui.jsx'
 import { brandsOf, useRider } from './rider.js'
 
 /** Livreur · Historique des courses livrées aujourd'hui */
@@ -45,7 +45,6 @@ export default function RiderHistory() {
           </span>
         </Card>
         <p className="mx-1 text-[13px] text-[#1f4a2c]">Toutes payées en ligne, rien à remettre.</p>
-        <DemoNote className="mx-1" />
       </div>
     </>
   )

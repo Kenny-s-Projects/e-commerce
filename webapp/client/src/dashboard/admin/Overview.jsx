@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BRANDS, STOCK_ALERTS } from '../data/demo.js'
+import { BRANDS } from '../data/demo.js'
 import { riderState, useStore } from '../store/store.jsx'
 import { ORDER_STATUS, ORDER_STATUS_KEYS, canDispatch, isActivePart, isOpen, orderStatus } from '../lib/status.js'
 import { minutesSince, money, orderTotal, partTotal, today } from '../lib/format.js'
@@ -43,7 +43,7 @@ function StatusBreakdown({ orders }) {
   )
 }
 
-function Alerts({ orders, now }) {
+function Alerts({ orders, now, stock = [] }) {
   const alerts = []
   for (const o of orders) {
     if (!isOpen(o) || o.riderId || o.deliveredAt) continue
@@ -56,8 +56,8 @@ function Alerts({ orders, now }) {
         title: `${o.number} en préparation depuis ${m} min`,
         text:
           waiting.length > 1
-            ? `Les parts ${waiting.map((p) => BRANDS[p.brand].name).join(' et ')} ne sont pas encore prêtes.`
-            : `La part ${BRANDS[waiting[0].brand].name} n’est pas encore prête.`,
+            ? `Les parts ${waiting.map((p) => (BRANDS[p.brand]?.name ?? p.brandName)).join(' et ')} ne sont pas encore prêtes.`
+            : `La part ${(BRANDS[waiting[0].brand]?.name ?? waiting[0].brandName)} n’est pas encore prête.`,
         level: 'warn',
       })
     }
@@ -68,14 +68,13 @@ function Alerts({ orders, now }) {
         key: `refused-${o.number}-${p.brand}`,
         href: detailHref(o),
         title: `Rupture sur ${o.number}`,
-        text: `${BRANDS[p.brand].name}${p.refusal ? ` : ${p.refusal}` : ''}. ${o.cancelled ? 'Commande annulée.' : 'La commande continue sans cette part.'}`,
+        text: `${(BRANDS[p.brand]?.name ?? p.brandName)}${p.refusal ? ` : ${p.refusal}` : ''}. ${o.cancelled ? 'Commande annulée.' : 'La commande continue sans cette part.'}`,
         level: 'danger',
       })
     }
   }
-  for (const s of STOCK_ALERTS) {
-    alerts.push({ key: `stock-${s.product}`, title: `Rupture signalée chez ${BRANDS[s.brand].name}`, text: `${s.product} : stock à ${s.stock}.`, level: 'danger' })
-  }
+  // Ruptures de stock calculées par l'API (pièces à 0, moins de 250 g pour les produits au poids)
+  for (const a of stock) alerts.push({ key: `stock-${a.ref ?? a.title}`, title: a.title, text: a.text, level: 'danger' })
 
   return (
     <Card className="px-5 py-[18px]">
@@ -161,6 +160,7 @@ function Riders({ riders, orders }) {
       >
         <span className="text-base">Livreurs</span>
       </CardTitle>
+      {!riders.length && <p className="py-3 text-sm text-d-muted">Aucun livreur pour l’instant. Invitez-en un dans Utilisateurs et rôles.</p>}
       <ul className="divide-y divide-d-line">
         {riders.map((r) => {
           const { status, order } = riderState(r, orders)
@@ -168,13 +168,13 @@ function Riders({ riders, orders }) {
           if (order?.pickedUpAt) line = `${order.number} · arrivée dans ${order.eta ?? '…'} min`
           else if (order) {
             const next = order.parts.find((p) => p.status !== 'collectee' && isActivePart(p))
-            line = next ? `${order.number} · récupère chez ${BRANDS[next.brand].name}` : `${order.number} · en route`
+            line = next ? `${order.number} · récupère chez ${(BRANDS[next.brand]?.name ?? next.brandName)}` : `${order.number} · en route`
           }
           return (
             <li key={r.id} className="flex items-center gap-3 py-3">
-              <Avatar name={r.name} />
+              <Avatar name={r.name || 'Livreur'} />
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px]">{r.name}</span>
+                <span className="block text-[15px]">{r.name || 'Livreur'}</span>
                 <span className="block truncate text-xs text-d-muted">{line}</span>
               </span>
               <RiderPill status={status} />
@@ -188,11 +188,15 @@ function Riders({ riders, orders }) {
 
 /** Super admin · Vue d'ensemble */
 export default function Overview() {
-  const { orders, riders, now, lastNewOrder, dispatch } = useStore()
+  const { orders, riders, now, lastNewOrder, dispatch, dashboard, loading } = useStore()
   const [q, setQ] = useState('')
 
-  const todays = useMemo(() => [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [orders])
-  const found = q.trim() ? todays.filter((o) => matches(o, q)) : []
+  // Commandes du jour (l'API renvoie aussi les plus anciennes, utiles à la recherche)
+  const sorted = useMemo(() => [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [orders])
+  const midnight = new Date(now).setHours(0, 0, 0, 0)
+  const todays = sorted.filter((o) => new Date(o.createdAt) >= midnight)
+  const found = q.trim() ? sorted.filter((o) => matches(o, q)) : []
+  const stockAlerts = (dashboard?.alerts ?? []).filter((a) => a.type === 'stock')
 
   const revenue = todays.filter((o) => !o.cancelled).reduce((acc, o) => acc + orderTotal(o), 0)
   const open = todays.filter(isOpen)
@@ -201,9 +205,6 @@ export default function Overview() {
   const avgDelay = delivered.length
     ? Math.round(delivered.reduce((acc, o) => acc + (new Date(o.deliveredAt) - new Date(o.createdAt)), 0) / delivered.length / 60000)
     : null
-  const lastWeek = Math.max(0, todays.length - 2) // démonstration : même jour la semaine dernière
-  const diff = todays.length - lastWeek
-  const weekday = new Date().toLocaleDateString('fr-FR', { weekday: 'long' })
 
   return (
     <>
@@ -229,19 +230,16 @@ export default function Overview() {
               </ul>
             )}
           </div>
-          <Button onClick={() => dispatch({ type: 'order/simulate' })} className="rounded-[10px] max-sm:w-full">
-            Simuler une commande
-          </Button>
+          {import.meta.env.DEV && (
+            <Button onClick={() => dispatch({ type: 'order/simulate' })} className="rounded-[10px] max-sm:w-full">
+              Simuler une commande
+            </Button>
+          )}
         </div>
       </header>
 
       <section aria-label="Indicateurs du jour" className="mb-[18px] grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi
-          label="Commandes aujourd’hui"
-          value={todays.length}
-          note={`${diff >= 0 ? '+' : ''}${diff} par rapport à ${weekday} dernier`}
-          tone={diff >= 0 ? 'text-[#2f5a37]' : 'text-d-danger'}
-        />
+        <Kpi label="Commandes aujourd’hui" value={loading ? '…' : todays.length} note="Depuis minuit" />
         <Kpi label="Chiffre d’affaires" value={money(revenue)} note="Hors commandes annulées" />
         <Kpi
           label="En cours"
@@ -254,7 +252,7 @@ export default function Overview() {
 
       <section className="mb-[18px] grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(300px,0.95fr)]">
         <StatusBreakdown orders={todays} />
-        <Alerts orders={todays} now={now} />
+        <Alerts orders={todays} now={now} stock={stockAlerts} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,0.95fr)]">
@@ -265,7 +263,11 @@ export default function Overview() {
               Tout voir
             </a>
           </div>
-          <OrdersTable orders={todays.slice(0, 8)} highlight={lastNewOrder} />
+          {todays.length ? (
+            <OrdersTable orders={todays.slice(0, 8)} highlight={lastNewOrder} />
+          ) : (
+            <p className="px-5 pb-6 text-sm text-d-muted">{loading ? 'Chargement des commandes…' : 'Aucune commande aujourd’hui pour l’instant.'}</p>
+          )}
         </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:flex lg:flex-col">
           <SalesByBrand orders={todays} />
@@ -273,7 +275,6 @@ export default function Overview() {
         </div>
       </section>
 
-      <p className="mt-6 text-xs text-d-muted">Données de démonstration.</p>
     </>
   )
 }

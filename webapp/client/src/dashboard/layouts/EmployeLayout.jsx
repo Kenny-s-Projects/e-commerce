@@ -1,4 +1,5 @@
-import { BRANDS, STAFF } from '../data/demo.js'
+import { BRANDS } from '../data/demo.js'
+import Icon from '../ui/Icon.jsx'
 import { useStore } from '../store/store.jsx'
 import { Avatar, Toggle } from '../ui/ui.jsx'
 
@@ -13,7 +14,10 @@ const TABS = [
  * Sur téléphone, les onglets passent sur une seconde ligne qui défile.
  */
 export default function EmployeLayout({ brand, current, children }) {
-  const { orders, shopsOpen, dispatch } = useStore()
+  const { orders, shopsOpen, dispatch, me, logout } = useStore()
+  const isAdmin = me?.roles?.some((r) => r.role === 'super_admin')
+  const name = me?.fullName || me?.email || 'Équipe'
+  const open = !!shopsOpen[brand]
   const b = BRANDS[brand]
   const fresh = orders.filter((o) => !o.cancelled && o.parts.some((p) => p.brand === brand && p.status === 'nouvelle')).length
 
@@ -52,17 +56,31 @@ export default function EmployeLayout({ brand, current, children }) {
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <div className="rounded-full border border-white/15 px-3 py-1.5 max-sm:border-0 max-sm:px-0">
-              <Toggle
-                checked={shopsOpen[brand]}
-                onChange={() => dispatch({ type: 'shop/toggle', brand })}
-                label={<span className="max-sm:sr-only">{shopsOpen[brand] ? 'Boutique ouverte' : 'Boutique fermée'}</span>}
-              />
-            </div>
+            {isAdmin ? (
+              <div className="rounded-full border border-white/15 px-3 py-1.5 max-sm:border-0 max-sm:px-0">
+                <Toggle
+                  checked={open}
+                  onChange={() => dispatch({ type: 'shop/toggle', brand })}
+                  label={<span className="max-sm:sr-only">{open ? 'Boutique ouverte' : 'Boutique fermée'}</span>}
+                />
+              </div>
+            ) : (
+              // Seul le super admin ouvre ou ferme une Maison (Paramètres › Maisons)
+              <span
+                title="L’ouverture de la Maison se règle par le super admin"
+                className="flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/85 max-sm:border-0 max-sm:px-0"
+              >
+                <span className={`size-2 rounded-full ${open ? 'bg-[#5e9468]' : 'bg-[#9b968c]'}`} aria-hidden />
+                <span className="max-sm:sr-only">{open ? 'Boutique ouverte' : 'Boutique fermée'}</span>
+              </span>
+            )}
             <span className="flex items-center gap-2.5">
-              <Avatar name={STAFF[brand]} className="size-8 text-[12px]" tone="text-white" color={b.color} />
-              <span className="text-sm max-sm:hidden">{STAFF[brand]}</span>
+              <Avatar name={name} className="size-8 text-[12px]" tone="text-white" color={b.color} />
+              <span className="max-w-[160px] truncate text-sm max-sm:hidden">{name}</span>
             </span>
+            <button type="button" onClick={logout} aria-label="Se déconnecter" title="Se déconnecter" className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
+              <Icon name="logout" className="size-[18px]" />
+            </button>
           </div>
         </div>
         <nav aria-label="Espace boutique" className="flex h-12 overflow-x-auto border-t border-white/10 px-2 md:hidden">
@@ -70,6 +88,11 @@ export default function EmployeLayout({ brand, current, children }) {
         </nav>
       </header>
       <main className="px-[clamp(16px,3vw,40px)] pb-16 pt-[clamp(20px,3vw,36px)]">
+        {!open && (
+          <p role="status" className="mx-auto mb-6 max-w-[1360px] rounded-[12px] border border-d-line bg-white px-4 py-3 text-sm text-d-muted">
+            <span className="font-medium text-d-ink">Maison fermée — bientôt disponible.</span> Ses produits s’affichent « Bientôt disponible » sur le site et ne peuvent pas être commandés.
+          </p>
+        )}
         <div className="mx-auto max-w-[1360px]">{children}</div>
       </main>
     </div>

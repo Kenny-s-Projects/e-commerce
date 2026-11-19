@@ -2,7 +2,7 @@ import { BRANDS } from '../data/demo.js'
 import { hour } from '../lib/format.js'
 import { Button, Card, Mono, Pill, telHref, waHref } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
-import { brandList, CURRENT_RIDER_ID, pickupParts, useRider } from './rider.js'
+import { brandList, pickupParts, useRider } from './rider.js'
 import { useStore } from '../store/store.jsx'
 
 const lower = (s = '') => s.charAt(0).toLowerCase() + s.slice(1)
@@ -52,7 +52,13 @@ function TopBar({ order, subtitle }) {
         <Mono className="text-[17px]">{order?.number ?? 'Course'}</Mono>
         <span className="block truncate text-[13px] text-[#b9b3a7]">{subtitle}</span>
       </span>
-      {order && <Pill tone={{ bg: '#d7e9dc', fg: '#1f4a2c' }}>Payée</Pill>}
+      {order &&
+        (order.payment?.status === 'paye' ? (
+          <Pill tone={{ bg: '#d7e9dc', fg: '#1f4a2c' }}>Payée</Pill>
+        ) : (
+          // Paiement en ligne pas encore confirmé par l'équipe : le livreur n'encaisse jamais rien
+          <Pill tone={{ bg: '#fbefd5', fg: '#7a5200' }}>Paiement en ligne</Pill>
+        ))}
     </header>
   )
 }
@@ -60,10 +66,12 @@ function TopBar({ order, subtitle }) {
 /** Livreur · Une course : récupérer chez chaque Maison, puis livrer au client */
 export default function Course({ number }) {
   const { orders } = useStore()
-  const { dispatch } = useRider()
+  const { dispatch, loading } = useRider()
+  // /deliveries/mine ne renvoie que les courses de ce livreur
   const order = orders.find((o) => o.number === number)
 
-  if (!order || order.riderId !== CURRENT_RIDER_ID) {
+  if (!order && loading) return <TopBar order={null} subtitle="Chargement…" />
+  if (!order) {
     return (
       <>
         <TopBar order={null} subtitle="Course introuvable" />
@@ -102,7 +110,7 @@ export default function Course({ number }) {
             Course <span className="font-serif italic">terminée</span>
           </p>
           <p className="text-sm text-d-muted">
-            {order.customer.name} a reçu sa commande à {hour(order.deliveredAt)}. Rien à encaisser : elle était payée en ligne.
+            {order.customer.name} a reçu sa commande à {hour(order.deliveredAt)}. Rien à encaisser : le paiement se fait en ligne.
           </p>
           <a href="#livreur" className="mt-4 inline-flex h-12 items-center rounded-xl bg-d-ink px-6 text-[15px] text-white">
             Retour à mes courses
@@ -138,7 +146,7 @@ export default function Course({ number }) {
           <Step
             index={parts.length + 1}
             title={`Livrer à ${order.customer.name}`}
-            text="Déjà payée en ligne : remise en main propre, rien à encaisser."
+            text="Paiement en ligne : remise en main propre, rien à encaisser."
             state={toCollect.length ? 'todo' : 'current'}
           />
         </ol>

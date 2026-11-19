@@ -1,6 +1,6 @@
 import { BRANDS } from '../data/demo.js'
 import { hour, today } from '../lib/format.js'
-import { Card, DemoNote, Mono, Pill } from '../ui/ui.jsx'
+import { Card, Mono, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 import { brandsOf, courseState, PART_TEXT, pickupParts, shortStreet, useRider } from './rider.js'
 
@@ -54,7 +54,7 @@ function CourseCard({ order }) {
       </span>
       <span className="mt-3.5 flex items-center justify-between gap-3 text-sm">
         <span className="text-d-muted">Paiement</span>
-        <span className="text-right text-[#1f4a2c]">Payée en ligne · rien à encaisser</span>
+        <span className="text-right text-[#1f4a2c]">Paiement en ligne · rien à encaisser</span>
       </span>
     </a>
   )
@@ -68,7 +68,7 @@ function DoneRow({ order }) {
         <Pill tone={{ bg: '#d7e9dc', fg: '#1f4a2c' }}>Livrée à {hour(order.deliveredAt)}</Pill>
       </div>
       <p className="text-sm text-d-muted">
-        {order.customer.name} · {brandsOf(order)} · payée en ligne
+        {order.customer.name} · {brandsOf(order)} · paiement en ligne
       </p>
     </div>
   )
@@ -85,8 +85,8 @@ function Row({ label, children, muted }) {
 
 /** Livreur · Mes courses */
 export default function Courses() {
-  const { rider, current, delivered, dispatch } = useRider()
-  if (!rider) return null
+  const { rider, current, delivered, dispatch, loading } = useRider()
+  if (!rider) return <p className="px-5 py-16 text-center text-sm text-d-muted">{loading ? 'Chargement de vos courses…' : 'Profil livreur introuvable.'}</p>
 
   return (
     <>
@@ -121,9 +121,6 @@ export default function Courses() {
             <p className="max-w-[280px] text-[13px] leading-relaxed text-d-muted">
               Le dispatch vous attribue les courses. Vous recevrez une notification.
             </p>
-            <a href="#admin/dispatch" className="mt-1 text-xs text-d-muted underline decoration-d-border underline-offset-4">
-              Démonstration : ouvrir le dispatch
-            </a>
           </Card>
         )}
 
@@ -143,7 +140,6 @@ export default function Courses() {
             <span className="text-right text-[#1f4a2c]">Tous en ligne, rien à remettre</span>
           </Row>
         </Card>
-        <DemoNote className="mx-1" />
       </div>
     </>
   )

@@ -29,8 +29,8 @@ export const since = (date, now) => {
 export const today = () =>
   new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^./, (c) => c.toUpperCase())
 
-export const initials = (name) =>
-  name
+export const initials = (name = '') =>
+  String(name || '?')
     .split(/\s+/)
     .map((w) => w[0])
     .join('')

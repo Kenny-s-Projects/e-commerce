@@ -1,44 +1,55 @@
-import { useMemo, useState } from 'react'
-import { adidasCatalog, celioCatalog, kyraCatalog, patchiCatalog } from '../../data/catalog.js'
+import { useEffect, useMemo, useState } from 'react'
+import { api } from '../../lib/api.js'
 import { BRANDS } from '../data/demo.js'
 import { money } from '../lib/format.js'
-import { Card, DemoNote, Mono, PageTitle, Toggle } from '../ui/ui.jsx'
+import { Card, Mono, PageTitle, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 
-const CATALOGS = { kyra: kyraCatalog, patchi: patchiCatalog, adidas: adidasCatalog, celio: celioCatalog }
+const IN = { bg: '#e1eee2', fg: '#2f5a37' }
+const OUT = { bg: '#f7deda', fg: '#8e2118' }
+
+// Stock lisible : pièces, ou kilos pour les produits vendus au poids
+const stockText = (p) => (p.unit === 'kg' ? `${Number(p.stock_kg ?? 0).toLocaleString('fr-FR')} kg` : `${p.stock} pièce(s)`)
 
 /*
- * Disponibilités : la Maison indique ce qui est en rupture.
- * Démonstration locale ; plus tard chaque bascule mettra à jour le stock via l'API.
+ * Disponibilités : stock réel des produits de la Maison (GET /catalog/products?brand=…).
+ * Lecture seule pour l'instant : le stock viendra de la synchronisation avec l'ERP (eshopaid).
  */
-const NONE = []
-
 export default function Availability({ brand }) {
   const b = BRANDS[brand]
-  const products = CATALOGS[brand] ?? NONE
+  const [products, setProducts] = useState(null)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
-  const [out, setOut] = useState(() => new Set(products.filter((p) => p.stock === 0).map((p) => p.id)))
+
+  useEffect(() => {
+    let alive = true
+    api
+      .get('/catalog/products', { brand, limit: 100 })
+      .then((r) => alive && setProducts(r.items))
+      .catch((err) => alive && setError(err.message))
+    return () => {
+      alive = false
+    }
+  }, [brand])
 
   const list = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return q ? products.filter((p) => `${p.name} ${p.store ?? ''} ${p.ref ?? ''}`.toLowerCase().includes(q)) : products
+    const all = products ?? []
+    return q ? all.filter((p) => `${p.name_fr} ${p.category_fr ?? ''} ${p.ref ?? ''}`.toLowerCase().includes(q)) : all
   }, [products, search])
 
-  const toggle = (id) =>
-    setOut((s) => {
-      const next = new Set(s)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const inStock = (p) => (p.variants ?? []).some((v) => v.in_stock ?? v.stock > 0)
+  const out = (products ?? []).filter((p) => !inStock(p)).length
 
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <PageTitle eyebrow={`${b.name} · Gombe`} before="Disponi" accent="bilités" />
-        <p className="text-sm text-d-muted">
-          <Mono>{products.length - out.size}</Mono> disponible(s) · <Mono>{out.size}</Mono> en rupture
-        </p>
+        {products && (
+          <p className="text-sm text-d-muted">
+            <Mono>{products.length - out}</Mono> en stock · <Mono>{out}</Mono> en rupture
+          </p>
+        )}
       </header>
 
       <label className="mb-4 flex h-11 max-w-md items-center gap-3 rounded-lg border border-d-line bg-white px-3.5 focus-within:border-d-ink">
@@ -53,29 +64,34 @@ export default function Availability({ brand }) {
       </label>
 
       <Card as="ul" className="divide-y divide-d-soft">
+        {!products && <li className="px-4 py-8 text-center text-sm text-d-muted">{error || 'Chargement des produits…'}</li>}
         {list.map((p) => {
-          const available = !out.has(p.id)
+          const ok = inStock(p)
           return (
             <li key={p.id} className="flex items-center gap-4 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px]">{p.name}</p>
+                <p className="truncate text-[15px]">{p.name_fr}</p>
                 <p className="truncate text-[13px] text-d-muted">
-                  {[p.store, p.ref].filter(Boolean).join(' · ')}
-                  {p.price != null && <> · <Mono>{money(p.price)}</Mono>{p.unit === 'kg' && ' le kg'}</>}
+                  {[p.category_fr, p.ref].filter(Boolean).join(' · ')}
+                  {p.price_from != null && (
+                    <>
+                      {' · '}
+                      <Mono>{money(p.price_from)}</Mono>
+                      {p.unit === 'kg' && ' les 250 g'}
+                    </>
+                  )}
+                  {' · '}
+                  {stockText(p)}
                 </p>
               </div>
-              <Toggle
-                checked={available}
-                onChange={() => toggle(p.id)}
-                label={<span className={`w-[84px] text-[13px] ${available ? '' : 'text-d-danger'}`}>{available ? 'Disponible' : 'Rupture'}</span>}
-              />
+              <Pill tone={ok ? IN : OUT}>{ok ? 'En stock' : 'Rupture'}</Pill>
             </li>
           )
         })}
-        {!list.length && <li className="px-4 py-8 text-center text-sm text-d-muted">Aucun produit ne correspond.</li>}
+        {products && !list.length && <li className="px-4 py-8 text-center text-sm text-d-muted">Aucun produit ne correspond.</li>}
       </Card>
 
-      <DemoNote className="mt-6">Données de démonstration : la disponibilité mettra à jour le stock via l’API.</DemoNote>
+      <p className="mt-6 text-xs text-d-muted">Le stock se met à jour avec les commandes et, bientôt, avec l’ERP. Une rupture sur une commande se signale depuis la file des commandes.</p>
     </>
   )
 }

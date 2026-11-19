@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BRANDS } from '../data/demo.js'
+import { api } from '../../lib/api.js'
 import { useOrder, useStore } from '../store/store.jsx'
 import { canDispatch, isOpen, orderStatus } from '../lib/status.js'
 import { clock, hour, money, orderSubtotal, partTotal } from '../lib/format.js'
@@ -7,7 +8,6 @@ import { timeline } from '../lib/timeline.js'
 import { Button, Card, PartPill, Pill, StatusPill, telHref, waHref } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 
-const PICKUP = 'Kyra, 124 Boulevard du 30 Juin, Gombe'
 
 const PAYMENT_TONE = {
   paye: { label: 'Payée', bg: '#e1eee2', fg: '#2f5a37' },
@@ -35,8 +35,12 @@ function PartCard({ part }) {
       </div>
       <ul className={`divide-y divide-d-line ${off ? 'opacity-55' : ''}`}>
         {part.items.map((i) => (
-          <li key={i.name} className="flex gap-4 px-5 py-4">
-            <span className="size-14 shrink-0 rounded-md" style={{ background: b.color, opacity: 0.85 }} aria-hidden />
+          <li key={i.id ?? `${i.name}-${i.detail}`} className="flex gap-4 px-5 py-4">
+            {i.image ? (
+              <img src={i.image} alt="" className="size-14 shrink-0 rounded-md bg-d-soft object-cover" />
+            ) : (
+              <span className="size-14 shrink-0 rounded-md" style={{ background: b.color, opacity: 0.85 }} aria-hidden />
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <p className={`text-[15px] ${off ? 'line-through' : ''}`}>{i.name}</p>
@@ -142,7 +146,7 @@ function Customer({ order }) {
           )}
         </p>
       ) : (
-        <p className="text-[14.5px] leading-relaxed">{PICKUP}</p>
+        <p className="text-[14.5px] leading-relaxed">{order.pickup ? `${order.pickup.name}, ${order.pickup.address ?? ''}` : 'Point de retrait'}</p>
       )}
     </Card>
   )
@@ -221,9 +225,27 @@ function CancelPanel({ order, onClose }) {
 
 /** Super admin · Détail d'une commande */
 export default function OrderDetail({ number }) {
-  const order = useOrder(number)
+  const listed = useOrder(number)
+  const { loading, orders } = useStore()
   const [cancelling, setCancelling] = useState(false)
+  // Commande plus ancienne que celles chargées : recherche par numéro
+  const [found, setFound] = useState({ number: null, order: null, done: false })
+  useEffect(() => {
+    if (listed || loading) return
+    let alive = true
+    api
+      .get('/orders', { search: number, limit: 5 })
+      .then((r) => alive && setFound({ number, order: r.items.find((o) => o.number === number) ?? null, done: true }))
+      .catch(() => alive && setFound({ number, order: null, done: true }))
+    return () => {
+      alive = false
+    }
+  }, [listed, loading, number, orders])
+  const order = listed ?? (found.number === number ? found.order : null)
 
+  if (!order && (loading || (found.number !== number && !listed))) {
+    return <Card className="px-6 py-14 text-center text-sm text-d-muted">Chargement de la commande…</Card>
+  }
   if (!order) {
     return (
       <Card className="px-6 py-14 text-center">
@@ -302,7 +324,6 @@ export default function OrderDetail({ number }) {
         </div>
       </div>
 
-      <p className="mt-6 text-xs text-d-muted">Données de démonstration.</p>
     </>
   )
 }
