@@ -9,6 +9,12 @@ import Orders from './admin/Orders.jsx'
 import OrderDetail from './admin/OrderDetail.jsx'
 import Dispatch from './admin/Dispatch.jsx'
 import ComingSoon from './admin/ComingSoon.jsx'
+import Settings from './admin/Settings.jsx'
+import Clients from './admin/Clients.jsx'
+import ClientDetail from './admin/ClientDetail.jsx'
+import Users from './admin/Users.jsx'
+import UserForm from './admin/UserForm.jsx'
+import StaffLogin from './auth/StaffLogin.jsx'
 import Queue from './employe/Queue.jsx'
 import Pickups from './employe/Pickups.jsx'
 import Availability from './employe/Availability.jsx'
@@ -26,7 +32,7 @@ export default function DashboardApp() {
   const route = useDashRoute()
 
   useEffect(() => {
-    const titles = { admin: 'Super admin', employe: 'Boutique', livreur: 'Livreur', dashboard: 'Dashboard' }
+    const titles = { admin: 'Super admin', employe: 'Boutique', livreur: 'Livreur', dashboard: 'Dashboard', connexion: 'Connexion' }
     document.title = `kclick · ${titles[route.space]}`
   }, [route.space])
 
@@ -42,6 +48,16 @@ export default function DashboardApp() {
             <Orders />
           ) : route.section === 'dispatch' ? (
             <Dispatch />
+          ) : route.section === 'parametres' ? (
+            <Settings />
+          ) : route.section === 'clients' && route.id ? (
+            <ClientDetail id={route.id} />
+          ) : route.section === 'clients' ? (
+            <Clients />
+          ) : route.section === 'utilisateurs' && route.id ? (
+            <UserForm id={route.id === 'nouveau' ? null : route.id} />
+          ) : route.section === 'utilisateurs' ? (
+            <Users />
           ) : (
             <ComingSoon section={route.section} />
           )}
@@ -66,6 +82,8 @@ export default function DashboardApp() {
             {route.section === 'historique' ? <RiderHistory /> : route.section === 'profil' ? <RiderProfile /> : <Courses />}
           </LivreurLayout>
         )
+      ) : route.space === 'connexion' ? (
+        <StaffLogin step={route.section} />
       ) : (
         <Spaces />
       )}
@@ -76,6 +94,7 @@ export default function DashboardApp() {
 // Choix de l'espace (démonstration, en attendant la connexion avec les rôles)
 function Spaces() {
   const spaces = [
+    { href: '#connexion', title: 'Connexion de l’équipe', text: 'Écran de connexion par code e-mail (admin, employés, livreurs).' },
     { href: '#admin', title: 'Super admin', text: 'Vue d’ensemble, commandes, dispatch des livreurs.' },
     ...Object.values(BRANDS).map((b) => ({ href: `#employe/${b.id}`, title: `Employé · ${b.name}`, text: 'File des commandes de la Maison.', color: b.color })),
     { href: '#livreur', title: 'Livreur', text: 'Courses du jour, récupération et remise (pensé pour le téléphone).' },

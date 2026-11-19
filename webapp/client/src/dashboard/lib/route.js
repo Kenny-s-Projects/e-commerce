@@ -13,6 +13,8 @@ import { BRANDS } from '../data/demo.js'
  *   livreur                       → mes courses
  *   livreur/course/KC-0142        → une course
  *   livreur/historique | profil
+ *   connexion                     → connexion de l'équipe (admin, employés, livreurs)
+ *   admin/clients/<id>, admin/utilisateurs/nouveau, admin/utilisateurs/<id>
  */
 function parse() {
   const [space, a, b] = decodeURIComponent(window.location.hash.slice(1)).split('/')
@@ -22,6 +24,7 @@ function parse() {
     return { space, brand, section: (BRANDS[a] ? b : a) || 'file' }
   }
   if (space === 'livreur') return { space, section: a || 'courses', id: b ?? null }
+  if (space === 'connexion') return { space, section: a || 'email' }
   return { space: 'dashboard' }
 }
 

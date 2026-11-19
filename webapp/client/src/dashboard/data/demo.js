@@ -130,3 +130,23 @@ export const SIMULATION_CUSTOMERS = [
   { name: 'Cédric Ngoy', phone: '+243 99 512 63 20', street: 'avenue Wagenia', landmark: 'immeuble Crown, 5e' },
   { name: 'Esther Mbala', phone: '+243 82 330 47 15', street: 'boulevard du 30 Juin', landmark: 'galerie Sajir' },
 ]
+
+// Comptes de l'équipe (utilisateurs du dashboard). Les clients du site sont dans data/clients.js.
+//  role : super_admin · employe (avec brand) · livreur (avec riderId)
+//  status : actif · invite (invitation envoyée, pas encore connecté) · desactive
+export const USERS = [
+  { id: 'u1', firstName: 'Ref', lastName: 'Digital', email: 'ecommerce@kennysinternational.com', phone: '+243 85 648 69 93', role: 'super_admin', status: 'actif', lastSeenAt: at(2), createdAt: '2026-09-01T09:00:00Z' },
+  { id: 'u2', firstName: 'Aline', lastName: 'Mukendi', email: 'aline.kyra@exemple.com', phone: '+243 81 300 21 45', role: 'employe', brand: 'kyra', status: 'actif', lastSeenAt: at(5), createdAt: '2026-09-15T09:00:00Z' },
+  { id: 'u3', firstName: 'Esther', lastName: 'Kanza', email: 'esther.patchi@exemple.com', phone: '+243 82 410 77 02', role: 'employe', brand: 'patchi', status: 'actif', lastSeenAt: at(11), createdAt: '2026-09-15T09:00:00Z' },
+  { id: 'u4', firstName: 'Junior', lastName: 'Lokwa', email: 'junior.adidas@exemple.com', phone: '+243 99 210 88 64', role: 'employe', brand: 'adidas', status: 'invite', lastSeenAt: null, createdAt: '2026-11-17T09:00:00Z' },
+  { id: 'u5', firstName: 'Ruth', lastName: 'Mbala', email: 'ruth.celio@exemple.com', phone: '+243 97 655 31 20', role: 'employe', brand: 'celio', status: 'actif', lastSeenAt: at(190), createdAt: '2026-10-02T09:00:00Z' },
+  { id: 'u6', firstName: 'Jonathan', lastName: 'Mavungu', email: 'jonathan.m@exemple.com', phone: '+243 81 555 10 01', role: 'livreur', riderId: 'jm', status: 'actif', lastSeenAt: at(1), createdAt: '2026-10-10T09:00:00Z' },
+  { id: 'u7', firstName: 'Héritier', lastName: 'Ngalula', email: 'heritier.n@exemple.com', phone: '+243 81 555 10 02', role: 'livreur', riderId: 'hn', status: 'actif', lastSeenAt: at(3), createdAt: '2026-10-10T09:00:00Z' },
+  { id: 'u8', firstName: 'Glody', lastName: 'Kabeya', email: 'glody.k@exemple.com', phone: '+243 81 555 10 03', role: 'livreur', riderId: 'gk', status: 'actif', lastSeenAt: at(4), createdAt: '2026-10-10T09:00:00Z' },
+]
+
+export const ROLES = {
+  super_admin: { label: 'Super admin', text: 'Accès à tout : commandes, dispatch, catalogue, utilisateurs, paramètres.' },
+  employe: { label: 'Employé', text: 'Voit et prépare la part de sa Maison dans chaque commande.' },
+  livreur: { label: 'Livreur', text: 'Voit ses courses, récupère les parts et livre le client.' },
+}

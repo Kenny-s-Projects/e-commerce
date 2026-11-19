@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
 import { createContext, useContext, useEffect, useMemo, useReducer, useState } from 'react'
-import { BRANDS, ORDERS, RIDERS, SIMULATION_CUSTOMERS, SIMULATION_ITEMS } from '../data/demo.js'
+import { BRANDS, ORDERS, RIDERS, SIMULATION_CUSTOMERS, SIMULATION_ITEMS, USERS } from '../data/demo.js'
 import { isActivePart } from '../lib/status.js'
 
 /*
@@ -14,6 +14,7 @@ const now = () => new Date().toISOString()
 const initial = {
   orders: ORDERS,
   riders: RIDERS,
+  users: USERS,
   shopsOpen: Object.fromEntries(Object.keys(BRANDS).map((b) => [b, true])),
   lastNewOrder: null, // numéro de la dernière commande arrivée (son + surbrillance)
 }
@@ -68,6 +69,20 @@ function reducer(state, action) {
         cancelled: { reason: action.reason, at: now() },
         parts: o.parts.map((p) => (isActivePart(p) ? { ...p, status: 'annulee' } : p)),
       }))
+
+    // Utilisateurs de l'équipe (super-admin)
+    case 'user/invite': {
+      const id = `u${Date.now()}`
+      const user = { ...action.user, id, status: 'invite', lastSeenAt: null, createdAt: now() }
+      // Un nouveau livreur apparaît aussi dans le dispatch
+      const riders =
+        user.role === 'livreur'
+          ? [...state.riders, { id: `r${id}`, name: `${user.firstName} ${user.lastName[0]}.`, firstName: user.firstName, vehicle: user.vehicle || 'Moto', zone: user.zone || 'Gombe', available: false }]
+          : state.riders
+      return { ...state, users: [...state.users, { ...user, riderId: user.role === 'livreur' ? `r${id}` : undefined }], riders }
+    }
+    case 'user/update':
+      return { ...state, users: state.users.map((u) => (u.id === action.id ? { ...u, ...action.changes } : u)) }
 
     case 'shop/toggle':
       return { ...state, shopsOpen: { ...state.shopsOpen, [action.brand]: !state.shopsOpen[action.brand] } }

@@ -69,10 +69,13 @@ function Me() {
   return (
     <div className="flex items-center gap-3 border-t border-white/10 pt-4">
       <Avatar name={ME.name} className="size-9 text-[12px]" tone="bg-d-gold text-d-ink" />
-      <div className="leading-tight">
+      <div className="flex-1 leading-tight">
         <p className="text-[14.5px] text-white">{ME.name}</p>
         <p className="text-xs text-white/60">{ME.role}</p>
       </div>
+      <a href="#connexion" aria-label="Se déconnecter" title="Se déconnecter" className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
+        <Icon name="logout" className="size-[18px]" />
+      </a>
     </div>
   )
 }

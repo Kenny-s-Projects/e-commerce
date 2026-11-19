@@ -1,0 +1,393 @@
+import { useState } from 'react'
+import { BRANDS } from '../data/demo.js'
+import { useStore } from '../store/store.jsx'
+import { Brand, Button, Card, DemoNote, PageTitle, Toggle } from '../ui/ui.jsx'
+import Icon from '../ui/Icon.jsx'
+
+const SECTIONS = [
+  { id: 'general', label: 'Général', text: 'Plateforme, contact, langue' },
+  { id: 'livraison', label: 'Livraison', text: 'Zones, frais, retrait' },
+  { id: 'paiements', label: 'Paiements', text: 'Mobile money, carte' },
+  { id: 'notifications', label: 'Notifications', text: 'E-mails, son' },
+  { id: 'maisons', label: 'Maisons', text: 'Ouverture, horaires' },
+  { id: 'securite', label: 'Sécurité', text: 'Connexion, sessions' },
+]
+
+const INITIAL = {
+  platform: 'kclick',
+  company: 'Kenny’s International',
+  supportEmail: 'ecommerce@kennysinternational.com',
+  whatsapp: '+243 856 486 993',
+  address: '124 Boulevard du 30 Juin, Gombe',
+  lang: 'fr',
+  currency: 'USD',
+  zones: [
+    { id: 'z1', commune: 'Gombe', fee: 4, delay: 'Le jour même', active: true },
+    { id: 'z2', commune: 'Ngaliema', fee: 7, delay: 'Le lendemain', active: false },
+  ],
+  cutoff: '17:00',
+  pickup: 'Kyra · 124 Boulevard du 30 Juin, Gombe',
+  cancelDelay: '15',
+  mobileMoney: true,
+  operators: { 'M-Pesa': true, 'Orange Money': true, 'Airtel Money': true },
+  card: true,
+  provider: '',
+  clientMails: { confirmation: true, prete: true, route: true, livree: true },
+  teamMail: true,
+  recipients: ['ecommerce@kennysinternational.com'],
+  sound: true,
+  hours: { kyra: 'Lun–sam · 9 h – 20 h', patchi: 'Lun–sam · 9 h – 20 h', adidas: 'Lun–sam · 10 h – 19 h', celio: 'Lun–sam · 10 h – 19 h' },
+  codeValidity: '10',
+  idle: '60',
+}
+
+const input =
+  'h-11 w-full rounded-[10px] border border-d-line bg-white px-3.5 text-sm outline-none transition-colors focus:border-d-ink disabled:bg-d-soft disabled:text-d-muted'
+
+function Field({ id, label, hint, children, className = '' }) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="mb-1.5 block text-[13px] text-d-muted">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="mt-1.5 text-xs text-d-muted">{hint}</p>}
+    </div>
+  )
+}
+
+/** Ligne avec un interrupteur : titre, explication, interrupteur à droite */
+function Switch({ title, text, checked, onChange, disabled }) {
+  return (
+    <div className={`flex items-center justify-between gap-5 py-3.5 ${disabled ? 'opacity-60' : ''}`}>
+      <div className="min-w-0">
+        <p className="text-sm">{title}</p>
+        {text && <p className="mt-0.5 text-xs text-d-muted">{text}</p>}
+      </div>
+      {disabled ? (
+        <span className="relative h-6 w-11 shrink-0 rounded-full bg-[#cfc9bd]" aria-label={`${title} : désactivé`}>
+          <span className="absolute left-0.5 top-0.5 size-5 rounded-full bg-white" />
+        </span>
+      ) : (
+        <Toggle checked={checked} onChange={onChange} label={<span className="sr-only">{title}</span>} />
+      )}
+    </div>
+  )
+}
+
+function Section({ title, text, children }) {
+  return (
+    <Card className="px-5 py-5 sm:px-6 sm:py-6">
+      <h2 className="text-[17px] font-medium">{title}</h2>
+      {text && <p className="mt-1 text-[13px] text-d-muted">{text}</p>}
+      <div className="mt-5">{children}</div>
+    </Card>
+  )
+}
+
+/** Paramètres de la plateforme (démonstration : rien n'est encore enregistré côté serveur) */
+export default function Settings() {
+  const { shopsOpen, dispatch } = useStore()
+  const [section, setSection] = useState('general')
+  const [saved, setSaved] = useState(INITIAL)
+  const [s, setS] = useState(INITIAL)
+  const [done, setDone] = useState(false)
+  const [newRecipient, setNewRecipient] = useState('')
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  const [loggedOut, setLoggedOut] = useState(false)
+
+  const dirty = JSON.stringify(s) !== JSON.stringify(saved)
+  const set = (patch) => {
+    setS((prev) => ({ ...prev, ...patch }))
+    setDone(false)
+  }
+  const setZone = (id, patch) => set({ zones: s.zones.map((z) => (z.id === id ? { ...z, ...patch } : z)) })
+  const save = () => {
+    setSaved(s)
+    setDone(true)
+  }
+
+  return (
+    <>
+      <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
+        <PageTitle eyebrow="Super admin" before="Para" accent="mètres" />
+        <div className="flex items-center gap-3 max-sm:w-full">
+          {done && !dirty && (
+            <span role="status" className="inline-flex items-center gap-1.5 text-[13px] text-[#2f6b40]">
+              <Icon name="check" className="size-4" /> Modifications enregistrées
+            </span>
+          )}
+          {dirty && <span className="text-[13px] text-d-gold-ink max-sm:hidden">Modifications non enregistrées</span>}
+          <Button onClick={save} disabled={!dirty} className="max-sm:hidden">
+            Enregistrer les modifications
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-6 max-lg:grid-cols-1">
+        <nav aria-label="Rubriques des paramètres" className="max-lg:-mx-1 max-lg:overflow-x-auto max-lg:px-1 max-lg:pb-1">
+          <ul className="flex flex-col gap-1 max-lg:flex-row max-lg:gap-1.5">
+            {SECTIONS.map((x) => {
+              const active = section === x.id
+              return (
+                <li key={x.id} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSection(x.id)}
+                    aria-current={active ? 'true' : undefined}
+                    className={`w-full text-left transition-colors lg:rounded-[10px] lg:px-4 lg:py-3 max-lg:flex max-lg:h-9 max-lg:items-center max-lg:rounded-full max-lg:border max-lg:px-4 max-lg:text-[13.5px] ${
+                      active
+                        ? 'lg:bg-white lg:shadow-[inset_0_0_0_1px_var(--color-d-line)] max-lg:border-d-ink max-lg:bg-d-ink max-lg:text-white'
+                        : 'lg:hover:bg-white/60 max-lg:border-d-line max-lg:bg-white'
+                    }`}
+                  >
+                    <span className="block text-[14.5px] max-lg:text-[13.5px]">{x.label}</span>
+                    <span className="block text-xs text-d-muted max-lg:hidden">{x.text}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+
+        <div className="flex min-w-0 flex-col gap-5">
+          {section === 'general' && (
+            <Section title="Général" text="Informations affichées aux clients sur le site et dans les e-mails.">
+              <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                <Field id="set-platform" label="Nom de la plateforme">
+                  <input id="set-platform" className={input} value={s.platform} onChange={(e) => set({ platform: e.target.value })} />
+                </Field>
+                <Field id="set-company" label="Société">
+                  <input id="set-company" className={input} value={s.company} onChange={(e) => set({ company: e.target.value })} />
+                </Field>
+                <Field id="set-email" label="E-mail du service client">
+                  <input id="set-email" type="email" className={input} value={s.supportEmail} onChange={(e) => set({ supportEmail: e.target.value })} />
+                </Field>
+                <Field id="set-wa" label="WhatsApp de la conciergerie">
+                  <input id="set-wa" type="tel" className={`${input} font-mono`} value={s.whatsapp} onChange={(e) => set({ whatsapp: e.target.value })} />
+                </Field>
+                <Field id="set-address" label="Adresse" className="sm:col-span-2">
+                  <input id="set-address" className={input} value={s.address} onChange={(e) => set({ address: e.target.value })} />
+                </Field>
+                <Field id="set-lang" label="Langue par défaut du site">
+                  <select id="set-lang" className={input} value={s.lang} onChange={(e) => set({ lang: e.target.value })}>
+                    <option value="fr">Français</option>
+                    <option value="en">English</option>
+                  </select>
+                </Field>
+                <Field id="set-currency" label="Devise" hint="Les prix sont affichés en dollars américains.">
+                  <select id="set-currency" className={input} value={s.currency} onChange={(e) => set({ currency: e.target.value })}>
+                    <option value="USD">USD ($)</option>
+                    <option value="CDF">CDF (FC)</option>
+                  </select>
+                </Field>
+              </div>
+            </Section>
+          )}
+
+          {section === 'livraison' && (
+            <>
+              <Section title="Zones de livraison" text="Communes livrées, frais et délai annoncés au client.">
+                <ul className="flex flex-col gap-3">
+                  {s.zones.map((z, i) => (
+                    <li key={z.id} className="grid grid-cols-[minmax(0,1.3fr)_100px_minmax(0,1.2fr)_150px] items-end gap-3 rounded-[10px] border border-d-line p-3.5 max-md:grid-cols-2">
+                      <Field id={`zone-c-${z.id}`} label="Commune">
+                        <input id={`zone-c-${z.id}`} className={input} value={z.commune} onChange={(e) => setZone(z.id, { commune: e.target.value })} />
+                      </Field>
+                      <Field id={`zone-f-${z.id}`} label="Frais ($)">
+                        <input id={`zone-f-${z.id}`} type="number" min="0" className={`${input} font-mono`} value={z.fee} onChange={(e) => setZone(z.id, { fee: Number(e.target.value) })} />
+                      </Field>
+                      <Field id={`zone-d-${z.id}`} label="Délai">
+                        <input id={`zone-d-${z.id}`} className={input} value={z.delay} onChange={(e) => setZone(z.id, { delay: e.target.value })} />
+                      </Field>
+                      <div className="flex h-11 items-center gap-3">
+                        <Toggle checked={z.active} onChange={(v) => setZone(z.id, { active: v })} label={<span className="text-[13px]">{z.active ? 'Active' : 'Inactive'}</span>} />
+                        {i > 0 && (
+                          <button type="button" onClick={() => set({ zones: s.zones.filter((x) => x.id !== z.id) })} aria-label={`Supprimer la zone ${z.commune}`} className="grid size-9 place-items-center rounded-lg text-d-muted hover:bg-d-soft hover:text-d-danger">
+                            <Icon name="close" className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <Button variant="soft" size="sm" className="mt-4" onClick={() => set({ zones: [...s.zones, { id: `z${Date.now()}`, commune: '', fee: 5, delay: 'Le lendemain', active: false }] })}>
+                  <Icon name="plus" className="size-4" /> Ajouter une zone
+                </Button>
+              </Section>
+              <Section title="Horaires et retrait">
+                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                  <Field id="set-cutoff" label="Heure limite pour la livraison du jour" hint="Après cette heure, la commande est livrée le lendemain.">
+                    <input id="set-cutoff" type="time" className={`${input} font-mono`} value={s.cutoff} onChange={(e) => set({ cutoff: e.target.value })} />
+                  </Field>
+                  <Field id="set-cancel" label="Délai d’annulation par le client" hint="Tant que la commande n’est pas en préparation.">
+                    <select id="set-cancel" className={input} value={s.cancelDelay} onChange={(e) => set({ cancelDelay: e.target.value })}>
+                      <option value="5">5 minutes</option>
+                      <option value="15">15 minutes</option>
+                      <option value="30">30 minutes</option>
+                    </select>
+                  </Field>
+                  <Field id="set-pickup" label="Point de retrait" className="sm:col-span-2">
+                    <input id="set-pickup" className={input} value={s.pickup} onChange={(e) => set({ pickup: e.target.value })} />
+                  </Field>
+                </div>
+              </Section>
+            </>
+          )}
+
+          {section === 'paiements' && (
+            <Section title="Moyens de paiement" text="Tous les paiements se font en ligne, au moment de la commande.">
+              <div className="divide-y divide-d-line">
+                <Switch title="Mobile money" text="Le client valide le paiement sur son téléphone." checked={s.mobileMoney} onChange={(v) => set({ mobileMoney: v })} />
+                {s.mobileMoney && (
+                  <div className="flex flex-wrap gap-2 py-3.5">
+                    {Object.entries(s.operators).map(([op, on]) => (
+                      <button
+                        key={op}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => set({ operators: { ...s.operators, [op]: !on } })}
+                        className={`inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[13.5px] transition-colors ${on ? 'border-d-ink bg-d-ink text-white' : 'border-d-line bg-white text-d-muted'}`}
+                      >
+                        {on && <Icon name="check" className="size-3.5" />}
+                        {op}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <Switch title="Carte bancaire" text="Visa, Mastercard. La carte est saisie chez le prestataire, jamais sur kclick." checked={s.card} onChange={(v) => set({ card: v })} />
+                <Switch title="Paiement à la livraison" text="Désactivé : tous les paiements se font en ligne." disabled />
+              </div>
+              <Field id="set-provider" label="Prestataire de paiement" hint="À choisir : il confirmera automatiquement les paiements." className="mt-5 max-w-md">
+                <input id="set-provider" className={input} value={s.provider} placeholder="[à choisir]" onChange={(e) => set({ provider: e.target.value })} />
+              </Field>
+            </Section>
+          )}
+
+          {section === 'notifications' && (
+            <>
+              <Section title="E-mails au client" text="Envoyés à l’adresse saisie au moment de la commande.">
+                <div className="divide-y divide-d-line">
+                  {[
+                    ['confirmation', 'Confirmation de commande', 'Numéro, articles, total.'],
+                    ['prete', 'Commande prête', 'Pour un retrait en boutique.'],
+                    ['route', 'Commande en route', 'Avec le nom du livreur et l’heure d’arrivée.'],
+                    ['livree', 'Commande livrée', 'Avec un lien pour recommander.'],
+                  ].map(([key, title, text]) => (
+                    <Switch key={key} title={title} text={text} checked={s.clientMails[key]} onChange={(v) => set({ clientMails: { ...s.clientMails, [key]: v } })} />
+                  ))}
+                </div>
+              </Section>
+              <Section title="E-mails à l’équipe">
+                <Switch title="Une alerte à chaque nouvelle commande" text="Détail de la commande et des Maisons concernées." checked={s.teamMail} onChange={(v) => set({ teamMail: v })} />
+                <p className="mb-2 mt-3 text-[13px] text-d-muted">Destinataires</p>
+                <ul className="flex flex-wrap gap-2">
+                  {s.recipients.map((r) => (
+                    <li key={r} className="inline-flex h-9 max-w-full items-center gap-2 rounded-full border border-d-line bg-white pl-4 pr-1.5 text-[13.5px]">
+                      <span className="truncate">{r}</span>
+                      <button type="button" onClick={() => set({ recipients: s.recipients.filter((x) => x !== r) })} aria-label={`Retirer ${r}`} className="grid size-7 place-items-center rounded-full text-d-muted hover:bg-d-soft hover:text-d-danger">
+                        <Icon name="close" className="size-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <form
+                  className="mt-3 flex max-w-md gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    const v = newRecipient.trim()
+                    if (/^\S+@\S+\.\S+$/.test(v) && !s.recipients.includes(v)) {
+                      set({ recipients: [...s.recipients, v] })
+                      setNewRecipient('')
+                    }
+                  }}
+                >
+                  <label htmlFor="set-recipient" className="sr-only">Ajouter un destinataire</label>
+                  <input id="set-recipient" type="email" className={input} placeholder="prenom@kennysinternational.com" value={newRecipient} onChange={(e) => setNewRecipient(e.target.value)} />
+                  <Button type="submit" variant="soft" className="shrink-0">Ajouter</Button>
+                </form>
+              </Section>
+              <Section title="Dans les boutiques">
+                <Switch title="Son à chaque nouvelle commande" text="Joué sur l’écran « File des commandes » des employés." checked={s.sound} onChange={(v) => set({ sound: v })} />
+              </Section>
+            </>
+          )}
+
+          {section === 'maisons' && (
+            <Section title="Maisons" text="Une Maison fermée ne reçoit plus de commandes : ses produits restent visibles mais ne peuvent pas être commandés.">
+              <ul className="divide-y divide-d-line">
+                {Object.values(BRANDS).map((b) => (
+                  <li key={b.id} className="grid grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 py-4 max-sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <Brand id={b.id} className="text-[15px]" />
+                    <div className="max-sm:order-3 max-sm:col-span-2">
+                      <label htmlFor={`hours-${b.id}`} className="sr-only">Horaires {b.name}</label>
+                      <input id={`hours-${b.id}`} className={input} value={s.hours[b.id]} onChange={(e) => set({ hours: { ...s.hours, [b.id]: e.target.value } })} />
+                    </div>
+                    <Toggle
+                      checked={shopsOpen[b.id]}
+                      onChange={() => dispatch({ type: 'shop/toggle', brand: b.id })}
+                      label={<span className="w-[62px] text-[13px]">{shopsOpen[b.id] ? 'Ouverte' : 'Fermée'}</span>}
+                    />
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-d-muted">L’ouverture est appliquée tout de suite ; les horaires avec « Enregistrer ».</p>
+            </Section>
+          )}
+
+          {section === 'securite' && (
+            <>
+              <Section title="Connexion" text="L’équipe et les clients se connectent avec un code à 6 chiffres reçu par e-mail : aucun mot de passe à retenir ni à voler.">
+                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                  <Field id="set-code" label="Durée de validité du code">
+                    <select id="set-code" className={input} value={s.codeValidity} onChange={(e) => set({ codeValidity: e.target.value })}>
+                      <option value="5">5 minutes</option>
+                      <option value="10">10 minutes</option>
+                      <option value="15">15 minutes</option>
+                    </select>
+                  </Field>
+                  <Field id="set-idle" label="Déconnexion automatique de l’équipe">
+                    <select id="set-idle" className={input} value={s.idle} onChange={(e) => set({ idle: e.target.value })}>
+                      <option value="30">Après 30 min d’inactivité</option>
+                      <option value="60">Après 1 h d’inactivité</option>
+                      <option value="480">Après 8 h (une journée)</option>
+                      <option value="never">Jamais</option>
+                    </select>
+                  </Field>
+                </div>
+              </Section>
+              <Section title="Sessions ouvertes" text="Déconnecte tous les comptes de l’équipe sur tous les appareils, par exemple après la perte d’un téléphone.">
+                {loggedOut ? (
+                  <p role="status" className="inline-flex items-center gap-1.5 text-[13px] text-[#2f6b40]">
+                    <Icon name="check" className="size-4" /> Toutes les sessions ont été fermées.
+                  </p>
+                ) : confirmLogout ? (
+                  <div className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#f7deda] px-4 py-3">
+                    <p className="text-sm text-d-danger">Chaque membre de l’équipe devra se reconnecter. Continuer ?</p>
+                    <div className="flex gap-2">
+                      <Button variant="danger" size="sm" onClick={() => setLoggedOut(true)}>Oui, tout déconnecter</Button>
+                      <Button variant="soft" size="sm" onClick={() => setConfirmLogout(false)}>Annuler</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="danger" onClick={() => setConfirmLogout(true)}>
+                    <Icon name="logout" className="size-4" /> Déconnecter toutes les sessions
+                  </Button>
+                )}
+              </Section>
+            </>
+          )}
+
+          <DemoNote>Données de démonstration : les paramètres seront enregistrés sur le serveur une fois l’API branchée.</DemoNote>
+        </div>
+      </div>
+
+      {/* Téléphone : bouton d'enregistrement toujours visible en bas */}
+      {dirty && (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-d-line bg-white/95 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:hidden">
+          <Button onClick={save} className="w-full">Enregistrer les modifications</Button>
+        </div>
+      )}
+    </>
+  )
+}

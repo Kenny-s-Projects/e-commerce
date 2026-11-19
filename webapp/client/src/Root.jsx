@@ -4,7 +4,7 @@ import App from './App.jsx'
 // Le dashboard (admin, employé, livreur) est chargé à part : le site reste léger pour les clients.
 const Dashboard = lazy(() => import('./dashboard/DashboardApp.jsx'))
 
-const DASHBOARD_ROOTS = ['dashboard', 'admin', 'employe', 'livreur']
+const DASHBOARD_ROOTS = ['dashboard', 'admin', 'employe', 'livreur', 'connexion']
 const isDashboard = () => DASHBOARD_ROOTS.includes(window.location.hash.slice(1).split('/')[0])
 
 export default function Root() {
