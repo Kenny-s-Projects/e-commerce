@@ -4,12 +4,12 @@ import { query } from '../../config/db.js'
 
 // Variantes et photos d'un produit, sous forme de listes JSON (réutilisé par les requêtes ci-dessous)
 const VARIANTS = `coalesce((select json_agg(v order by v.position) from (
-    select id, label, price, unit, stock, is_default, position
+    select id, label, price, unit, stock, weight_grams, is_default, position
       from public.product_variants where product_id = p.id and is_active) v), '[]')`
 const IMAGES = `coalesce((select json_agg(i order by i.position) from (
     select url, alt, variant_id, position from public.product_images where product_id = p.id) i), '[]')`
-const PRODUCT_COLUMNS = `p.id, p.slug, p.name_fr, p.name_en, p.description_fr, p.description_en, p.base_price, p.tag,
-       b.slug as brand, b.name as brand_name, c.slug as category, c.name_fr as category_fr, c.name_en as category_en,
+const PRODUCT_COLUMNS = `p.id, p.slug, p.ref, p.unit, p.stock_kg, p.name_fr, p.name_en, p.description_fr, p.description_en, p.base_price, p.tag,
+       b.slug as brand, b.name as brand_name, b.is_open as brand_open, c.slug as category, c.name_fr as category_fr, c.name_en as category_en,
        ${VARIANTS} as variants, ${IMAGES} as images`
 
 const SORTS = {
@@ -46,8 +46,9 @@ export async function findProducts({ brand, category, tag, search, inStock, sort
         and ($3::text is null or p.tag = $3)
         and ($4::text is null or p.name_fr ilike '%' || $4 || '%' or p.name_en ilike '%' || $4 || '%'
              or b.name ilike '%' || $4 || '%' or c.name_fr ilike '%' || $4 || '%')
-        and ($5::boolean is not true or exists (
-              select 1 from public.product_variants v where v.product_id = p.id and v.is_active and v.stock > 0))
+        and ($5::boolean is not true or (b.is_open and exists (
+              select 1 from public.product_variants v where v.product_id = p.id and v.is_active and v.price is not null
+                 and (case when p.unit = 'kg' then v.weight_grams <= coalesce(p.stock_kg, 0) * 1000 else v.stock > 0 end))))
       order by b.created_at, ${SORTS[sort] ?? SORTS.default}
       limit $6 offset $7`,
     [brand ?? null, category ?? null, tag ?? null, search ?? null, inStock ?? null, limit, offset],

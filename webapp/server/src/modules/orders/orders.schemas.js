@@ -47,3 +47,15 @@ export const createOrderBody = z
 export const orderParams = z.object({ id: z.uuid() })
 export const cancelBody = z.object({ reason: z.string().trim().max(300).optional() }).optional()
 export const mineQuery = z.object({ tab: z.enum(['en_attente', 'en_cours', 'refusees', 'terminees']).optional() })
+
+export const listQuery = z.object({
+  tab: z.enum(['en_attente', 'en_cours', 'refusees', 'terminees']).optional(),
+  search: z.string().trim().max(60).optional(),
+  date: z.enum(['today', 'all']).default('all'),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+})
+
+// Suivi sans compte : numéro de commande + téléphone utilisé à la commande
+export const trackParams = z.object({ number: z.string().trim().regex(/^KC-\d{4,}$/i, 'Numéro de commande invalide') })
+export const trackQuery = z.object({ phone: z.string().trim().min(8, 'Téléphone obligatoire') })

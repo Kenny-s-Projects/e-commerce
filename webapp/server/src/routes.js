@@ -8,6 +8,9 @@ import { paymentsRoutes } from './modules/payments/payments.routes.js'
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { dashboardsRoutes } from './modules/dashboards/dashboards.routes.js'
+import { authRoutes } from './modules/auth/auth.routes.js'
+import { clientsRoutes } from './modules/clients/clients.routes.js'
+import { settingsRoutes } from './modules/settings/settings.routes.js'
 
 // Toutes les routes de l'API, préfixées par /api/v1 (voir app.js)
 export const routes = Router()
@@ -21,3 +24,6 @@ routes.use('/payments', paymentsRoutes)
 routes.use('/notifications', notificationsRoutes)
 routes.use('/users', usersRoutes)
 routes.use('/dashboards', dashboardsRoutes)
+routes.use('/auth', authRoutes)
+routes.use('/clients', clientsRoutes)
+routes.use('/settings', settingsRoutes)

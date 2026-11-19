@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test --import ./tests/setup.js \"tests/**/*.test.js\""
+    "test": "node --test --import ./tests/setup.js \"tests/**/*.test.js\"",
+    "images:upload": "node scripts/upload-images.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

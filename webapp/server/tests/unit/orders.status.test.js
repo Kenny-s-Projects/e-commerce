@@ -5,7 +5,8 @@ import { canMovePart, computeOrderState, customerCanCancel, tabOf } from '../../
 const order = { status: 'en_cours', mode: 'livraison', delivery_fee: 4, is_partial: false }
 
 test('une part ne peut pas sauter d’étape', () => {
-  assert.equal(canMovePart('en_attente', 'acceptee'), true)
+  assert.equal(canMovePart('en_attente', 'en_preparation'), true)
+  assert.equal(canMovePart('en_attente', 'acceptee'), false)
   assert.equal(canMovePart('en_attente', 'prete'), false)
   assert.equal(canMovePart('refusee', 'acceptee'), false)
 })
