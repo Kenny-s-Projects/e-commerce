@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
+import { api } from '../../lib/api.js'
+import { sendCode, verifyCode } from '../../lib/supabase.js'
 
 /*
  * Connexion de l'équipe (super admin, employés, livreurs) : e-mail, puis code à 6 chiffres reçu par e-mail.
- * Démonstration : n'importe quel code à 6 chiffres est accepté ; le compte est cherché dans les utilisateurs du store.
+ * 1. POST /auth/staff/check : l'adresse appartient-elle à l'équipe (compte ou invitation) ?
+ * 2. Supabase Auth envoie le code (une personne invitée n'a pas encore de compte : il est créé, le rôle vient de l'invitation)
+ * 3. Code vérifié → GET /auth/me → page d'arrivée selon le rôle
  */
+
+// Comptes du serveur de développement (npm run dev:memory), proposés seulement en développement
+const DEV_EMAILS = [
+  { email: 'ecommerce@kennysinternational.com', label: 'Super admin' },
+  { email: 'employe.patchi@exemple.com', label: 'Employé · Patchi' },
+  { email: 'livreur@exemple.com', label: 'Livreur' },
+]
 
 const KEY = 'kclick-staff-email'
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -25,8 +36,6 @@ const saveEmail = (email) => {
     /* navigation privée : on garde l'e-mail en mémoire seulement */
   }
 }
-
-const homeOf = (user) => (user.role === 'super_admin' ? 'admin' : user.role === 'employe' ? `employe/${user.brand}` : 'livreur')
 
 function Logo({ className = '' }) {
   return (
@@ -50,15 +59,19 @@ const Dots = () => (
 
 /** Page de connexion : panneau noir à gauche (ordinateur) ou en haut (téléphone), formulaire à droite */
 export default function StaffLogin({ step }) {
-  const { users } = useStore()
+  const { auth, me } = useStore()
   const [email, setEmail] = useState(readEmail)
-  const known = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase())
-  const showCode = step === 'code' && known && known.status !== 'desactive'
+  const showCode = step === 'code' && EMAIL.test(email.trim())
 
-  // Arriver sur l'étape code sans e-mail valide : retour à l'étape e-mail
+  // Arriver sur l'étape code sans e-mail : retour à l'étape e-mail
   useEffect(() => {
     if (step === 'code' && !showCode) window.location.hash = 'connexion'
   }, [step, showCode])
+
+  // Déjà connecté avec un compte d'équipe : directement vers son espace
+  useEffect(() => {
+    if (auth.status === 'ok' && me?.home && me.home !== '#compte/profil') window.location.hash = me.home.replace(/^#/, '')
+  }, [auth.status, me])
 
   return (
     <div className="flex min-h-svh flex-col bg-d-bg font-sans text-d-ink antialiased lg:flex-row">
@@ -90,7 +103,7 @@ export default function StaffLogin({ step }) {
       {/* Formulaire */}
       <main className="flex flex-1 items-start justify-center px-[clamp(20px,5vw,64px)] pb-12 pt-10 lg:items-center lg:py-12">
         <div className="w-full max-w-[420px]">
-          {showCode ? <CodeStep user={known} /> : <EmailStep email={email} setEmail={setEmail} users={users} />}
+          {showCode ? <CodeStep email={email.trim().toLowerCase()} /> : <EmailStep email={email} setEmail={setEmail} />}
           <a href="#" className="mt-10 inline-block text-[13px] text-d-muted underline decoration-d-border underline-offset-4 hover:text-d-ink">
             Retour au site
           </a>
@@ -100,11 +113,12 @@ export default function StaffLogin({ step }) {
   )
 }
 
-function EmailStep({ email, setEmail, users }) {
+function EmailStep({ email, setEmail }) {
   const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
   const inputRef = useRef(null)
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const value = email.trim().toLowerCase()
     if (!EMAIL.test(value)) {
@@ -112,26 +126,26 @@ function EmailStep({ email, setEmail, users }) {
       inputRef.current?.focus()
       return
     }
-    const user = users.find((u) => u.email.toLowerCase() === value)
-    if (!user) {
-      setError('Aucun compte d’équipe avec cette adresse. Demandez une invitation à l’administrateur.')
+    setSending(true)
+    try {
+      await api.post('/auth/staff/check', { email: value }, { auth: false })
+      await sendCode(value, { createUser: true })
+      setEmail(value)
+      saveEmail(value)
+      window.location.hash = 'connexion/code'
+    } catch (err) {
+      setError(
+        err.code === 'NOT_STAFF'
+          ? 'Aucun compte d’équipe avec cette adresse. Demandez une invitation à l’administrateur.'
+          : err.code === 'ACCOUNT_DISABLED'
+            ? 'Ce compte est désactivé. Contactez l’administrateur.'
+            : err.message || 'Le code n’a pas pu être envoyé. Réessayez dans un instant.',
+      )
       inputRef.current?.focus()
-      return
+    } finally {
+      setSending(false)
     }
-    if (user.status === 'desactive') {
-      setError('Ce compte est désactivé. Contactez l’administrateur.')
-      return
-    }
-    setEmail(value)
-    saveEmail(value)
-    window.location.hash = 'connexion/code'
   }
-
-  const demo = [
-    users.find((u) => u.role === 'super_admin' && u.status !== 'desactive'),
-    users.find((u) => u.role === 'employe' && u.status !== 'desactive'),
-    users.find((u) => u.role === 'livreur' && u.status !== 'desactive'),
-  ].filter(Boolean)
 
   return (
     <>
@@ -168,16 +182,17 @@ function EmailStep({ email, setEmail, users }) {
             </p>
           )}
         </div>
-        <button type="submit" className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black">
-          Recevoir mon code
+        <button type="submit" disabled={sending} className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black disabled:opacity-60">
+          {sending ? 'Envoi du code…' : 'Recevoir mon code'}
         </button>
       </form>
 
+      {import.meta.env.DEV && (
       <div className="mt-10 rounded-[12px] border border-dashed border-d-border p-4">
-        <p className="text-xs text-d-muted">Démonstration : cliquez sur une adresse pour la saisir.</p>
+        <p className="text-xs text-d-muted">Développement : comptes du serveur en mémoire (npm run dev:memory).</p>
         <ul className="mt-3 flex flex-col gap-2">
-          {demo.map((u) => (
-            <li key={u.id}>
+          {DEV_EMAILS.map((u) => (
+            <li key={u.email}>
               <button
                 type="button"
                 onClick={() => {
@@ -188,20 +203,20 @@ function EmailStep({ email, setEmail, users }) {
                 className="flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-left text-[13px] hover:text-d-ink"
               >
                 <span className="min-w-0 break-all font-mono text-[12.5px] underline decoration-d-border underline-offset-4">{u.email}</span>
-                <span className="text-xs text-d-muted">
-                  {u.role === 'super_admin' ? 'Super admin' : u.role === 'employe' ? `Employé · ${BRANDS[u.brand].name}` : 'Livreur'}
-                </span>
+                <span className="text-xs text-d-muted">{u.label}</span>
               </button>
             </li>
           ))}
         </ul>
       </div>
+      )}
     </>
   )
 }
 
-function CodeStep({ user }) {
-  const { dispatch } = useStore()
+function CodeStep({ email }) {
+  const { refreshMe } = useStore()
+  const [checking, setChecking] = useState(false)
   const [digits, setDigits] = useState(['', '', '', '', '', ''])
   const [error, setError] = useState('')
   const [wait, setWait] = useState(RESEND_DELAY)
@@ -241,14 +256,37 @@ function CodeStep({ user }) {
     else if (e.key === 'ArrowRight' && i < 5) refs.current[i + 1]?.focus()
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     if (!complete) {
       setError('Saisissez les 6 chiffres du code.')
       return
     }
-    dispatch({ type: 'user/update', id: user.id, changes: { status: 'actif', lastSeenAt: new Date().toISOString() } })
-    window.location.hash = homeOf(user)
+    setChecking(true)
+    try {
+      await verifyCode(email, code)
+      const me = await refreshMe()
+      if (!me) throw new Error('Connexion impossible. Réessayez.')
+      if (me.home === '#compte/profil') {
+        setError('Ce compte n’a pas d’accès équipe. Demandez une invitation à l’administrateur.')
+        return
+      }
+      window.location.hash = me.home.replace(/^#/, '')
+    } catch (err) {
+      setError(/expired|invalid/i.test(err.message ?? '') ? 'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.' : err.message)
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  const resend = async () => {
+    setWait(RESEND_DELAY)
+    try {
+      await sendCode(email, { createUser: true })
+      setResent(true)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   return (
@@ -258,7 +296,7 @@ function CodeStep({ user }) {
         Vérifiez vos <span className="font-serif italic">e-mails.</span>
       </h2>
       <p className="mt-3 text-[15px] leading-relaxed text-d-muted">
-        Nous avons envoyé un code à 6 chiffres à <span className="break-all font-mono text-[14px] text-d-ink">{user.email}</span>. Il est valable 10 minutes.
+        Nous avons envoyé un code à 6 chiffres à <span className="break-all font-mono text-[14px] text-d-ink">{email}</span>. Il est valable 10 minutes.
       </p>
 
       <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5">
@@ -303,8 +341,8 @@ function CodeStep({ user }) {
           )}
         </fieldset>
 
-        <button type="submit" disabled={!complete} className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black disabled:opacity-40">
-          Valider
+        <button type="submit" disabled={!complete || checking} className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black disabled:opacity-40">
+          {checking ? 'Vérification…' : 'Valider'}
         </button>
       </form>
 
@@ -316,10 +354,7 @@ function CodeStep({ user }) {
         ) : (
           <button
             type="button"
-            onClick={() => {
-              setWait(RESEND_DELAY)
-              setResent(true)
-            }}
+            onClick={resend}
             className="underline decoration-d-border underline-offset-4 hover:decoration-d-ink"
           >
             Renvoyer le code
@@ -336,7 +371,7 @@ function CodeStep({ user }) {
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-d-muted">
-        Rien reçu ? Regardez dans les courriers indésirables. Démonstration : n’importe quel code à 6 chiffres est accepté.
+        Rien reçu ? Regardez dans les courriers indésirables, puis demandez un nouveau code.
       </p>
     </>
   )

@@ -1,145 +1,300 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
-import { createContext, useContext, useEffect, useMemo, useReducer, useState } from 'react'
-import { BRANDS, ORDERS, RIDERS, SIMULATION_CUSTOMERS, SIMULATION_ITEMS, USERS } from '../data/demo.js'
-import { isActivePart } from '../lib/status.js'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { api } from '../../lib/api.js'
+import { getAccessToken, onSessionChange, signOut } from '../../lib/supabase.js'
 
 /*
- * État partagé des dashboards (démonstration) : une action faite sur un écran
- * (préparer une part, assigner un livreur…) se voit sur tous les autres.
- * Chaque action correspond à une route de l'API ; elles seront branchées à l'étape suivante.
+ * État partagé des dashboards, branché sur l'API Express.
+ * Les écrans gardent la même interface qu'en démonstration :
+ *   const { orders, riders, users, shopsOpen, now, dispatch } = useStore()
+ * Les données utiles à l'espace ouvert (admin, employé, livreur) sont chargées, puis actualisées
+ * toutes les 15 s tant que l'onglet est visible. Chaque action (dispatch) appelle l'API puis recharge.
  */
 
-const now = () => new Date().toISOString()
+const POLL_MS = 15000
 
-const initial = {
-  orders: ORDERS,
-  riders: RIDERS,
-  users: USERS,
-  shopsOpen: Object.fromEntries(Object.keys(BRANDS).map((b) => [b, true])),
-  lastNewOrder: null, // numéro de la dernière commande arrivée (son + surbrillance)
+const EMPTY = {
+  orders: [],
+  riders: [],
+  users: [],
+  brands: [],
+  shopsOpen: {},
+  dashboard: null,
+  riderSelf: null,
 }
 
-const updateOrder = (state, number, fn) => ({
-  ...state,
-  orders: state.orders.map((o) => (o.number === number ? fn(o) : o)),
-})
+/** Rôle et Maison requis pour chaque espace */
+export function canEnter(me, space, brand) {
+  if (!me) return false
+  const roles = me.roles ?? []
+  const has = (r) => roles.some((x) => x.role === r)
+  if (space === 'admin') return has('super_admin')
+  if (space === 'employe') return has('super_admin') || roles.some((x) => x.role === 'employe' && x.brand === brand)
+  if (space === 'livreur') return has('livreur')
+  return true
+}
 
-const updatePart = (order, brand, fn) => ({ ...order, parts: order.parts.map((p) => (p.brand === brand ? fn(p) : p)) })
-
-function reducer(state, action) {
-  switch (action.type) {
-    // Employé : Nouvelle → En préparation → Prête, ou rupture
-    case 'part/start':
-      return updateOrder(state, action.number, (o) => updatePart(o, action.brand, (p) => ({ ...p, status: 'en_preparation', startedAt: now() })))
-    case 'part/ready':
-      return updateOrder(state, action.number, (o) => updatePart(o, action.brand, (p) => ({ ...p, status: 'prete', readyAt: now() })))
-    case 'part/refuse':
-      return updateOrder(state, action.number, (o) => {
-        const next = updatePart(o, action.brand, (p) => ({ ...p, status: 'refusee', refusedAt: now(), refusal: action.reason }))
-        return next.parts.some(isActivePart) ? { ...next, partial: true } : { ...next, cancelled: { reason: `Rupture : ${action.reason}`, at: now() } }
-      })
-
-    // Retrait en boutique : le client est venu chercher sa commande
-    case 'order/pickedByCustomer':
-      return updateOrder(state, action.number, (o) => ({
-        ...o,
-        deliveredAt: now(),
-        parts: o.parts.map((p) => (isActivePart(p) ? { ...p, status: 'collectee' } : p)),
-      }))
-
-    // Dispatch
-    case 'order/assign':
-      return updateOrder(state, action.number, (o) => ({ ...o, riderId: action.riderId, assignedAt: now(), eta: action.eta ?? null }))
-
-    // Livreur : récupère chaque part, puis livre
-    case 'rider/collect':
-      return updateOrder(state, action.number, (o) => {
-        const next = updatePart(o, action.brand, (p) => ({ ...p, status: 'collectee', collectedAt: now() }))
-        const allCollected = next.parts.filter(isActivePart).every((p) => p.status === 'collectee')
-        return allCollected ? { ...next, pickedUpAt: now(), eta: next.eta ?? 15 } : next
-      })
-    case 'rider/deliver':
-      return updateOrder(state, action.number, (o) => ({ ...o, deliveredAt: now() }))
-    case 'rider/availability':
-      return { ...state, riders: state.riders.map((r) => (r.id === action.riderId ? { ...r, available: action.available } : r)) }
-
-    case 'order/cancel':
-      return updateOrder(state, action.number, (o) => ({
-        ...o,
-        cancelled: { reason: action.reason, at: now() },
-        parts: o.parts.map((p) => (isActivePart(p) ? { ...p, status: 'annulee' } : p)),
-      }))
-
-    // Utilisateurs de l'équipe (super-admin)
-    case 'user/invite': {
-      const id = `u${Date.now()}`
-      const user = { ...action.user, id, status: 'invite', lastSeenAt: null, createdAt: now() }
-      // Un nouveau livreur apparaît aussi dans le dispatch
-      const riders =
-        user.role === 'livreur'
-          ? [...state.riders, { id: `r${id}`, name: `${user.firstName} ${user.lastName[0]}.`, firstName: user.firstName, vehicle: user.vehicle || 'Moto', zone: user.zone || 'Gombe', available: false }]
-          : state.riders
-      return { ...state, users: [...state.users, { ...user, riderId: user.role === 'livreur' ? `r${id}` : undefined }], riders }
-    }
-    case 'user/update':
-      return { ...state, users: state.users.map((u) => (u.id === action.id ? { ...u, ...action.changes } : u)) }
-
-    case 'shop/toggle':
-      return { ...state, shopsOpen: { ...state.shopsOpen, [action.brand]: !state.shopsOpen[action.brand] } }
-
-    case 'order/simulate': {
-      const max = Math.max(...state.orders.map((o) => Number(o.number.slice(3))))
-      const number = `KC-${String(max + 1).padStart(4, '0')}`
-      const c = SIMULATION_CUSTOMERS[max % SIMULATION_CUSTOMERS.length]
-      const picks = [SIMULATION_ITEMS[max % 2], SIMULATION_ITEMS[2 + (max % 2)]]
-      const brands = [...new Set(picks.map((i) => i.brand))]
-      const order = {
-        number,
-        createdAt: now(),
-        source: 'simulation',
-        customer: { name: c.name, phone: c.phone },
-        mode: 'livraison',
-        deliveryFee: 4,
-        address: { commune: 'Gombe', street: c.street, landmark: c.landmark },
-        parts: brands.map((b) => ({
-          brand: b,
-          status: 'nouvelle',
-          staff: undefined,
-          items: picks.filter((i) => i.brand === b).map(({ name, detail, price, qty, house, ref }) => ({ name, detail, price, qty, house, ref })),
-        })),
-        payment: { method: 'mobile_money', provider: 'M-Pesa', status: 'paye', at: now(), ref: `MP-${50000 + max}` },
-      }
-      return { ...state, orders: [order, ...state.orders], lastNewOrder: number }
-    }
-    default:
-      return state
+/** Chargement des données d'un espace */
+async function loadSpace(space, brand) {
+  if (space === 'admin') {
+    const [list, riders, brands, dashboard, users] = await Promise.all([
+      api.get('/orders', { date: 'all', limit: 200 }),
+      api.get('/deliveries/riders'),
+      api.get('/brands'),
+      api.get('/dashboards/admin'),
+      api.get('/users'),
+    ])
+    return { orders: list.items, riders, brands, dashboard, users }
   }
+  if (space === 'employe') {
+    const [orders, brands, riders] = await Promise.all([
+      api.get('/parts', { brand, scope: 'all' }),
+      api.get('/brands'),
+      api.get('/deliveries/riders').catch(() => []),
+    ])
+    return { orders, brands, riders }
+  }
+  if (space === 'livreur') {
+    const mine = await api.get('/deliveries/mine')
+    const self = { ...mine.rider }
+    return { orders: [...mine.current, ...mine.deliveredToday], riderSelf: self, riders: [] }
+  }
+  return {}
 }
 
 const StoreContext = createContext(null)
 
-export function DashboardStore({ children }) {
-  const [state, dispatch] = useReducer(reducer, initial)
+export function DashboardStore({ space, brand, children }) {
+  const [auth, setAuth] = useState({ status: 'loading', me: null })
+  const [data, setData] = useState(EMPTY)
+  const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState(null) // { kind: 'error' | 'ok', text }
+  const [lastNewOrder, setLastNewOrder] = useState(null)
+  const [now, setNow] = useState(() => Date.now())
+  const known = useRef(null) // numéros déjà vus (détection des nouvelles commandes)
 
-  // Horloge : rafraîchit « il y a 3 min », « depuis 9 min »… toutes les 30 s
-  const [tick, setTick] = useState(() => Date.now())
+  const notify = useCallback((text, kind = 'error') => {
+    setToast({ text, kind, id: Date.now() })
+  }, [])
   useEffect(() => {
-    const id = setInterval(() => setTick(Date.now()), 30000)
-    return () => clearInterval(id)
+    if (!toast) return undefined
+    const id = setTimeout(() => setToast(null), toast.kind === 'error' ? 7000 : 3500)
+    return () => clearTimeout(id)
+  }, [toast])
+
+  /* ---------- Session ---------- */
+  const refreshMe = useCallback(async () => {
+    const token = await getAccessToken()
+    if (!token) {
+      setAuth({ status: 'anon', me: null })
+      return null
+    }
+    try {
+      const me = await api.get('/auth/me')
+      setAuth({ status: 'ok', me })
+      return me
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        if (err.code === 'ACCOUNT_DISABLED') notify(err.message)
+        await signOut()
+        setAuth({ status: 'anon', me: null })
+      } else {
+        setAuth({ status: 'error', me: null, error: err.message })
+      }
+      return null
+    }
+  }, [notify])
+
+  useEffect(() => {
+    // refreshMe est asynchrone : l'état change après la réponse du serveur, pas pendant l'effet
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshMe()
+    return onSessionChange((session) => {
+      if (!session) setAuth({ status: 'anon', me: null })
+    })
+  }, [refreshMe])
+
+  const logout = useCallback(async () => {
+    await signOut()
+    setAuth({ status: 'anon', me: null })
+    setData(EMPTY)
+    window.location.hash = 'connexion'
   }, [])
 
-  const value = useMemo(() => ({ ...state, now: tick, dispatch }), [state, tick])
+  /* ---------- Données ---------- */
+  const ready = auth.status === 'ok' && canEnter(auth.me, space, brand) && ['admin', 'employe', 'livreur'].includes(space)
+
+  const reload = useCallback(async () => {
+    if (!ready) return
+    try {
+      const next = await loadSpace(space, brand)
+      const shopsOpen = next.brands ? Object.fromEntries(next.brands.map((b) => [b.slug, b.is_open])) : undefined
+      setData((d) => ({ ...d, ...next, ...(shopsOpen ? { shopsOpen } : {}) }))
+      // Nouvelle commande arrivée depuis le dernier chargement : surbrillance (et son côté employé)
+      const numbers = (next.orders ?? []).map((o) => o.number)
+      if (known.current) {
+        const fresh = numbers.filter((n) => !known.current.has(n))
+        if (fresh.length) setLastNewOrder(fresh[0])
+      }
+      known.current = new Set(numbers)
+      setNow(Date.now())
+    } catch (err) {
+      notify(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [ready, space, brand, notify])
+
+  // Le store est recréé à chaque changement d'espace (clé dans DashboardApp) : on charge simplement les données
+  useEffect(() => {
+    known.current = null
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reload est asynchrone (état modifié après la réponse)
+    reload()
+  }, [reload])
+
+  // Actualisation régulière, seulement quand l'onglet est visible
+  useEffect(() => {
+    if (!ready) return undefined
+    const tick = () => document.visibilityState === 'visible' && reload()
+    const id = setInterval(tick, POLL_MS)
+    document.addEventListener('visibilitychange', tick)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', tick)
+    }
+  }, [ready, reload])
+
+  /* ---------- Actions ---------- */
+  const byNumber = useCallback((number) => data.orders.find((o) => o.number === number), [data.orders])
+  const partOf = (order, brandSlug) => order?.parts.find((p) => p.brand === brandSlug)
+
+  // Mise à jour immédiate de l'écran avant la réponse du serveur (annulée par le rechargement en cas d'erreur)
+  const patchOrder = (number, fn) => setData((d) => ({ ...d, orders: d.orders.map((o) => (o.number === number ? fn(o) : o)) }))
+  const patchPart = (number, brandSlug, changes) =>
+    patchOrder(number, (o) => ({ ...o, parts: o.parts.map((p) => (p.brand === brandSlug ? { ...p, ...changes } : p)) }))
+
+  const dispatch = useCallback(
+    async (action) => {
+      const order = action.number ? byNumber(action.number) : null
+      const stamp = new Date().toISOString()
+      try {
+        switch (action.type) {
+          case 'part/start':
+            patchPart(action.number, action.brand, { status: 'en_preparation', startedAt: stamp })
+            await api.patch(`/parts/${partOf(order, action.brand).id}/status`, { status: 'en_preparation' })
+            break
+          case 'part/ready':
+            patchPart(action.number, action.brand, { status: 'prete', readyAt: stamp })
+            await api.patch(`/parts/${partOf(order, action.brand).id}/status`, { status: 'prete' })
+            break
+          case 'part/refuse':
+            await api.patch(`/parts/${partOf(order, action.brand).id}/status`, { status: 'refusee', reason: action.reason })
+            notify('Rupture signalée.', 'ok')
+            break
+          case 'order/assign':
+            await api.post('/deliveries', { orderId: order.id, riderId: action.riderId, etaMinutes: action.eta ?? undefined })
+            notify(`${action.number} assignée.`, 'ok')
+            break
+          case 'rider/collect':
+            await api.post(`/deliveries/${order.id}/collect`, { brand: action.brand })
+            break
+          case 'rider/deliver':
+            await api.post(`/deliveries/${order.id}/delivered`)
+            break
+          case 'rider/availability':
+            setData((d) => ({ ...d, riderSelf: d.riderSelf ? { ...d.riderSelf, available: action.available } : d.riderSelf }))
+            await api.patch('/deliveries/me/availability', { available: action.available })
+            break
+          case 'order/cancel':
+            await api.post(`/orders/${order.id}/cancel`, { reason: action.reason })
+            notify(`${action.number} annulée.`, 'ok')
+            break
+          case 'order/pickedByCustomer':
+            await api.post(`/orders/${order.id}/handover`)
+            notify(`${action.number} remise au client.`, 'ok')
+            break
+          case 'shop/toggle': {
+            const open = !data.shopsOpen[action.brand]
+            setData((d) => ({ ...d, shopsOpen: { ...d.shopsOpen, [action.brand]: open } }))
+            await api.patch(`/brands/${action.brand}`, { isOpen: open })
+            notify(open ? 'Maison ouverte à la vente.' : 'Maison fermée : produits « bientôt disponibles ».', 'ok')
+            break
+          }
+          case 'user/invite': {
+            const result = await api.post('/users/invitations', action.user)
+            await reload()
+            return { ok: true, result }
+          }
+          case 'user/update': {
+            const { status, ...changes } = action.changes
+            const fields = Object.fromEntries(
+              Object.entries(changes).filter(([k]) => ['firstName', 'lastName', 'phone', 'role', 'brand', 'vehicle', 'zone'].includes(k)),
+            )
+            if (Object.keys(fields).length) await api.patch(`/users/${action.id}`, fields)
+            if (status === 'desactive') await api.post(`/users/${action.id}/deactivate`)
+            if (status === 'actif') await api.post(`/users/${action.id}/reactivate`)
+            break
+          }
+          case 'order/simulate': {
+            // Développement uniquement : une commande Patchi de test
+            const { items } = await api.get('/catalog/products', { brand: 'patchi', inStock: 'true', limit: 2 })
+            await api.post('/orders', {
+              customer: { name: 'Client test', phone: '+243810000000' },
+              mode: 'livraison',
+              address: { commune: 'Gombe', street: 'Avenue de test', landmark: 'Démonstration' },
+              paymentMethod: 'mobile_money',
+              provider: 'M-Pesa',
+              payerPhone: '+243810000000',
+              items: items.map((p) => ({ variantId: (p.variants.find((v) => v.available) ?? p.variants[0]).id, quantity: 1 })),
+            })
+            break
+          }
+          default:
+            return { ok: false }
+        }
+      } catch (err) {
+        // L'erreur est affichée dans le bandeau ; l'écran peut aussi la lire dans le résultat
+        notify(err.message)
+        await reload()
+        return { error: err }
+      }
+      await reload()
+      return { ok: true }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- patchOrder/patchPart ne dépendent que de setData
+    [byNumber, data.shopsOpen, notify, reload],
+  )
+
+  const value = useMemo(
+    () => ({
+      ...data,
+      auth,
+      me: auth.me,
+      loading,
+      now,
+      lastNewOrder,
+      toast,
+      notify,
+      dismissToast: () => setToast(null),
+      dispatch,
+      reload,
+      refreshMe,
+      logout,
+    }),
+    [data, auth, loading, now, lastNewOrder, toast, notify, dispatch, reload, refreshMe, logout],
+  )
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
-/** { orders, riders, shopsOpen, lastNewOrder, now, dispatch } */
+/** { orders, riders, users, brands, shopsOpen, dashboard, riderSelf, me, auth, loading, now, dispatch, notify, reload, logout } */
 export const useStore = () => useContext(StoreContext)
 
 export const useOrder = (number) => useStore().orders.find((o) => o.number === number) ?? null
 
-/** Statut d'un livreur : en course s'il a une commande assignée et non livrée */
+/** Statut d'un livreur (calculé par l'API, ou d'après les commandes chargées) */
 export function riderState(rider, orders) {
   const current = orders.find((o) => o.riderId === rider.id && !o.deliveredAt && !o.cancelled)
   if (current) return { status: 'en_course', order: current }
+  if (rider.status) return { status: rider.status, order: null }
   return { status: rider.available ? 'disponible' : 'hors_ligne', order: null }
 }

@@ -1,21 +1,17 @@
-// Espace livreur : le livreur connecté (démonstration : Glody K.) et quelques aides partagées par ses écrans.
+// Espace livreur : le livreur connecté (GET /deliveries/mine) et quelques aides partagées par ses écrans.
 import { useStore } from '../store/store.jsx'
 import { BRANDS } from '../data/demo.js'
 import { isActivePart } from '../lib/status.js'
 
-export const CURRENT_RIDER_ID = 'gk'
-
-// Téléphone du livreur (démonstration)
-export const RIDER_PHONE = '+243 81 640 22 18'
-
-/** Livreur connecté et ses commandes : en cours (assignées, non livrées) et livrées */
+/** Livreur connecté et ses commandes : en cours (assignées, non livrées) et livrées aujourd'hui */
 export function useRider() {
-  const { riders, orders, dispatch, now } = useStore()
-  const rider = riders.find((r) => r.id === CURRENT_RIDER_ID)
-  const mine = orders.filter((o) => o.riderId === CURRENT_RIDER_ID)
-  const current = mine.filter((o) => !o.deliveredAt && !o.cancelled)
-  const delivered = mine.filter((o) => o.deliveredAt).sort((a, b) => new Date(b.deliveredAt) - new Date(a.deliveredAt))
-  return { rider, current, delivered, dispatch, now }
+  const { riderSelf, orders, dispatch, now, me, loading } = useStore()
+  const rider = riderSelf
+    ? { ...riderSelf, name: me?.fullName || me?.email || 'Livreur', firstName: (me?.fullName || '').split(/\s+/)[0] || 'Livreur', phone: me?.phone ?? null }
+    : null
+  const current = orders.filter((o) => !o.deliveredAt && !o.cancelled)
+  const delivered = orders.filter((o) => o.deliveredAt).sort((a, b) => new Date(b.deliveredAt) - new Date(a.deliveredAt))
+  return { rider, current, delivered, dispatch, now, loading }
 }
 
 /** Parts à récupérer, dans l'ordre : d'abord celles qui sont prêtes */
@@ -23,7 +19,7 @@ export const pickupParts = (order) => order.parts.filter(isActivePart)
 
 /** « À récupérer chez Kyra et Patchi » */
 export const brandList = (parts) => {
-  const names = parts.map((p) => BRANDS[p.brand].name)
+  const names = parts.map((p) => BRANDS[p.brand]?.name ?? p.brandName)
   return names.length > 1 ? `${names.slice(0, -1).join(', ')} et ${names.at(-1)}` : names[0] ?? ''
 }
 
@@ -46,4 +42,4 @@ export const PART_TEXT = {
 
 export const shortStreet = (street = '') => street.replace(/^avenue /i, 'av. ').replace(/^boulevard /i, 'bd ')
 
-export const brandsOf = (order) => order.parts.map((p) => BRANDS[p.brand].name).join(', ')
+export const brandsOf = (order) => order.parts.map((p) => BRANDS[p.brand]?.name ?? p.brandName).join(', ')

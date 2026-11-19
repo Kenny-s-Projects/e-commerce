@@ -3,7 +3,7 @@ import { BRANDS } from '../data/demo.js'
 import { riderState, useStore } from '../store/store.jsx'
 import { canDispatch, isActivePart, orderStatus } from '../lib/status.js'
 import { hour, minutesSince, money, orderTotal } from '../lib/format.js'
-import { Avatar, Brand, Button, Card, DemoNote, Mono, PageTitle, PartPill, RiderPill, StatusPill } from '../ui/ui.jsx'
+import { Avatar, Brand, Button, Card, Mono, PageTitle, PartPill, RiderPill, StatusPill } from '../ui/ui.jsx'
 
 /*
  * Dispatch : choisir une commande à livrer, puis le livreur qui la prend.
@@ -184,7 +184,6 @@ export default function Dispatch() {
         </section>
       </div>
 
-      <DemoNote className="mt-8" />
     </>
   )
 }

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { BRANDS, RIDERS } from '../data/demo.js'
+import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { ago, money, since } from '../lib/format.js'
 import { PART_STATUS } from '../lib/status.js'
-import { Button, DemoNote, Mono, PageTitle } from '../ui/ui.jsx'
+import { Button, Mono, PageTitle } from '../ui/ui.jsx'
 
 /*
  * File des commandes d'une Maison : seule sa part de chaque commande s'affiche.
@@ -102,8 +102,11 @@ function RefuseForm({ onCancel, onConfirm }) {
 
 function PartCard({ order, part, brand, now, fresh, dispatch }) {
   const [refusing, setRefusing] = useState(false)
-  const others = order.parts.filter((p) => p.brand !== brand && p.status !== 'annulee').map((p) => BRANDS[p.brand].name)
-  const rider = RIDERS.find((r) => r.id === order.riderId)
+  // L'API ne donne à l'employé que la part de sa Maison ; les autres Maisons sont citées par leur nom
+  const others = order.otherBrands
+    ? order.otherBrands.map((o) => o.name)
+    : order.parts.filter((p) => p.brand !== brand && p.status !== 'annulee').map((p) => BRANDS[p.brand]?.name ?? p.brand)
+  const rider = order.riderName ? { name: order.riderName } : null
   const act = (type, extra) => dispatch({ type, number: order.number, brand, ...extra })
 
   let time
@@ -179,7 +182,7 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
 }
 
 export default function Queue({ brand }) {
-  const { orders, shopsOpen, now, dispatch } = useStore()
+  const { orders, now, dispatch, loading } = useStore()
   const b = BRANDS[brand]
 
   // Ma part de chaque commande ouverte
@@ -199,6 +202,7 @@ export default function Queue({ brand }) {
   const [fresh, setFresh] = useState([])
   const newIds = columns[0].items.map((x) => x.order.number).join(',')
   useEffect(() => {
+    if (loading) return // premier chargement : pas de son pour les commandes déjà là
     const ids = newIds ? newIds.split(',') : []
     if (seen.current) {
       const added = ids.filter((id) => !seen.current.has(id))
@@ -209,7 +213,7 @@ export default function Queue({ brand }) {
       }
     }
     seen.current = new Set(ids)
-  }, [newIds])
+  }, [newIds, loading])
 
   useEffect(() => {
     window.addEventListener('pointerdown', unlockAudio)
@@ -226,12 +230,6 @@ export default function Queue({ brand }) {
         <PageTitle live="En direct · un son retentit à chaque nouvelle commande" before="File des " accent="commandes" />
         <p className="text-sm text-d-muted">Seule la part {b.name} de chaque commande s’affiche ici.</p>
       </header>
-
-      {!shopsOpen[brand] && (
-        <p role="status" className="mb-5 rounded-xl border border-[#f1d9a6] bg-[#fbefd5] px-4 py-3 text-sm text-[#7a5200]">
-          Boutique fermée : les nouvelles commandes sont mises en attente.
-        </p>
-      )}
 
       {/* Ordinateur : 3 colonnes · téléphone : colonnes qui défilent sur le côté */}
       <div className="-mx-[clamp(16px,3vw,40px)] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[clamp(16px,3vw,40px)] pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
@@ -257,7 +255,6 @@ export default function Queue({ brand }) {
         ))}
       </div>
 
-      <DemoNote className="mt-6">Données de démonstration. Les boutons font avancer les cartes d’une colonne à l’autre.</DemoNote>
     </>
   )
 }

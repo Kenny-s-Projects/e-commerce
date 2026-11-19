@@ -1,7 +1,7 @@
 import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { hour, money, partTotal, since } from '../lib/format.js'
-import { Button, Card, DemoNote, Mono, PageTitle, PartPill } from '../ui/ui.jsx'
+import { Button, Card, Mono, PageTitle, PartPill } from '../ui/ui.jsx'
 
 /*
  * Retraits en boutique : commandes que le client vient chercher.
@@ -90,7 +90,6 @@ export default function Pickups({ brand }) {
         )}
       </section>
 
-      <DemoNote className="mt-8" />
     </>
   )
 }

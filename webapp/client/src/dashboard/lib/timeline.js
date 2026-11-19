@@ -1,5 +1,5 @@
 // Chronologie d'une commande, reconstruite à partir de ses dates (toujours cohérente avec son état)
-import { BRANDS, RIDERS } from '../data/demo.js'
+import { BRANDS } from '../data/demo.js'
 import { ORDER_STATUS } from './status.js'
 
 const PAYMENT = { mobile_money: 'mobile money', carte: 'carte bancaire' }
@@ -7,7 +7,7 @@ const PAYMENT = { mobile_money: 'mobile money', carte: 'carte bancaire' }
 export function timeline(order) {
   const events = []
   const add = (at, label, who, color) => at && events.push({ at, label, who, color })
-  const rider = RIDERS.find((r) => r.id === order.riderId)
+  const rider = order.riderName ? { name: order.riderName } : null
 
   add(
     order.createdAt,
@@ -16,7 +16,7 @@ export function timeline(order) {
     ORDER_STATUS.nouvelle.bar,
   )
   for (const p of order.parts) {
-    const brand = BRANDS[p.brand].name
+    const brand = BRANDS[p.brand]?.name ?? p.brandName ?? p.brand
     const who = p.staff ? `${p.staff}, ${brand}` : brand
     add(p.startedAt, `Part ${brand} en préparation`, who, ORDER_STATUS.en_preparation.bar)
     add(p.readyAt, `Part ${brand} prête`, who, ORDER_STATUS.prete.bar)

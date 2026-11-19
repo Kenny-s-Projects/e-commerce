@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
-import { Brand, Button, Card, DemoNote, PageTitle, Toggle } from '../ui/ui.jsx'
+import { api } from '../../lib/api.js'
+import { Brand, Button, Card, PageTitle, Toggle } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 
 const SECTIONS = [
@@ -13,32 +14,76 @@ const SECTIONS = [
   { id: 'securite', label: 'Sécurité', text: 'Connexion, sessions' },
 ]
 
-const INITIAL = {
-  platform: 'kclick',
-  company: 'Kenny’s International',
-  supportEmail: 'ecommerce@kennysinternational.com',
-  whatsapp: '+243 856 486 993',
-  address: '124 Boulevard du 30 Juin, Gombe',
-  lang: 'fr',
-  currency: 'USD',
-  zones: [
-    { id: 'z1', commune: 'Gombe', fee: 4, delay: 'Le jour même', active: true },
-    { id: 'z2', commune: 'Ngaliema', fee: 7, delay: 'Le lendemain', active: false },
-  ],
-  cutoff: '17:00',
-  pickup: 'Kyra · 124 Boulevard du 30 Juin, Gombe',
-  cancelDelay: '15',
-  mobileMoney: true,
-  operators: { 'M-Pesa': true, 'Orange Money': true, 'Airtel Money': true },
-  card: true,
-  provider: '',
-  clientMails: { confirmation: true, prete: true, route: true, livree: true },
-  teamMail: true,
-  recipients: ['ecommerce@kennysinternational.com'],
-  sound: true,
-  hours: { kyra: 'Lun–sam · 9 h – 20 h', patchi: 'Lun–sam · 9 h – 20 h', adidas: 'Lun–sam · 10 h – 19 h', celio: 'Lun–sam · 10 h – 19 h' },
-  codeValidity: '10',
-  idle: '60',
+const OPERATORS = { mpesa: 'M-Pesa', orange: 'Orange Money', airtel: 'Airtel Money' }
+const WEEKDAYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam']
+
+// Horaires enregistrés d'une Maison, en une ligne (« lun–sam · 09:00–20:00 »)
+function hoursText(hours = []) {
+  if (!hours.length) return 'Horaires à renseigner'
+  const days = hours.map((h) => WEEKDAYS[h.weekday])
+  const h = hours[0]
+  return `${days[0]}${days.length > 1 ? `–${days.at(-1)}` : ''} · ${h.opens_at ?? '?'}–${h.closes_at ?? '?'}`
+}
+
+/** GET /settings + /brands → valeurs du formulaire */
+function fromApi(settings, brands) {
+  const g = settings.general ?? {}
+  const d = settings.delivery ?? {}
+  const p = settings.payments ?? {}
+  const n = settings.notifications ?? {}
+  const sec = settings.security ?? {}
+  const pickup = brands.find((b) => b.is_pickup_point)
+  return {
+    platform: g.platform ?? '',
+    company: g.company ?? '',
+    supportEmail: g.supportEmail ?? '',
+    whatsapp: g.whatsapp ?? '',
+    address: g.address ?? '',
+    lang: g.defaultLang ?? 'fr',
+    currency: g.currency ?? 'USD',
+    zones: (d.zones ?? []).map((z, i) => ({ id: `z${i}`, ...z })),
+    cutoff: d.sameDayCutoff ?? '17:00',
+    cancelDelay: String(d.cancelWindowMinutes ?? 15),
+    pickupBrand: pickup?.slug ?? null,
+    pickup: pickup?.pickup_address ?? '',
+    mobileMoney: p.mobileMoney?.enabled ?? true,
+    operators: Object.fromEntries(Object.entries(OPERATORS).map(([k, label]) => [label, p.mobileMoney?.operators?.[k] ?? true])),
+    card: p.card?.enabled ?? true,
+    provider: p.provider ?? '',
+    clientMails: {
+      confirmation: n.customerEmails?.confirmation ?? true,
+      prete: n.customerEmails?.ready ?? true,
+      route: n.customerEmails?.onTheWay ?? true,
+      livree: n.customerEmails?.delivered ?? true,
+    },
+    recipients: n.teamRecipients ?? [],
+    sound: n.newOrderSound ?? true,
+    hours: Object.fromEntries(brands.map((b) => [b.slug, hoursText(b.hours)])),
+    codeValidity: String(sec.codeValidityMinutes ?? 10),
+    idle: String(sec.idleLogoutMinutes ?? 60),
+  }
+}
+
+/** Valeurs du formulaire → corps de PUT /settings/:section */
+const toApi = {
+  general: (s) => ({ platform: s.platform, company: s.company, supportEmail: s.supportEmail, whatsapp: s.whatsapp, address: s.address, defaultLang: s.lang, currency: s.currency }),
+  delivery: (s) => ({
+    zones: s.zones.map(({ commune, fee, delay, active }) => ({ commune: commune.trim(), fee: Number(fee), delay, active })),
+    sameDayCutoff: s.cutoff,
+    cancelWindowMinutes: Number(s.cancelDelay),
+  }),
+  payments: (s) => ({
+    mobileMoney: { enabled: s.mobileMoney, operators: Object.fromEntries(Object.entries(OPERATORS).map(([k, label]) => [k, !!s.operators[label]])) },
+    card: { enabled: s.card },
+    cashOnDelivery: false,
+    provider: s.provider.trim() || null,
+  }),
+  notifications: (s) => ({
+    customerEmails: { confirmation: s.clientMails.confirmation, ready: s.clientMails.prete, onTheWay: s.clientMails.route, delivered: s.clientMails.livree },
+    teamRecipients: s.recipients,
+    newOrderSound: s.sound,
+  }),
+  security: (s) => ({ codeValidityMinutes: Number(s.codeValidity), idleLogoutMinutes: Number(s.idle) }),
 }
 
 const input =
@@ -85,26 +130,63 @@ function Section({ title, text, children }) {
   )
 }
 
-/** Paramètres de la plateforme (démonstration : rien n'est encore enregistré côté serveur) */
+/** Paramètres de la plateforme (GET /settings, PUT /settings/:section ; Maisons via /brands) */
 export default function Settings() {
+  const [loaded, setLoaded] = useState(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let alive = true
+    Promise.all([api.get('/settings'), api.get('/brands')])
+      .then(([settings, brands]) => alive && setLoaded(fromApi(settings, brands)))
+      .catch((err) => alive && setError(err.message))
+    return () => {
+      alive = false
+    }
+  }, [])
+  if (!loaded)
+    return (
+      <>
+        <PageTitle eyebrow="Super admin" before="Para" accent="mètres" />
+        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{error || 'Chargement des paramètres…'}</Card>
+      </>
+    )
+  return <SettingsForm initial={loaded} />
+}
+
+function SettingsForm({ initial }) {
   const { shopsOpen, dispatch } = useStore()
   const [section, setSection] = useState('general')
-  const [saved, setSaved] = useState(INITIAL)
-  const [s, setS] = useState(INITIAL)
+  const [saved, setSaved] = useState(initial)
+  const [s, setS] = useState(initial)
   const [done, setDone] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [newRecipient, setNewRecipient] = useState('')
-  const [confirmLogout, setConfirmLogout] = useState(false)
-  const [loggedOut, setLoggedOut] = useState(false)
 
   const dirty = JSON.stringify(s) !== JSON.stringify(saved)
   const set = (patch) => {
     setS((prev) => ({ ...prev, ...patch }))
     setDone(false)
+    setSaveError('')
   }
   const setZone = (id, patch) => set({ zones: s.zones.map((z) => (z.id === id ? { ...z, ...patch } : z)) })
-  const save = () => {
-    setSaved(s)
-    setDone(true)
+
+  // Enregistre seulement les rubriques modifiées (une requête par rubrique)
+  const save = async () => {
+    setSaving(true)
+    setSaveError('')
+    try {
+      for (const [section, build] of Object.entries(toApi)) {
+        if (JSON.stringify(build(s)) !== JSON.stringify(build(saved))) await api.put(`/settings/${section}`, build(s))
+      }
+      if (s.pickupBrand && s.pickup !== saved.pickup) await api.patch(`/brands/${s.pickupBrand}`, { pickupAddress: s.pickup.trim() })
+      setSaved(s)
+      setDone(true)
+    } catch (err) {
+      setSaveError(err.details?.length ? `${err.message} : ${err.details.map((d) => d.message).join(', ')}` : err.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -118,10 +200,15 @@ export default function Settings() {
             </span>
           )}
           {dirty && <span className="text-[13px] text-d-gold-ink max-sm:hidden">Modifications non enregistrées</span>}
-          <Button onClick={save} disabled={!dirty} className="max-sm:hidden">
-            Enregistrer les modifications
+          <Button onClick={save} disabled={!dirty || saving} className="max-sm:hidden">
+            {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
           </Button>
         </div>
+        {saveError && (
+          <p role="alert" className="w-full rounded-[10px] bg-[#f7deda] px-4 py-3 text-sm text-[#8e2118]">
+            {saveError}
+          </p>
+        )}
       </header>
 
       <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-6 max-lg:grid-cols-1">
@@ -227,8 +314,8 @@ export default function Settings() {
                       <option value="30">30 minutes</option>
                     </select>
                   </Field>
-                  <Field id="set-pickup" label="Point de retrait" className="sm:col-span-2">
-                    <input id="set-pickup" className={input} value={s.pickup} onChange={(e) => set({ pickup: e.target.value })} />
+                  <Field id="set-pickup" label={`Point de retrait${s.pickupBrand ? ` · ${BRANDS[s.pickupBrand]?.name ?? s.pickupBrand}` : ''}`} className="sm:col-span-2">
+                    <input id="set-pickup" className={input} value={s.pickup} disabled={!s.pickupBrand} onChange={(e) => set({ pickup: e.target.value })} />
                   </Field>
                 </div>
               </Section>
@@ -279,8 +366,9 @@ export default function Settings() {
                 </div>
               </Section>
               <Section title="E-mails à l’équipe">
-                <Switch title="Une alerte à chaque nouvelle commande" text="Détail de la commande et des Maisons concernées." checked={s.teamMail} onChange={(v) => set({ teamMail: v })} />
-                <p className="mb-2 mt-3 text-[13px] text-d-muted">Destinataires</p>
+                <p className="text-sm">Une alerte à chaque nouvelle commande</p>
+                <p className="mt-0.5 text-xs text-d-muted">Détail de la commande et des Maisons concernées (au moins un destinataire).</p>
+                <p className="mb-2 mt-4 text-[13px] text-d-muted">Destinataires</p>
                 <ul className="flex flex-wrap gap-2">
                   {s.recipients.map((r) => (
                     <li key={r} className="inline-flex h-9 max-w-full items-center gap-2 rounded-full border border-d-line bg-white pl-4 pr-1.5 text-[13.5px]">
@@ -319,19 +407,16 @@ export default function Settings() {
                 {Object.values(BRANDS).map((b) => (
                   <li key={b.id} className="grid grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 py-4 max-sm:grid-cols-[minmax(0,1fr)_auto]">
                     <Brand id={b.id} className="text-[15px]" />
-                    <div className="max-sm:order-3 max-sm:col-span-2">
-                      <label htmlFor={`hours-${b.id}`} className="sr-only">Horaires {b.name}</label>
-                      <input id={`hours-${b.id}`} className={input} value={s.hours[b.id]} onChange={(e) => set({ hours: { ...s.hours, [b.id]: e.target.value } })} />
-                    </div>
+                    <p className="text-[13.5px] text-d-muted max-sm:order-3 max-sm:col-span-2">{s.hours[b.id] ?? 'Horaires à renseigner'}</p>
                     <Toggle
-                      checked={shopsOpen[b.id]}
+                      checked={!!shopsOpen[b.id]}
                       onChange={() => dispatch({ type: 'shop/toggle', brand: b.id })}
                       label={<span className="w-[62px] text-[13px]">{shopsOpen[b.id] ? 'Ouverte' : 'Fermée'}</span>}
                     />
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-d-muted">L’ouverture est appliquée tout de suite ; les horaires avec « Enregistrer ».</p>
+              <p className="mt-3 text-xs text-d-muted">L’ouverture est appliquée tout de suite sur le site. Les horaires se règlent depuis l’espace de chaque Maison.</p>
             </Section>
           )}
 
@@ -351,41 +436,24 @@ export default function Settings() {
                       <option value="30">Après 30 min d’inactivité</option>
                       <option value="60">Après 1 h d’inactivité</option>
                       <option value="480">Après 8 h (une journée)</option>
-                      <option value="never">Jamais</option>
+                      <option value="1440">Après 24 h</option>
                     </select>
                   </Field>
                 </div>
               </Section>
-              <Section title="Sessions ouvertes" text="Déconnecte tous les comptes de l’équipe sur tous les appareils, par exemple après la perte d’un téléphone.">
-                {loggedOut ? (
-                  <p role="status" className="inline-flex items-center gap-1.5 text-[13px] text-[#2f6b40]">
-                    <Icon name="check" className="size-4" /> Toutes les sessions ont été fermées.
-                  </p>
-                ) : confirmLogout ? (
-                  <div className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#f7deda] px-4 py-3">
-                    <p className="text-sm text-d-danger">Chaque membre de l’équipe devra se reconnecter. Continuer ?</p>
-                    <div className="flex gap-2">
-                      <Button variant="danger" size="sm" onClick={() => setLoggedOut(true)}>Oui, tout déconnecter</Button>
-                      <Button variant="soft" size="sm" onClick={() => setConfirmLogout(false)}>Annuler</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button variant="danger" onClick={() => setConfirmLogout(true)}>
-                    <Icon name="logout" className="size-4" /> Déconnecter toutes les sessions
-                  </Button>
-                )}
+              <Section title="Sessions ouvertes" text="Pour retirer l’accès à une personne (téléphone perdu, départ), désactivez son compte dans Utilisateurs et rôles : elle ne peut plus se connecter.">
+                <a href="#admin/utilisateurs" className="text-[13px] underline decoration-d-border underline-offset-4">Ouvrir Utilisateurs et rôles</a>
               </Section>
             </>
           )}
 
-          <DemoNote>Données de démonstration : les paramètres seront enregistrés sur le serveur une fois l’API branchée.</DemoNote>
         </div>
       </div>
 
       {/* Téléphone : bouton d'enregistrement toujours visible en bas */}
       {dirty && (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-d-line bg-white/95 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:hidden">
-          <Button onClick={save} className="w-full">Enregistrer les modifications</Button>
+          <Button onClick={save} disabled={saving} className="w-full">{saving ? 'Enregistrement…' : 'Enregistrer les modifications'}</Button>
         </div>
       )}
     </>

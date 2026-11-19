@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '../../lib/api.js'
 import { BRANDS, ROLES } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { Button, Card, PageTitle } from '../ui/ui.jsx'
@@ -85,8 +86,14 @@ function InvitePreview({ form }) {
   )
 }
 
-/** Ajouter (id = null) ou modifier un utilisateur de l'équipe */
+/** Ajouter (id = null) ou modifier un utilisateur de l'équipe (attend le chargement de la liste en modification) */
 export default function UserForm({ id }) {
+  const { loading } = useStore()
+  if (id && loading) return <Card className="mx-auto mt-6 max-w-lg p-8 text-center text-sm text-d-muted">Chargement…</Card>
+  return <UserFormInner key={id ?? 'nouveau'} id={id} />
+}
+
+function UserFormInner({ id }) {
   const { users, dispatch } = useStore()
   const existing = id ? users.find((u) => u.id === id) : null
   const [form, setForm] = useState(() => (existing ? { ...empty, ...existing, brand: existing.brand ?? '', vehicle: existing.vehicle ?? 'Moto', zone: existing.zone ?? 'Gombe', phone: existing.phone ?? '' } : empty))
@@ -94,6 +101,8 @@ export default function UserForm({ id }) {
   const [submitted, setSubmitted] = useState(false)
   const [done, setDone] = useState(null) // 'invite' | 'saved'
   const [confirmStatus, setConfirmStatus] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [serverError, setServerError] = useState('')
 
   if (id && !existing) {
     return (
@@ -118,8 +127,9 @@ export default function UserForm({ id }) {
     if (submitted) setErrors(validate(next, users, id))
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
+    setServerError('')
     setSubmitted(true)
     const errs = validate(form, users, id)
     setErrors(errs)
@@ -137,13 +147,16 @@ export default function UserForm({ id }) {
       vehicle: form.role === 'livreur' ? form.vehicle.trim() || 'Moto' : undefined,
       zone: form.role === 'livreur' ? form.zone.trim() : undefined,
     }
-    if (existing) {
-      dispatch({ type: 'user/update', id, changes: user })
-      setDone('saved')
-    } else {
-      dispatch({ type: 'user/invite', user })
-      setDone('invite')
+    setSaving(true)
+    const changes = { ...user }
+    delete changes.email // l'e-mail d'un compte existant ne se modifie pas ici
+    const res = existing ? await dispatch({ type: 'user/update', id, changes }) : await dispatch({ type: 'user/invite', user })
+    setSaving(false)
+    if (res?.error) {
+      setServerError(res.error.message)
+      return
     }
+    setDone(existing ? 'saved' : 'invite')
     window.scrollTo({ top: 0 })
   }
 
@@ -162,7 +175,7 @@ export default function UserForm({ id }) {
             Invitation <span className="font-serif italic">envoyée.</span>
           </h1>
           <p className="max-w-md text-sm leading-relaxed text-d-muted">
-            {form.firstName.trim()} recevra un e-mail à <span className="font-mono text-d-ink">{form.email.trim().toLowerCase()}</span>. Son compte apparaît dans la liste avec le statut « Invitation envoyée » jusqu’à sa première connexion.
+            {form.firstName.trim()} peut se connecter à l’espace équipe avec <span className="font-mono text-d-ink">{form.email.trim().toLowerCase()}</span> : un code lui sera envoyé par e-mail et son rôle s’activera à la première connexion. L’e-mail d’invitation partira automatiquement dès que le service d’e-mails sera branché ; en attendant, prévenez-la vous-même.
           </p>
           <div className="mt-4 flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row">
             <Button
@@ -221,7 +234,7 @@ export default function UserForm({ id }) {
                 <input id="lastName" value={form.lastName} onChange={set('lastName')} autoComplete="family-name" aria-invalid={!!errors.lastName} aria-describedby={errors.lastName ? 'lastName-error' : undefined} className={inputClass(errors.lastName)} />
               </Field>
               <Field id="email" label="E-mail professionnel" error={errors.email} hint="Le code de connexion est envoyé à cette adresse.">
-                <input id="email" type="email" value={form.email} onChange={set('email')} autoComplete="email" inputMode="email" placeholder="prenom@exemple.com" aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} className={inputClass(errors.email)} />
+                <input id="email" type="email" value={form.email} onChange={set('email')} readOnly={!!existing} autoComplete="email" inputMode="email" placeholder="prenom@exemple.com" aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} className={inputClass(errors.email)} />
               </Field>
               <Field id="phone" label="Téléphone (WhatsApp)" error={errors.phone} hint="Facultatif.">
                 <span className={`flex h-11 items-center rounded-[10px] border bg-white focus-within:border-d-ink ${errors.phone ? 'border-d-danger' : 'border-d-line'}`}>
@@ -291,11 +304,16 @@ export default function UserForm({ id }) {
             )}
           </Card>
 
+          {serverError && (
+            <p role="alert" className="rounded-[10px] bg-[#f7deda] px-4 py-3 text-sm text-[#8e2118]">
+              {serverError}
+            </p>
+          )}
           <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
             <Button variant="soft" onClick={() => (window.location.hash = 'admin/utilisateurs')}>
               Annuler
             </Button>
-            <Button type="submit">{existing ? 'Enregistrer' : 'Envoyer l’invitation'}</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Enregistrement…' : existing ? 'Enregistrer' : 'Envoyer l’invitation'}</Button>
           </div>
         </div>
 
@@ -322,7 +340,29 @@ export default function UserForm({ id }) {
             </Card>
           )}
 
-          {existing && (
+          {existing?.kind === 'invitation' && (
+            <Card className="border-[#e7c9c3] p-5">
+              <h2 className="text-[15px] font-medium text-d-danger">Invitation</h2>
+              <p className="mt-2 text-[13px] leading-relaxed text-d-muted">Cette personne ne s’est pas encore connectée. Retirer l’invitation l’empêche d’entrer dans l’espace équipe.</p>
+              <Button
+                variant="danger"
+                size="sm"
+                className="mt-4"
+                onClick={async () => {
+                  try {
+                    await api.del(`/users/invitations/${id}`)
+                    window.location.hash = 'admin/utilisateurs'
+                  } catch (err) {
+                    setServerError(err.message)
+                  }
+                }}
+              >
+                Retirer l’invitation
+              </Button>
+            </Card>
+          )}
+
+          {existing && existing.kind !== 'invitation' && (
             <Card className="border-[#e7c9c3] p-5">
               <h2 className="text-[15px] font-medium text-d-danger">Zone sensible</h2>
               <p className="mt-2 text-[13px] leading-relaxed text-d-muted">
@@ -360,7 +400,6 @@ export default function UserForm({ id }) {
           )}
         </div>
       </form>
-      <p className="mt-6 text-xs text-d-muted">Données de démonstration : aucun e-mail n’est réellement envoyé.</p>
     </>
   )
 }

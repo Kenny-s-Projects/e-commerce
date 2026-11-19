@@ -1,21 +1,29 @@
-import { useMemo, useState } from 'react'
-import { useStore } from '../store/store.jsx'
-import { CLIENTS, fullName, statsOf } from '../data/clients.js'
+import { useEffect, useState } from 'react'
+import { api } from '../../lib/api.js'
 import { money } from '../lib/format.js'
-import { Avatar, Brand, Card, DemoNote, PageTitle } from '../ui/ui.jsx'
+import { Avatar, Brand, Card, PageTitle } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 
 const FILTERS = [
   { id: 'tous', label: 'Tous', test: () => true },
   { id: 'compte', label: 'Avec compte', test: (c) => c.hasAccount },
   { id: 'sans', label: 'Sans compte', test: (c) => !c.hasAccount },
-  { id: 'newsletter', label: 'Newsletter', test: (c) => c.newsletter },
 ]
 
 const shortDate = (date) =>
   date ? new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '') : '—'
 
 const href = (c) => `#admin/clients/${c.id}`
+const fullName = (c) => c.name || 'Client'
+
+// Client renvoyé par GET /clients → forme utilisée par l'écran
+const toRow = (c) => ({
+  ...c,
+  id: c.key,
+  email: c.email ?? '',
+  phone: c.phone ?? '',
+  stats: { count: c.ordersCount, spent: c.totalSpent, lastAt: c.lastOrderAt, favourite: c.favoriteBrand },
+})
 
 function matches(c, q) {
   const s = q.trim().toLowerCase()
@@ -40,17 +48,29 @@ function Kpi({ label, value, note }) {
 
 /** Clients : comptes et clients qui ont commandé sans compte */
 export default function Clients() {
-  const { orders } = useStore()
   const [filter, setFilter] = useState('tous')
   const [q, setQ] = useState('')
+  const [rows, setRows] = useState(null)
+  const [error, setError] = useState('')
 
-  const rows = useMemo(
-    () =>
-      CLIENTS.map((c) => ({ ...c, stats: statsOf(c, orders) })).sort(
-        (a, b) => new Date(b.stats.lastAt ?? 0) - new Date(a.stats.lastAt ?? 0),
-      ),
-    [orders],
-  )
+  useEffect(() => {
+    let alive = true
+    api
+      .get('/clients')
+      .then((list) => alive && setRows(list.map(toRow)))
+      .catch((err) => alive && setError(err.message))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  if (!rows)
+    return (
+      <>
+        <PageTitle eyebrow="Comptes et commandes sans compte" before="Cli" accent="ents" />
+        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{error || 'Chargement des clients…'}</Card>
+      </>
+    )
 
   const monthStart = new Date()
   monthStart.setDate(1)
@@ -85,7 +105,7 @@ export default function Clients() {
 
       <div className="mb-6 grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-sm:gap-3">
         <Kpi label="Clients" value={rows.length} note="Avec au moins une commande ou un compte" />
-        <Kpi label="Avec compte" value={withAccount} note={`${Math.round((withAccount / rows.length) * 100)} % des clients`} />
+        <Kpi label="Avec compte" value={withAccount} note={rows.length ? `${Math.round((withAccount / rows.length) * 100)} % des clients` : '—'} />
         <Kpi label="Nouveaux ce mois" value={newThisMonth} note="Premier achat ou inscription" />
         <Kpi label="Panier moyen" value={money(Math.round(basket))} note="Toutes commandes, hors annulées" />
       </div>
@@ -110,7 +130,7 @@ export default function Clients() {
 
       <Card className="overflow-hidden">
         {!visible.length ? (
-          <p className="px-5 py-12 text-center text-sm text-d-muted">Aucun client ne correspond à cette recherche.</p>
+          <p className="px-5 py-12 text-center text-sm text-d-muted">{rows.length ? 'Aucun client ne correspond à cette recherche.' : 'Aucun client pour l’instant : ils apparaîtront avec les premières commandes.'}</p>
         ) : (
           <>
             <div className="overflow-x-auto max-sm:hidden">
@@ -183,7 +203,6 @@ export default function Clients() {
           </>
         )}
       </Card>
-      <DemoNote className="mt-5" />
     </>
   )
 }

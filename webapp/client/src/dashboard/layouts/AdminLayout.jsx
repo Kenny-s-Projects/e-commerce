@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Icon from '../ui/Icon.jsx'
 import { Avatar } from '../ui/ui.jsx'
-import { ME } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { canDispatch, isOpen } from '../lib/status.js'
 
@@ -66,16 +65,18 @@ function Nav({ current, onNavigate }) {
 }
 
 function Me() {
+  const { me, logout } = useStore()
+  const name = me?.fullName || me?.email || 'Super admin'
   return (
     <div className="flex items-center gap-3 border-t border-white/10 pt-4">
-      <Avatar name={ME.name} className="size-9 text-[12px]" tone="bg-d-gold text-d-ink" />
-      <div className="flex-1 leading-tight">
-        <p className="text-[14.5px] text-white">{ME.name}</p>
-        <p className="text-xs text-white/60">{ME.role}</p>
+      <Avatar name={name} className="size-9 text-[12px]" tone="bg-d-gold text-d-ink" />
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className="truncate text-[14.5px] text-white">{name}</p>
+        <p className="text-xs text-white/60">Super admin</p>
       </div>
-      <a href="#connexion" aria-label="Se déconnecter" title="Se déconnecter" className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
+      <button type="button" onClick={logout} aria-label="Se déconnecter" title="Se déconnecter" className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
         <Icon name="logout" className="size-[18px]" />
-      </a>
+      </button>
     </div>
   )
 }
