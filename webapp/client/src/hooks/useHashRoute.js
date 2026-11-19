@@ -3,6 +3,8 @@ import { MAISON_PAGES } from '../data/houses.js'
 import { getProduct } from '../data/products.js'
 import { offrir, aide } from '../data/pages.js'
 
+const PROFILE_TABS = ['commandes', 'adresses', 'favoris', 'infos']
+
 /*
  * Lit l'adresse après le # :
  *   maison/kyra        → page Maison
@@ -11,6 +13,8 @@ import { offrir, aide } from '../data/pages.js'
  *   notre-histoire     → page Notre histoire
  *   aide/paiement      → page Aide, rubrique choisie (aide seul → Livraison ; contact → rubrique Contact)
  *   checkout           → page de commande
+ *   compte             → connexion ; compte/inscription · compte/code · compte/profil/<onglet>
+ *   suivi/KC-0140      → suivi d'une commande
  *   sinon              → accueil, avec une ancre éventuelle (#patchi…)
  */
 const parse = () => {
@@ -25,6 +29,14 @@ const parse = () => {
   }
   if (head === 'notre-histoire') return { page: 'histoire', id: '', anchor: '' }
   if (head === 'checkout') return { page: 'checkout', id: '', anchor: '' }
+  if (head === 'compte') {
+    const [, , tab] = hash.split('/')
+    if (sub === 'inscription') return { page: 'inscription', id: '', anchor: '' }
+    if (sub === 'code') return { page: 'code', id: '', anchor: '' }
+    if (sub === 'profil') return { page: 'profil', id: PROFILE_TABS.includes(tab) ? tab : 'commandes', anchor: '' }
+    return { page: 'compte', id: '', anchor: '' }
+  }
+  if (head === 'suivi') return { page: 'suivi', id: (sub ?? '').toUpperCase(), anchor: '' }
   if (head === 'aide' || head === 'contact') {
     const id = head === 'contact' ? 'contact' : sub
     const section = aide.sections.find((s) => s.id === id) ?? aide.sections[0]
@@ -49,6 +61,6 @@ export default function useHashRoute() {
  * Changer d'onglet (Offrir) ou de rubrique (Aide) garde la même page.
  */
 export const pageKeyOf = (route) => {
-  if (route.page === 'maison' || route.page === 'produit') return `${route.page}-${route.id}`
+  if (route.page === 'maison' || route.page === 'produit' || route.page === 'suivi') return `${route.page}-${route.id}`
   return route.page
 }

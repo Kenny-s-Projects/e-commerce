@@ -15,6 +15,7 @@ const LINKS = [
   { label: 'Offrir', href: '#offrir/pour-elle', page: 'offrir' },
   { label: 'Notre histoire', href: '#notre-histoire', page: 'histoire' },
   { label: 'Aide et service client', href: '#aide/livraison', page: 'aide' },
+  { label: 'Mon compte', href: '#compte', page: 'compte' },
 ]
 
 /**
@@ -26,7 +27,7 @@ const LINKS = [
 export default function MenuPanel({ open, onClose, onSearch }) {
   const t = useT()
   const route = useHashRoute()
-  const current = route.page === 'maison' ? `maison-${route.id}` : route.page
+  const current = route.page === 'maison' ? `maison-${route.id}` : ['inscription', 'code', 'profil'].includes(route.page) ? 'compte' : route.page
 
   return (
     <AnimatePresence>

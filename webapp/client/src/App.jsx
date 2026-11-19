@@ -23,6 +23,11 @@ import AidePage from './pages/Aide/AidePage.jsx'
 import QuickViewModal from './components/QuickView/QuickViewModal.jsx'
 import { QuickViewContext } from './context/quickView.js'
 import CheckoutPage from './pages/Checkout/CheckoutPage.jsx'
+import LoginPage from './pages/Compte/LoginPage.jsx'
+import SignupPage from './pages/Compte/SignupPage.jsx'
+import CodePage from './pages/Compte/CodePage.jsx'
+import ProfilePage from './pages/Compte/ProfilePage.jsx'
+import TrackingPage from './pages/Suivi/TrackingPage.jsx'
 import { LangContext, readLang, saveLang } from './i18n/lang.js'
 import { houses } from './data/houses.js'
 import { maisons } from './data/maisons.js'
@@ -138,6 +143,16 @@ export default function App() {
             <HistoirePage />
           ) : route.page === 'aide' ? (
             <AidePage section={route.id} />
+          ) : route.page === 'compte' ? (
+            <LoginPage />
+          ) : route.page === 'inscription' ? (
+            <SignupPage />
+          ) : route.page === 'code' ? (
+            <CodePage />
+          ) : route.page === 'profil' ? (
+            <ProfilePage tab={route.id} />
+          ) : route.page === 'suivi' ? (
+            <TrackingPage number={route.id} />
           ) : (
             <>
               <Hero houses={houses} ready={ready} />
