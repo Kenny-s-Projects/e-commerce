@@ -41,7 +41,7 @@ src/
 | orders | `POST /orders` (checkout avec ou sans compte), `GET /orders/mine?tab=`, `GET /orders/:id` (selon le rôle), `POST /orders/:id/cancel` ; `orders.status.js` = machine à statuts | prêt |
 | parts | travail de chaque brand : accepter, préparer, refuser | à écrire |
 | deliveries | livreur : attribution, collecte, remise, cash | à écrire |
-| payments | paiement « en attente » à la commande, remboursement à l'annulation ; `providers/` mobile money et carte | base prête, routes à écrire |
+| payments | `GET /payments?status=&kind=`, `POST /payments/:id/confirm` (paiement reçu, référence obligatoire), `POST /payments/:id/fail`, `GET /payments/refunds`, `POST /payments/refunds/:id/done` (super-admin) ; `POST /payments/webhooks/:provider` prêt à brancher ; mobile money et carte uniquement | prêt (sans prestataire) |
 | notifications | `channels/` app, WhatsApp, SMS | canal app prêt |
 | users | profil, rôles (super-admin) | à écrire |
 | brands | horaires, point de retrait | à écrire |
