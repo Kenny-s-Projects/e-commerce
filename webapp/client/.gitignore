@@ -1,0 +1,5 @@
+# Variables locales (ne jamais commiter de secret)
+.env
+.env.local
+.env.*.local
+dist/
