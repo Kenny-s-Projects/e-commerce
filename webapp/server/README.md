@@ -11,7 +11,7 @@ cd webapp/server
 cp .env.example .env      # puis remplir DATABASE_URL et SUPABASE_URL
 npm install
 npm run dev               # redémarre tout seul à chaque modification
-npm test
+npm test                  # base PostgreSQL en mémoire avec les migrations : ne touche jamais Supabase
 ```
 
 - `GET http://localhost:4000/health` doit répondre `{ "ok": true }`.
@@ -38,10 +38,10 @@ src/
 | Module | Rôle | État |
 |---|---|---|
 | catalog | `GET /catalog/brands` (brands + rayons), `GET /catalog/products` (filtres brand, category, tag, search, inStock, tri), `GET /catalog/products/:slug` (fiche + produits liés) | prêt |
-| orders | checkout, suivi, annulation ; `orders.status.js` = machine à statuts | statuts prêts et testés, routes à écrire |
+| orders | `POST /orders` (checkout avec ou sans compte), `GET /orders/mine?tab=`, `GET /orders/:id` (selon le rôle), `POST /orders/:id/cancel` ; `orders.status.js` = machine à statuts | prêt |
 | parts | travail de chaque brand : accepter, préparer, refuser | à écrire |
 | deliveries | livreur : attribution, collecte, remise, cash | à écrire |
-| payments | `providers/` mobile money, carte, espèces + remboursements | à écrire |
+| payments | paiement « en attente » à la commande, remboursement à l'annulation ; `providers/` mobile money et carte | base prête, routes à écrire |
 | notifications | `channels/` app, WhatsApp, SMS | canal app prêt |
 | users | profil, rôles (super-admin) | à écrire |
 | brands | horaires, point de retrait | à écrire |
