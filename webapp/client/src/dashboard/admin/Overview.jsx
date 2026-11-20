@@ -230,11 +230,7 @@ export default function Overview() {
               </ul>
             )}
           </div>
-          {import.meta.env.DEV && (
-            <Button onClick={() => dispatch({ type: 'order/simulate' })} className="rounded-[10px] max-sm:w-full">
-              Simuler une commande
-            </Button>
-          )}
+         
         </div>
       </header>
 
