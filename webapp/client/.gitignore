@@ -3,3 +3,8 @@
 .env.local
 .env.*.local
 dist/
+
+# Fichiers générés (jamais versionnés)
+node_modules/
+.vite/
+.DS_Store
