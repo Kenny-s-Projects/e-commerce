@@ -1,12 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useReducedMotion,
-} from 'framer-motion'
+import { m, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import useLiteMode from '../../hooks/useLiteMode.js'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import FilterPanel from '../../components/maison/FilterPanel.jsx'
 import { maisons, optionsOf } from '../../data/maisons.js'
@@ -69,7 +63,7 @@ export default function Maison({ maison, onAdd }) {
 
       {/* Collections en chapitres */}
       <section className="px-gutter pt-[clamp(72px,9vw,130px)] pb-[clamp(40px,5vw,72px)]">
-        <motion.div
+        <m.div
           className="mb-[clamp(32px,4vw,52px)] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-start"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -82,9 +76,9 @@ export default function Maison({ maison, onAdd }) {
           <p className="max-w-[360px] text-sm leading-[1.75] opacity-80">
             {t('{n} produits, {m} {label}.', { n: maison.products.length, m: chapters.options.length, label: t(chapters.label).toLowerCase() })}
           </p>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="flex gap-[clamp(12px,1.4vw,20px)] overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           initial="hidden"
           whileInView="show"
@@ -94,7 +88,7 @@ export default function Maison({ maison, onAdd }) {
           {optionsOf(maison, chapters).map((o) => {
             const on = sel[chapters.key] === o.id
             return (
-              <motion.button
+              <m.button
                 key={o.id}
                 type="button"
                 onClick={() => pick(chapters.key, o.id, true)}
@@ -112,6 +106,7 @@ export default function Maison({ maison, onAdd }) {
                 >
                   {o.img && (
                     <img
+                      decoding="async"
                       src={o.img}
                       alt=""
                       className={`absolute inset-0 m-auto transition-transform duration-700 ease-lux group-hover:scale-105 ${
@@ -122,10 +117,10 @@ export default function Maison({ maison, onAdd }) {
                 </span>
                 <span className="accent text-[clamp(20px,1.8vw,26px)] leading-tight">{t(o.label)}</span>
                 <span className="caps -mt-1.5 text-[9px] opacity-70">{t(o.count > 1 ? '{n} produits' : '{n} produit', { n: o.count })}</span>
-              </motion.button>
+              </m.button>
             )
           })}
-        </motion.div>
+        </m.div>
       </section>
 
       {/* Filtres, collés sous la barre */}
@@ -203,7 +198,7 @@ export default function Maison({ maison, onAdd }) {
 /* ---------- Hero : les produits en apesanteur autour du logo ---------- */
 function MaisonHero({ maison, onBrowse }) {
   const t = useT()
-  const reduce = useReducedMotion()
+  const reduce = useLiteMode() // mode léger ou « Réduire les animations » : pas de flottement ni de parallaxe souris
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
   const sx = useSpring(mx, { stiffness: 50, damping: 18 })
@@ -231,33 +226,33 @@ function MaisonHero({ maison, onBrowse }) {
       ))}
 
       <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.1, ease }}
         >
           {maison.logo ? (
-            <img src={maison.logo} alt={maison.name} className={maison.logoClass ?? 'mx-auto h-auto w-[clamp(170px,20vw,290px)]'} />
+            <img decoding="async" src={maison.logo} alt={maison.name} className={maison.logoClass ?? 'mx-auto h-auto w-[clamp(170px,20vw,290px)]'} />
           ) : (
             <h1 className="text-[clamp(110px,15vw,230px)] font-light leading-[0.8] tracking-[-0.04em]">{maison.wordmark}</h1>
           )}
-        </motion.div>
-        <motion.p
+        </m.div>
+        <m.p
           className="mt-[clamp(24px,3vw,40px)] text-[clamp(22px,2.4vw,34px)] font-light leading-tight"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.25, ease }}
         >
           {t(maison.title)} <span className="accent text-[1.08em]">{t(maison.accent)}</span>
-        </motion.p>
-        <motion.p
+        </m.p>
+        <m.p
           className="mt-3 max-w-[520px] text-[14px] leading-[1.7]"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease }}
         >
           {t(maison.story)}
-        </motion.p>
+        </m.p>
       </div>
 
       <button
@@ -283,14 +278,14 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
   const y = useTransform(sy, (v) => v * -26 * spot.d)
 
   return (
-    <motion.div
+    <m.div
       className={`absolute ${spot.mobileHidden ? 'max-md:hidden' : ''}`}
       style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `calc(${spot.w}px * var(--fs))`, x, y, zIndex: hover ? 30 : Math.round(spot.d * 4) }}
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: spot.d < 0.6 ? 0.85 : 1, scale: 1 }}
       transition={{ duration: 1.2, delay: 0.3 + index * 0.08, ease }}
     >
-      <motion.button
+      <m.button
         type="button"
         onClick={onBrowse}
         onMouseEnter={() => setHover(true)}
@@ -305,6 +300,7 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
       >
         <span className={`relative block aspect-square overflow-hidden ${maison.id === 'patchi' ? 'rounded-xl' : 'bg-white'}`}>
           <img
+            loading="lazy" decoding="async"
             src={product.img}
             alt=""
             className={`absolute inset-0 m-auto ${product.boxed ? 'size-full object-cover' : 'size-[82%] object-contain mix-blend-multiply'}`}
@@ -312,7 +308,7 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
         </span>
         <AnimatePresence>
           {hover && (
-            <motion.span
+            <m.span
               className="block overflow-hidden"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -321,11 +317,11 @@ function FloatItem({ product, spot, index, sx, sy, reduce, maison, onBrowse }) {
             >
               <span className="block px-1 pt-2.5 text-[12px] font-medium leading-snug">{product.name}</span>
               <span className="block px-1 pt-0.5 pb-1 text-[12px]">{price}</span>
-            </motion.span>
+            </m.span>
           )}
         </AnimatePresence>
-      </motion.button>
-    </motion.div>
+      </m.button>
+    </m.div>
   )
 }
 
@@ -334,10 +330,10 @@ function ProductGrid({ items, maison, onAdd }) {
   const t = useT()
   return (
     <section className="px-gutter py-[clamp(48px,6vw,88px)]">
-      <motion.div layout className="grid grid-cols-3 gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)] max-[900px]:grid-cols-2">
+      <m.div layout className="grid grid-cols-3 gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)] max-[900px]:grid-cols-2">
         <AnimatePresence mode="popLayout">
           {items.map((p) => (
-            <motion.div
+            <m.div
               key={p.id}
               layout
               initial={{ opacity: 0, y: 30 }}
@@ -346,10 +342,10 @@ function ProductGrid({ items, maison, onAdd }) {
               transition={{ duration: 0.7, ease }}
             >
               <ProductSingle product={{ ...p, house: { id: maison.id, name: maison.name } }} onAdd={onAdd} href={`#maison/${maison.id}`} />
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
       {items.length === 0 && <p className="py-10 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
     </section>
   )
@@ -362,16 +358,16 @@ function Edito({ maison }) {
   return (
     <section className={`px-gutter py-[clamp(64px,8vw,110px)] ${e.bg}`}>
       <div className="grid grid-cols-2 items-center gap-[clamp(32px,6vw,96px)] max-md:grid-cols-1">
-        <motion.div
+        <m.div
           className={`relative aspect-[4/3] overflow-hidden ${e.boxed ? 'rounded-3xl' : 'bg-kyra-card'}`}
           initial={{ opacity: 0, scale: 0.94 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 1.2, ease }}
         >
-          <img src={e.img} alt="" className={`absolute inset-0 m-auto ${e.boxed ? 'size-full object-cover' : 'size-[70%] object-contain mix-blend-multiply'}`} />
-        </motion.div>
-        <motion.div
+          <img loading="lazy" decoding="async" src={e.img} alt="" className={`absolute inset-0 m-auto ${e.boxed ? 'size-full object-cover' : 'size-[70%] object-contain mix-blend-multiply'}`} />
+        </m.div>
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
@@ -381,7 +377,7 @@ function Edito({ maison }) {
           <p className="text-[clamp(34px,4vw,56px)] font-light leading-[1.12]">
             {t(e.title)} <span className="accent text-[1.08em] inline-block pr-[0.1em]">{t(e.accent)}</span>
           </p>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { getProduct } from '../../data/products.js'
@@ -39,7 +39,7 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
   }
 
   return (
-    <motion.section
+    <m.section
       className="overflow-hidden px-gutter py-[clamp(64px,8vw,112px)]"
       animate={{ backgroundColor: f.bg, color: f.fg }}
       transition={{ duration: 0.8, ease }}
@@ -66,7 +66,7 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
         {/* Visuel : la praline entre en roulant */}
         <div className="relative grid aspect-[5/4] place-items-center overflow-hidden rounded-2xl bg-white/10">
           <AnimatePresence mode="popLayout" custom={dir} initial={false}>
-            <motion.div
+            <m.div
               key={f.id}
               custom={dir}
               className="w-[42%]"
@@ -81,7 +81,7 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
               transition={{ duration: 0.9, ease }}
             >
               <Praline choco={f.choco} className="aspect-square w-full" />
-            </motion.div>
+            </m.div>
           </AnimatePresence>
           <span className="caps absolute right-5 top-5 opacity-70">{t('Réf.')} {f.ref}</span>
           <span className="caps absolute bottom-5 left-5 text-[9px] opacity-60">{t('[Photo {ref}.webp à fournir]', { ref: f.ref })}</span>
@@ -90,11 +90,11 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
         {/* Fiche */}
         <div>
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={f.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5, ease }}>
+            <m.div key={f.id} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5, ease }}>
               <p className="caps opacity-80">{t(f.coll)}</p>
               <h3 className="accent mt-3 text-[clamp(48px,5.6vw,84px)] leading-none">{t(f.name)}</h3>
               <p className="mt-5 text-[14px] leading-[1.75] opacity-85">{f.erp} · {t('[Notes de dégustation à fournir]')}</p>
-            </motion.div>
+            </m.div>
           </AnimatePresence>
 
           <p className="caps mb-3 mt-9 opacity-80">{t('Quantité')}</p>
@@ -108,7 +108,7 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
                 className="relative rounded-full border border-current/30 px-5 py-2.5 text-[13px]"
               >
                 {i === weight && (
-                  <motion.span layoutId="praline-weight" className="absolute inset-[-1px] rounded-full bg-current" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
+                  <m.span layoutId="praline-weight" className="absolute inset-[-1px] rounded-full bg-current" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
                 )}
                 <span className="relative" style={i === weight ? { color: f.bg } : undefined}>{wt.label}</span>
               </button>
@@ -120,16 +120,16 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
               <p className="flex overflow-hidden text-[34px] font-light">
                 $
                 <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.span key={price} initial={{ y: '100%' }} animate={{ y: '0%' }} exit={{ y: '-100%' }} transition={{ duration: 0.45, ease }}>
+                  <m.span key={price} initial={{ y: '100%' }} animate={{ y: '0%' }} exit={{ y: '-100%' }} transition={{ duration: 0.45, ease }}>
                     {formatPrice(price).slice(1)}
-                  </motion.span>
+                  </m.span>
                 </AnimatePresence>
               </p>
               <p className="mt-1 text-[11px] opacity-70">{live?.live ? t('{n} kg en stock', { n: stockKg }) : t('${p} / kg · {n} kg en stock', { p: pricePerKg, n: stockKg })}</p>
             </div>
-            <motion.button type="button" onClick={add} disabled={!canBuy} whileTap={{ scale: 0.96 }} className="caps px-7 py-4 disabled:opacity-50" style={{ background: f.fg, color: f.bg }}>
+            <m.button type="button" onClick={add} disabled={!canBuy} whileTap={{ scale: 0.96 }} className="caps px-7 py-4 disabled:opacity-50" style={{ background: f.fg, color: f.bg }}>
               {canBuy ? t('Ajouter au panier') : live?.live ? t('Épuisé') : t('Bientôt disponible')}
-            </motion.button>
+            </m.button>
           </div>
         </div>
       </div>
@@ -149,6 +149,6 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
           </button>
         ))}
       </div>
-    </motion.section>
+    </m.section>
   )
 }

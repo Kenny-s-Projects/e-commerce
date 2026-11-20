@@ -1,5 +1,6 @@
 import { useRef } from 'react'
-import { motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { m, useMotionValue, useScroll, useTransform } from 'framer-motion'
+import useLiteMode from '../../hooks/useLiteMode.js'
 import Praline from '../../components/maison/Praline.jsx'
 import { patchiFlavors, patchiPage } from '../../data/maisonPages.js'
 import { useT } from '../../i18n/lang.js'
@@ -18,7 +19,7 @@ const SLOTS = 12 // pralines visibles dans le coffret (4 × 3)
 export default function BoxReveal({ onCompose }) {
   const t = useT()
   const ref = useRef(null)
-  const reduce = useReducedMotion()
+  const reduce = useLiteMode() // mode léger ou « Réduire les animations »
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
   const still = useMotionValue(0.95)
   const p = reduce ? still : scrollYProgress
@@ -53,7 +54,7 @@ export default function BoxReveal({ onCompose }) {
     <section ref={ref} className={`relative bg-forest-deep text-paper ${reduce ? '' : 'h-[400vh]'}`}>
       <div className={`${reduce ? 'relative' : 'sticky top-16'} flex h-[calc(100svh-4rem)] min-h-[600px] flex-col overflow-hidden px-gutter pb-8 pt-6`}>
         {/* Étiquettes du haut */}
-        <motion.div
+        <m.div
           className="caps relative z-20 flex justify-between gap-4 text-gold max-sm:text-[8px]"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -62,11 +63,11 @@ export default function BoxReveal({ onCompose }) {
           {hero.labels.map((l) => (
             <span key={l} className="max-sm:[&:nth-child(2)]:hidden">{t(l)}</span>
           ))}
-        </motion.div>
+        </m.div>
 
         {/* Le coffret */}
         <div className="relative z-10 grid flex-1 place-items-center [perspective:1400px]">
-          <motion.div
+          <m.div
             className="relative aspect-[4/3] w-[min(72vw,540px)] max-sm:w-[84vw]"
             style={{ rotateX: tilt, scale, y: boxY, transformStyle: 'preserve-3d' }}
             initial={{ opacity: 0, y: 60 }}
@@ -83,38 +84,38 @@ export default function BoxReveal({ onCompose }) {
             </div>
 
             {/* Couvercle, articulé sur son bord haut */}
-            <motion.div
+            <m.div
               className="absolute inset-0 grid origin-top place-items-center rounded-[18px] bg-green shadow-[0_30px_60px_rgba(0,0,0,0.35)]"
               style={{ rotateX: lidRot, y: lidY, opacity: lidOpacity, backfaceVisibility: 'hidden' }}
             >
               <span className="absolute inset-[4%] rounded-[12px] border border-gold/70" />
-              <img src="/img/logos/patchi.png" alt="Patchi" className="relative w-[38%]" />
+              <img decoding="async" src="/img/logos/patchi.png" alt="Patchi" className="relative w-[38%]" />
 
               {/* Ruban vertical et horizontal */}
-              <motion.span className="absolute inset-y-0 left-[18%] w-[8%] -translate-x-1/2 origin-center bg-[linear-gradient(90deg,#b8954f,#e8cf8f,#b8954f)]" style={{ scaleY: ribbon }} />
-              <motion.span className="absolute inset-x-0 top-[24%] h-[10%] -translate-y-1/2 origin-center bg-[linear-gradient(180deg,#b8954f,#e8cf8f,#b8954f)]" style={{ scaleX: ribbon }} />
+              <m.span className="absolute inset-y-0 left-[18%] w-[8%] -translate-x-1/2 origin-center bg-[linear-gradient(90deg,#b8954f,#e8cf8f,#b8954f)]" style={{ scaleY: ribbon }} />
+              <m.span className="absolute inset-x-0 top-[24%] h-[10%] -translate-y-1/2 origin-center bg-[linear-gradient(180deg,#b8954f,#e8cf8f,#b8954f)]" style={{ scaleX: ribbon }} />
               {/* Nœud */}
-              <motion.span className="absolute left-[18%] top-[24%] flex -translate-x-1/2 -translate-y-1/2 gap-1" style={{ scale: bow, rotate: bowSpin }}>
+              <m.span className="absolute left-[18%] top-[24%] flex -translate-x-1/2 -translate-y-1/2 gap-1" style={{ scale: bow, rotate: bowSpin }}>
                 <span className="block h-[clamp(28px,4vw,44px)] w-[clamp(42px,6vw,66px)] -rotate-12 rounded-[50%_30%_30%_50%] bg-[radial-gradient(circle_at_70%_50%,#e8cf8f,#b8954f)] shadow-md" />
                 <span className="block h-[clamp(28px,4vw,44px)] w-[clamp(42px,6vw,66px)] rotate-12 rounded-[30%_50%_50%_30%] bg-[radial-gradient(circle_at_30%_50%,#e8cf8f,#b8954f)] shadow-md" />
-              </motion.span>
-            </motion.div>
-          </motion.div>
+              </m.span>
+            </m.div>
+          </m.div>
         </div>
 
         {/* Textes sous le coffret */}
         <div className="relative z-20 h-[clamp(120px,16vh,170px)] text-center">
           {hero.captions.map((c, i) => (
-            <motion.p
+            <m.p
               key={c}
               className="accent absolute inset-x-0 top-0 text-[clamp(30px,3.6vw,52px)] leading-tight"
               style={{ opacity: captions[i] }}
             >
               {t(c)}
-            </motion.p>
+            </m.p>
           ))}
 
-          <motion.div className="absolute inset-x-0 top-0 flex flex-col items-center" style={{ opacity: finale, y: finaleY }}>
+          <m.div className="absolute inset-x-0 top-0 flex flex-col items-center" style={{ opacity: finale, y: finaleY }}>
             <p className="text-[clamp(24px,2.6vw,36px)] font-light leading-tight">
               {t(hero.title)} <span className="accent text-[1.08em]">{t(hero.accent)}</span>
             </p>
@@ -122,15 +123,15 @@ export default function BoxReveal({ onCompose }) {
             <button type="button" onClick={onCompose} className="caps mt-4 border-b border-gold pb-1.5">
               {t('Composer un coffret')} ⟶
             </button>
-          </motion.div>
+          </m.div>
 
           {!reduce && (
-            <motion.div className="caps absolute inset-x-0 bottom-0 flex flex-col items-center gap-2.5 text-paper/80" style={{ opacity: cue }}>
+            <m.div className="caps absolute inset-x-0 bottom-0 flex flex-col items-center gap-2.5 text-paper/80" style={{ opacity: cue }}>
               {t('Faites défiler pour ouvrir le coffret')}
               <span className="block h-9 w-px overflow-hidden bg-current/30">
                 <span className="block h-1/3 w-full animate-scroll-cue bg-current" />
               </span>
-            </motion.div>
+            </m.div>
           )}
         </div>
       </div>
@@ -145,8 +146,8 @@ function BoxPraline({ index, p }) {
   const opacity = useTransform(p, [start, start + 0.05], [0, 1])
   const flavor = patchiFlavors[index % patchiFlavors.length]
   return (
-    <motion.div className="grid place-items-center" style={{ scale, opacity }}>
+    <m.div className="grid place-items-center" style={{ scale, opacity }}>
       <Praline choco={flavor.choco} cup className="size-full max-h-full" />
-    </motion.div>
+    </m.div>
   )
 }

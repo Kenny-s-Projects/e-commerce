@@ -149,6 +149,7 @@ function View({ view, fit, alt, onLoad, className = '' }) {
       src={view.src}
       alt={alt}
       loading="lazy"
+      decoding="async"
       draggable={false}
       onLoad={onLoad}
       className={`absolute ${view.detail ? DETAIL[fit] : FIT[fit]} ${className}`}

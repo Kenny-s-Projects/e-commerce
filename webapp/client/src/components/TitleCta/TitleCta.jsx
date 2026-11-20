@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 /**
@@ -11,7 +11,7 @@ import { useT } from '../../i18n/lang.js'
 export default function TitleCta({ name, logo, label, href = '#' }) {
   const t = useT()
   return (
-    <motion.div
+    <m.div
       className="flex flex-col items-end gap-3.5 max-sm:items-start"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -19,7 +19,7 @@ export default function TitleCta({ name, logo, label, href = '#' }) {
       transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       {logo ? (
-        <img src={logo} alt={name} className="h-[clamp(40px,4.4vw,64px)] w-auto" />
+        <img loading="lazy" decoding="async" src={logo} alt={name} className="h-[clamp(40px,4.4vw,64px)] w-auto" />
       ) : (
         <span className="text-[clamp(44px,5vw,72px)] font-light leading-[0.8] tracking-[-0.02em]">
           {name}
@@ -36,6 +36,6 @@ export default function TitleCta({ name, logo, label, href = '#' }) {
           ⟶
         </span>
       </a>
-    </motion.div>
+    </m.div>
   )
 }

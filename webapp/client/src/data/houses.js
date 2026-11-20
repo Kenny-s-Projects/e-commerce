@@ -2,20 +2,19 @@
 // Produits Kyra repris de l'existant (app.js), Patchi de brands.js (ERP, oct. 2026).
 // Images dans public/img.
 
-const PATCHI_IMG = '/img/logos/patchi-placeholder.png'
 const PATCHI_Product1 = '/img/products/patchi/Chocolate Bar 100 g Noblesse/Product1.webp' // visuel provisoire
 const PATCHI_Product2 = '/img/products/patchi/Chocolate Milk Filled with Praline/Product2.webp' // visuel provisoire
 const PATCHI_Product3 = '/img/products/patchi/Dragée Diet Almond Milk/Product3.webp' // visuel provisoire
 const PATCHI_Product4 = '/img/products/patchi/Filled Chocolate Box 1025 g/Product4.avif' // visuel provisoire
 
-const PATCHI_IMG_SECTION = '/img/logos/patchi-heroSection.png' // visuel provisoire
-const KYRA_IMG_SECTION = '/img/logos/kyra-heroSection.png' // visuel provisoire
+const PATCHI_IMG_SECTION = '/img/logos/patchi-heroSection.webp' // visuel provisoire
+const KYRA_IMG_SECTION = '/img/logos/kyra-heroSection.webp' // visuel provisoire
 
 export const houses = [
   {
     id: 'kyra',
     name: 'kyra',
-    logo: "/img/logos/logo-kyra.png", // pas de fichier logo : wordmark en texte
+    logo: "/img/logos/logo-kyra.webp", // pas de fichier logo : wordmark en texte
     theme: 'kyra',
     tagline: 'Parfums · Maquillage & soins',
     title: 'Les grandes maisons de',

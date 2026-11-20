@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { offrir } from '../../data/pages.js'
@@ -39,7 +39,7 @@ export default function OffrirPage({ tab, onAdd }) {
                 aria-current={on ? 'page' : undefined}
                 className={`relative rounded-full px-6 py-3 text-[14px] transition-colors duration-300 ${on ? 'text-ink' : 'text-ink/60 hover:text-ink'}`}
               >
-                {on && <motion.span layoutId="offrir-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.08)]" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
+                {on && <m.span layoutId="offrir-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.08)]" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
                 <span className="relative">{t(tb.label)}</span>
               </a>
             )
@@ -50,7 +50,7 @@ export default function OffrirPage({ tab, onAdd }) {
       {/* Sélection de l'onglet */}
       <section className="px-gutter pb-[clamp(72px,8vw,120px)]">
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div
+          <m.div
             key={current.id}
             className="grid grid-cols-[1.1fr_2fr] items-start gap-7 max-[1000px]:grid-cols-1"
             initial={{ opacity: 0, y: 24 }}
@@ -60,7 +60,7 @@ export default function OffrirPage({ tab, onAdd }) {
           >
             {/* Carte éditoriale */}
             <div className={`relative flex min-h-[560px] flex-col justify-end overflow-hidden rounded-2xl p-8 md:sticky md:top-24 max-[1000px]:min-h-[380px] ${current.tone}`}>
-              <motion.img
+              <m.img
                 src={current.hero}
                 alt=""
                 className={`absolute inset-0 m-auto ${current.heroFit === 'cover' ? 'size-full object-cover' : 'h-[70%] w-auto object-contain mix-blend-multiply'}`}
@@ -77,12 +77,12 @@ export default function OffrirPage({ tab, onAdd }) {
             {/* Produits */}
             <div className="grid grid-cols-3 gap-6 max-[1200px]:grid-cols-2">
               {products.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 + i * 0.06, ease }}>
+                <m.div key={p.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 + i * 0.06, ease }}>
                   <ProductSingle product={p} onAdd={onAdd} />
-                </motion.div>
+                </m.div>
               ))}
             </div>
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </section>
 
@@ -91,7 +91,7 @@ export default function OffrirPage({ tab, onAdd }) {
         <Reveal as="h2" className="text-[clamp(30px,3.4vw,46px)] font-light">
           {t('Le cadeau,')} <span className="accent">{t('jusqu’au bout')}</span>
         </Reveal>
-        <motion.div
+        <m.div
           className="mt-10 grid grid-cols-3 gap-8 max-md:grid-cols-1"
           initial="hidden"
           whileInView="show"
@@ -99,13 +99,13 @@ export default function OffrirPage({ tab, onAdd }) {
           variants={{ show: { transition: { staggerChildren: 0.12 } } }}
         >
           {offrir.services.map((s) => (
-            <motion.div key={s.n} className="border-t border-cream/25 pt-5" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease } } }}>
+            <m.div key={s.n} className="border-t border-cream/25 pt-5" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease } } }}>
               <p className="accent text-[32px] text-gold">{s.n}</p>
               <p className="mt-2.5 text-[17px]">{t(s.title)}</p>
               <p className="mt-1.5 text-[13px] leading-[1.7] text-cream/70">{t(s.text)}</p>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
         <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="caps mt-10 inline-block border-b border-gold pb-1.5">{t('Composer un cadeau avec le concierge')} ⟶</a>
       </section>
     </div>

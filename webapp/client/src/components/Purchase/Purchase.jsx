@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { photoFit } from './theme.js'
 import { useT } from '../../i18n/lang.js'
 import { formatPrice } from '../../data/houses.js'
@@ -31,7 +31,7 @@ export function WeightPicker({ variants, value, onChange, solid, compact = false
               onClick={() => onChange(v.id)}
               className={`relative flex flex-col items-center gap-0.5 rounded-xl border disabled:cursor-not-allowed disabled:opacity-40 ${compact ? 'py-2.5' : 'py-3'} ${on ? 'border-transparent' : 'border-current/25 hover:border-current'}`}
             >
-              {on && <motion.span layoutId={`weight-${compact ? 'qv' : 'page'}`} className={`absolute inset-[-1px] rounded-xl ${solid}`} transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+              {on && <m.span layoutId={`weight-${compact ? 'qv' : 'page'}`} className={`absolute inset-[-1px] rounded-xl ${solid}`} transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
               <span className={`relative text-[15px] ${on ? textOf(solid) : ''}`}>{v.label}</span>
               {!compact && (
                 <span className={`relative text-[11px] opacity-75 ${on ? textOf(solid) : ''}`}>
@@ -82,7 +82,7 @@ export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rou
     >
       {src ? (
         <AnimatePresence mode="popLayout" initial={false}>
-          <motion.img
+          <m.img
             key={src}
             src={src}
             alt={product.name}
@@ -118,7 +118,7 @@ export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rou
         i === index ? 'opacity-100 outline-current' : 'opacity-60 outline-transparent hover:opacity-90'
       } ${layout === 'side' ? 'w-full max-md:w-16' : 'w-16'}`}
     >
-      <img src={p} alt="" className={`absolute inset-0 m-auto ${fit}`} />
+      <img loading="lazy" decoding="async" src={p} alt="" className={`absolute inset-0 m-auto ${fit}`} />
     </button>
   ))
 

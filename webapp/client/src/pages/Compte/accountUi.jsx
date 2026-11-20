@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 import { HOUSE_COLORS, HOUSE_NAMES } from '../../data/account.js'
 
@@ -24,7 +24,7 @@ export function AuthShell({ children }) {
   return (
     <section className="grid min-h-[calc(100svh-4rem)] bg-white text-ink lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <aside className="relative hidden overflow-hidden bg-cream px-[clamp(40px,5vw,88px)] py-[clamp(56px,7vw,104px)] lg:flex lg:flex-col lg:justify-between">
-        <motion.div {...fadeUp(0.1)}>
+        <m.div {...fadeUp(0.1)}>
           <p className="caps text-[#86671f]">{t('kclick · Mon compte')}</p>
           <p className="mt-8 max-w-[440px] text-[clamp(34px,3.2vw,48px)] font-light leading-[1.1] tracking-[-0.01em]">
             {t('Un compte pour')} <span className="accent">{t('les quatre Maisons.')}</span>
@@ -37,15 +37,15 @@ export function AuthShell({ children }) {
               </li>
             ))}
           </ul>
-        </motion.div>
-        <motion.ul className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink/70" {...fadeUp(0.3)}>
+        </m.div>
+        <m.ul className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink/70" {...fadeUp(0.3)}>
           {Object.keys(HOUSE_NAMES).map((h) => (
             <li key={h} className="flex items-center gap-2">
               <span aria-hidden className="size-2.5 rounded-full" style={{ background: HOUSE_COLORS[h] }} />
               {HOUSE_NAMES[h]}
             </li>
           ))}
-        </motion.ul>
+        </m.ul>
       </aside>
       <div className="flex justify-center px-6 pb-14 pt-[clamp(36px,6vw,96px)] lg:items-center lg:px-[clamp(40px,5vw,88px)]">
         <div className="flex w-full max-w-[440px] flex-col">{children}</div>
@@ -78,13 +78,13 @@ export const inputClass = (error) =>
 /** Bouton plein noir (capitales espacées), comme la maquette */
 export function PrimaryButton({ children, className = '', ...rest }) {
   return (
-    <motion.button
+    <m.button
       whileTap={{ scale: 0.985 }}
       className={`caps h-14 w-full bg-ink text-[12px] text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:bg-[#9b9b9b] ${className}`}
       {...rest}
     >
       {children}
-    </motion.button>
+    </m.button>
   )
 }
 

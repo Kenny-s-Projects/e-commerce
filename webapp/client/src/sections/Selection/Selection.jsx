@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import CarouselNav from '../../components/CarouselNav/CarouselNav.jsx'
 import SelectionCard from '../../components/SelectionCard/SelectionCard.jsx'
@@ -49,7 +49,7 @@ export default function Selection({ items }) {
       </div>
 
       {/* Piste : les cartes débordent à droite pour inviter à faire défiler */}
-      <motion.div
+      <m.div
         ref={trackRef}
         onScroll={onScroll}
         className="flex snap-x snap-mandatory gap-[clamp(16px,1.8vw,28px)] overflow-x-auto px-gutter scroll-px-[clamp(20px,4vw,64px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -59,7 +59,7 @@ export default function Selection({ items }) {
         variants={{ show: { transition: { staggerChildren: 0.1 } } }}
       >
         {products.map(({ product, tone }) => (
-          <motion.div
+          <m.div
             key={product.id}
             className="w-[clamp(260px,29vw,440px)] shrink-0 snap-start max-sm:w-[78vw]"
             variants={{
@@ -68,9 +68,9 @@ export default function Selection({ items }) {
             }}
           >
             <SelectionCard product={product} tone={tone} />
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </section>
   )
 }

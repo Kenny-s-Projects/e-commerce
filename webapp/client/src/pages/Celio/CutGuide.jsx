@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { DrawLine } from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -20,7 +20,7 @@ export default function CutGuide({ cuts }) {
         </p>
         <div className="grid grid-cols-3 gap-5">
           {cuts.map((c, i) => (
-            <motion.div
+            <m.div
               key={c.id}
               initial="hidden"
               whileInView="show"
@@ -29,7 +29,7 @@ export default function CutGuide({ cuts }) {
             >
               <div className="grid aspect-[1/2] place-items-center bg-[#f3f2ef] p-[12%]">
                 <svg viewBox="0 0 100 200" className="h-full" role="img" aria-label={t('Coupe {c}', { c: c.label })}>
-                  <motion.path
+                  <m.path
                     d={c.path}
                     fill="none"
                     stroke="#111111"
@@ -41,7 +41,7 @@ export default function CutGuide({ cuts }) {
               </div>
               <p className="mt-3.5 text-[22px]">{c.label}</p>
               <p className="mt-1 text-[12px] text-ink/60">{t(c.note)}</p>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       </div>

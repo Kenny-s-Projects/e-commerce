@@ -1,4 +1,4 @@
-import { supabase, sendCode, verifyCode } from '../../lib/supabase.js'
+import { isConfigured, sendCode, verifyCode } from '../../lib/supabase.js'
 import { api } from '../../lib/api.js'
 
 /*
@@ -7,7 +7,7 @@ import { api } from '../../lib/api.js'
  */
 const PENDING_KEY = 'kclick-login-pending'
 
-export const authAvailable = () => Boolean(supabase)
+export const authAvailable = () => isConfigured
 
 export function savePending(pending) {
   try {
@@ -44,7 +44,7 @@ export async function confirmCode(email, code) {
 /** Messages d'erreur Supabase / API en français */
 export function authMessage(err) {
   const text = `${err?.code ?? ''} ${err?.message ?? ''}`.toLowerCase()
-  if (!supabase) return 'La connexion n’est pas encore configurée sur ce site (VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).'
+  if (!isConfigured) return 'La connexion n’est pas encore configurée sur ce site (VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).'
   if (text.includes('signups not allowed') || text.includes('otp_disabled') || text.includes('user not found'))
     return 'Aucun compte avec cette adresse. Créez un compte pour continuer.'
   if (text.includes('expired') || text.includes('invalid') || text.includes('otp'))

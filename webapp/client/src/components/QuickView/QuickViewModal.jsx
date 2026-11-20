@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { Gallery, QtyStepper, WeightPicker } from '../Purchase/Purchase.jsx'
 import { PRODUCT_THEMES } from '../Purchase/theme.js'
 import usePurchase from "../../hooks/usePurchase.js"
@@ -32,7 +32,7 @@ export default function QuickViewModal({ product, onClose, onAdd }) {
     <AnimatePresence>
       {product && (
         <div key={product.id} className="fixed inset-0 z-[65] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label={`${t('Aperçu')} : ${t(product.name)}`}>
-          <motion.button
+          <m.button
             type="button"
             aria-label={t('Fermer l’aperçu')}
             className="absolute inset-0 cursor-default bg-ink/40 backdrop-blur-[2px]"
@@ -41,7 +41,7 @@ export default function QuickViewModal({ product, onClose, onAdd }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
-          <motion.div
+          <m.div
             className="relative grid max-h-[calc(100svh-32px)] w-[min(980px,100%)] grid-cols-2 overflow-auto rounded-2xl bg-white text-ink shadow-[0_40px_100px_rgba(0,0,0,0.3)] max-md:grid-cols-1"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -49,7 +49,7 @@ export default function QuickViewModal({ product, onClose, onAdd }) {
             transition={{ duration: 0.55, ease }}
           >
             <QuickViewBody product={product} onClose={onClose} onAdd={onAdd} />
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

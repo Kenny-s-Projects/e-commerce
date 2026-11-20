@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -21,7 +21,7 @@ export default function Vestiaire({ cats, active, onPick }) {
       </div>
       <DrawLine className="bg-ink" />
 
-      <motion.div
+      <m.div
         className="mt-7 grid grid-cols-[repeat(8,minmax(110px,1fr))] gap-3.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         initial="hidden"
         whileInView="show"
@@ -31,7 +31,7 @@ export default function Vestiaire({ cats, active, onPick }) {
         {cats.map((c) => {
           const on = c.id === active
           return (
-            <motion.button
+            <m.button
               key={c.id}
               type="button"
               aria-pressed={on}
@@ -43,10 +43,10 @@ export default function Vestiaire({ cats, active, onPick }) {
                 <span className="caps grid size-full place-items-center text-[8px] text-ink/60 transition-transform duration-700 ease-lux group-hover:scale-105">[{t('Photo')}]</span>
               </span>
               <span className={`mt-2.5 block text-[12px] ${on ? 'font-medium' : ''}`}>{t(c.label)}</span>
-            </motion.button>
+            </m.button>
           )
         })}
-      </motion.div>
+      </m.div>
     </section>
   )
 }

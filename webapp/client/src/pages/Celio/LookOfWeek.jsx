@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Reveal, { DrawLine, FadeUp } from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -22,8 +22,8 @@ export default function LookOfWeek({ look }) {
     <section className="flex flex-wrap items-center gap-[clamp(32px,5vw,80px)] bg-[#f6f6f4] px-gutter py-[clamp(80px,10vw,140px)] text-ink">
       {/* Photo + points */}
       {/* Volet de gauche à droite. Le déclencheur est le conteneur : un élément entièrement masqué n'est jamais « visible » pour le navigateur */}
-      <motion.div className="flex-[1_1_440px]" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
-        <motion.div
+      <m.div className="flex-[1_1_440px]" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
+        <m.div
           className="relative aspect-[4/5] bg-[#e2e1dd]"
           variants={{
             hidden: { clipPath: 'inset(0% 100% 0% 0%)' },
@@ -43,7 +43,7 @@ export default function LookOfWeek({ look }) {
                 className="absolute -translate-x-1/2 -translate-y-1/2"
                 style={{ left: `${p.x}%`, top: `${p.y}%` }}
               >
-                <motion.span
+                <m.span
                   aria-hidden
                   className="absolute inset-0 rounded-full border border-ink"
                   animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
@@ -55,8 +55,8 @@ export default function LookOfWeek({ look }) {
               </button>
             )
           })}
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
 
       {/* Pièces */}
       <div className="max-w-[520px] flex-[1_1_360px]">
@@ -85,7 +85,7 @@ export default function LookOfWeek({ look }) {
           })}
         </div>
 
-        <motion.a
+        <m.a
           href={chosen.length ? `https://wa.me/243818592999?text=${encodeURIComponent(message)}` : undefined}
           target="_blank"
           rel="noreferrer"
@@ -94,7 +94,7 @@ export default function LookOfWeek({ look }) {
           className={`caps mt-7 block py-[18px] text-center text-white transition-colors duration-300 ${chosen.length ? 'bg-ink hover:bg-celio' : 'pointer-events-none bg-ink/40'}`}
         >
           {t(chosen.length > 1 ? 'Commander {n} pièces sur WhatsApp' : 'Commander {n} pièce sur WhatsApp', { n: chosen.length })}
-        </motion.a>
+        </m.a>
       </div>
     </section>
   )

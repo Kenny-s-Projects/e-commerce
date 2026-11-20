@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 /**
@@ -19,7 +19,7 @@ export default function CarouselNav({ current, total, onPrev, onNext }) {
         {/* Le chiffre glisse vers le haut à chaque changement */}
         <span className="relative inline-flex h-[1.2em] overflow-hidden text-2xl font-light leading-[1.2]">
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
+            <m.span
               key={current}
               initial={{ y: '100%' }}
               animate={{ y: '0%' }}
@@ -27,7 +27,7 @@ export default function CarouselNav({ current, total, onPrev, onNext }) {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             >
               {pad(current + 1)}
-            </motion.span>
+            </m.span>
           </AnimatePresence>
         </span>
         <span className="caps text-[9px] opacity-60">/ {pad(total)}</span>

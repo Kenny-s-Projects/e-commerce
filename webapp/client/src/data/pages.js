@@ -63,7 +63,7 @@ export const histoire = {
   },
   chapters: [
     { year: '1993', title: 'Les débuts', text: '[Récit de la création de Kenny’s International, à fournir]', visual: { kind: 'photo', label: '[Photo d’archive]' } },
-    { year: '[année]', title: 'Kyra, la parfumerie', text: '[Ouverture de Kyra et arrivée des grandes maisons de beauté, à fournir]', visual: { kind: 'logo', src: '/img/logos/logo-kyra.png', bg: 'bg-kyra', w: 'w-[46%]' } },
+    { year: '[année]', title: 'Kyra, la parfumerie', text: '[Ouverture de Kyra et arrivée des grandes maisons de beauté, à fournir]', visual: { kind: 'logo', src: '/img/logos/logo-kyra.webp', bg: 'bg-kyra', w: 'w-[46%]' } },
     { year: '[année]', title: 'Patchi, adidas, Celio', text: '[Arrivée des franchises à Kinshasa, à fournir]', visual: { kind: 'logo', src: '/img/logos/patchi.png', bg: 'bg-green', w: 'w-[26%]' } },
     { year: '[année]', title: 'Pointe-Noire et Lubumbashi', text: '[Ouverture des boutiques hors de Kinshasa, à fournir]', visual: { kind: 'photo', label: '[Photo boutique]' } },
     { year: '2026', title: 'kclick, en ligne', text: 'Les Maisons Kenny’s réunies sur une seule adresse, livrées le jour même à Gombe.', visual: { kind: 'word', label: 'kclick' } },

@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { whatsappFor } from '../../data/products.js'
@@ -50,7 +50,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
                   onClick={() => setSize(i)}
                   className={`relative flex flex-col gap-1.5 border p-5 text-left transition-colors duration-300 ${i === size ? 'border-forest-deep text-paper' : 'border-forest/25 hover:border-forest'}`}
                 >
-                  {i === size && <motion.span layoutId="box-size" className="absolute inset-[-1px] bg-forest-deep" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}
+                  {i === size && <m.span layoutId="box-size" className="absolute inset-[-1px] bg-forest-deep" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}
                   <span className="accent relative text-[26px] leading-none">{t(z.label)}</span>
                   <span className="relative text-[12px] opacity-75">{z.weight}</span>
                 </button>
@@ -64,7 +64,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
               {flavors.map((f) => {
                 const on = picked.includes(f.id)
                 return (
-                  <motion.button
+                  <m.button
                     key={f.id}
                     type="button"
                     aria-pressed={on}
@@ -74,7 +74,7 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
                   >
                     <Praline choco={f.choco} className="size-6" />
                     {t(f.name)}
-                  </motion.button>
+                  </m.button>
                 )
               })}
             </div>
@@ -99,12 +99,12 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
         <FadeUp as="aside" className="flex flex-[1_1_320px] flex-col gap-4 self-start bg-forest-deep p-8 text-paper">
           <p className="caps text-gold">{t('Votre coffret')}</p>
           <div className="rounded-xl bg-green p-[5%]">
-            <motion.div layout className={`grid gap-1.5 rounded-lg bg-paper p-2.5 ${s.slots > 12 ? 'grid-cols-5' : s.slots > 6 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+            <m.div layout className={`grid gap-1.5 rounded-lg bg-paper p-2.5 ${s.slots > 12 ? 'grid-cols-5' : s.slots > 6 ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <AnimatePresence mode="popLayout">
                 {Array.from({ length: s.slots }, (_, i) => {
                   const f = pool[i % pool.length]
                   return (
-                    <motion.div
+                    <m.div
                       key={`${s.id}-${i}-${f.id}`}
                       layout
                       initial={{ scale: 0, y: -20, opacity: 0 }}
@@ -113,11 +113,11 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
                       transition={{ duration: 0.5, delay: i * 0.025, ease }}
                     >
                       <Praline choco={f.choco} cup className="aspect-square w-full" />
-                    </motion.div>
+                    </m.div>
                   )
                 })}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
           </div>
           <div className="flex justify-between text-[14px]"><span>{t('Taille')}</span><span>{t(s.label)} · {s.weight}</span></div>
           <div className="flex justify-between gap-4 text-[14px]"><span>{t('Pralines')}</span><span className="text-right">{names}</span></div>
@@ -127,13 +127,13 @@ const BoxComposer = forwardRef(function BoxComposer({ flavors, sizes, pricePerKg
             <span className="flex overflow-hidden text-[34px] font-light">
               $
               <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span key={price} initial={{ y: '100%' }} animate={{ y: '0%' }} exit={{ y: '-100%' }} transition={{ duration: 0.45, ease }}>{price}</motion.span>
+                <m.span key={price} initial={{ y: '100%' }} animate={{ y: '0%' }} exit={{ y: '-100%' }} transition={{ duration: 0.45, ease }}>{price}</m.span>
               </AnimatePresence>
             </span>
           </div>
-          <motion.a href={whatsapp} target="_blank" rel="noreferrer" whileTap={{ scale: 0.97 }} className="caps bg-gold py-4 text-center text-forest-deep">
+          <m.a href={whatsapp} target="_blank" rel="noreferrer" whileTap={{ scale: 0.97 }} className="caps bg-gold py-4 text-center text-forest-deep">
             {t('Commander ce coffret sur WhatsApp')}
-          </motion.a>
+          </m.a>
           <p className="text-center text-[12px] opacity-80">{t('Prix indicatif. Le coffret sur mesure est préparé avec notre concierge.')}</p>
         </FadeUp>
       </div>

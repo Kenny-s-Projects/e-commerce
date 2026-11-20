@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { AnimatePresence, m, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -41,13 +41,13 @@ export default function IconViewer({ icons, colors, sizes }) {
             {t('Les icônes')} · {String(index + 1).padStart(2, '0')} / {String(icons.length).padStart(2, '0')}
           </Reveal>
 
-          <motion.div
+          <m.div
             className="relative w-[min(80%,560px)] cursor-grab touch-pan-y [perspective:1200px] active:cursor-grabbing"
             onPan={(_, info) => spin.set(spin.get() + info.delta.x * 0.8)}
             aria-label={t('Faire glisser pour tourner la chaussure')}
           >
             <AnimatePresence mode="popLayout" custom={dir} initial={false}>
-              <motion.div
+              <m.div
                 key={icon.name}
                 custom={dir}
                 variants={{
@@ -60,16 +60,16 @@ export default function IconViewer({ icons, colors, sizes }) {
                 exit="exit"
                 transition={{ duration: 0.8, ease }}
               >
-                <motion.div style={{ rotateY }}>
-                  <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
+                <m.div style={{ rotateY }}>
+                  <m.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
                     <Sneaker colors={c} />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
+                  </m.div>
+                </m.div>
+              </m.div>
             </AnimatePresence>
             {/* Ombre au sol */}
-            <motion.span aria-hidden className="mx-auto mt-4 block h-5 w-[70%] rounded-[50%] bg-black/70 blur-md" style={{ scaleX: shadow }} />
-          </motion.div>
+            <m.span aria-hidden className="mx-auto mt-4 block h-5 w-[70%] rounded-[50%] bg-black/70 blur-md" style={{ scaleX: shadow }} />
+          </m.div>
 
           <span className="caps absolute bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-white/60">⟵ {t('Glisser pour tourner')} ⟶</span>
           <span className="caps absolute bottom-6 right-7 text-[9px] text-white/40 max-md:hidden">{t('[Photos 360° à fournir]')}</span>
@@ -83,10 +83,10 @@ export default function IconViewer({ icons, colors, sizes }) {
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={icon.name} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5, ease }}>
+            <m.div key={icon.name} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5, ease }}>
               <p className="caps text-white/60">{t(icon.who)} · {t('Chaussures')}</p>
               <h3 className="mt-2.5 text-[56px] font-medium uppercase leading-[0.95] tracking-[-0.03em]">{icon.name}</h3>
-            </motion.div>
+            </m.div>
           </AnimatePresence>
 
           <div>
@@ -117,7 +117,7 @@ export default function IconViewer({ icons, colors, sizes }) {
                   onClick={() => setSize(i)}
                   className={`relative border py-3 text-[13px] ${i === size ? 'border-white text-black' : 'border-white/20 hover:border-white/60'}`}
                 >
-                  {i === size && <motion.span layoutId="adidas-size" className="absolute inset-0 bg-white" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+                  {i === size && <m.span layoutId="adidas-size" className="absolute inset-0 bg-white" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
                   <span className="relative">{z}</span>
                 </button>
               ))}

@@ -95,7 +95,7 @@ export default function PatchiPage({ onAdd }) {
         id="kyra"
         name="Kyra"
         className="bg-kyra text-kyra-ink"
-        visual={<img src="/img/logos/kyra-heroSection2.png" alt="Image de Kyra" className="h-[clamp(140px,16vw,240px)] w-auto mix-blend-multiply max-sm:hidden" />}
+        visual={<img loading="lazy" decoding="async" src="/img/logos/kyra-heroSection2.webp" alt="Image de Kyra" className="h-[clamp(140px,16vw,240px)] w-auto mix-blend-multiply max-sm:hidden" />}
       />
     </div>
   )

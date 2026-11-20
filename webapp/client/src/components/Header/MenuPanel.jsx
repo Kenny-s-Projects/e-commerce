@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import useHashRoute from '../../hooks/useHashRoute.js'
 import { contact } from '../../data/home.js'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
@@ -34,7 +34,7 @@ export default function MenuPanel({ open, onClose, onSearch }) {
       {open && (
         <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={t('Menu')}>
           {/* Clic à côté : ferme */}
-          <motion.button
+          <m.button
             type="button"
             aria-label={t('Fermer le menu')}
             className="absolute inset-0 cursor-default bg-ink/20"
@@ -45,7 +45,7 @@ export default function MenuPanel({ open, onClose, onSearch }) {
             transition={{ duration: 0.4 }}
           />
 
-          <motion.nav
+          <m.nav
             id="menu-panel"
             className="absolute left-1/2 top-3 w-[min(420px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-lg bg-ink px-7 pb-8 pt-5 text-cream shadow-[0_40px_80px_rgba(0,0,0,0.35)]"
             initial={{ clipPath: 'inset(0% 0% 92% 0% round 8px)' }}
@@ -57,12 +57,12 @@ export default function MenuPanel({ open, onClose, onSearch }) {
             <div className="flex items-center justify-between">
               <span className="text-[14px]">{t('Menu')}</span>
               <button type="button" onClick={onClose} aria-label={t('Fermer')} className="relative grid h-8 w-[60px] place-items-center">
-                <motion.span className="absolute h-px w-full bg-current" initial={{ rotate: 0, y: -3 }} animate={{ rotate: 10, y: 0 }} transition={{ duration: 0.5, ease }} />
-                <motion.span className="absolute h-px w-full bg-current" initial={{ rotate: 0, y: 3 }} animate={{ rotate: -10, y: 0 }} transition={{ duration: 0.5, ease }} />
+                <m.span className="absolute h-px w-full bg-current" initial={{ rotate: 0, y: -3 }} animate={{ rotate: 10, y: 0 }} transition={{ duration: 0.5, ease }} />
+                <m.span className="absolute h-px w-full bg-current" initial={{ rotate: 0, y: 3 }} animate={{ rotate: -10, y: 0 }} transition={{ duration: 0.5, ease }} />
               </button>
             </div>
 
-            <motion.ul
+            <m.ul
               className="mt-5"
               initial="hidden"
               animate="show"
@@ -71,7 +71,7 @@ export default function MenuPanel({ open, onClose, onSearch }) {
               {LINKS.map((l) => {
                 const on = l.page === current
                 return (
-                  <motion.li
+                  <m.li
                     key={l.label}
                     className="border-b border-cream/15 last:border-0"
                     variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } }}
@@ -85,12 +85,12 @@ export default function MenuPanel({ open, onClose, onSearch }) {
                       {on && <span aria-hidden className="size-[7px] bg-gold" />}
                       {t(l.label)}
                     </a>
-                  </motion.li>
+                  </m.li>
                 )
               })}
-            </motion.ul>
+            </m.ul>
 
-            <motion.div
+            <m.div
               className="mt-7 flex flex-col gap-3 text-[13px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -102,8 +102,8 @@ export default function MenuPanel({ open, onClose, onSearch }) {
               <a href={contact.phoneHref ?? `tel:${contact.phone.replace(/\s/g, '')}`} className="hover:text-gold">{contact.phone} ↗</a>
               <a href={`mailto:${contact.email}`} className="break-all hover:text-gold">{contact.email} ↗</a>
               <LangSwitch className="caps mt-3 text-[11px]" />
-            </motion.div>
-          </motion.nav>
+            </m.div>
+          </m.nav>
         </div>
       )}
     </AnimatePresence>

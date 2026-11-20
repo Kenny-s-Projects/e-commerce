@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -11,7 +11,7 @@ export default function Concierge({ concierge }) {
   const t = useT()
   return (
     <section id="conciergerie" className="bg-black px-gutter pb-[clamp(80px,10vw,140px)] text-white">
-      <motion.div
+      <m.div
         className="flex flex-wrap items-center justify-between gap-12 border border-gold/50 px-[clamp(24px,5vw,74px)] py-[clamp(56px,7vw,110px)]"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -38,7 +38,7 @@ export default function Concierge({ concierge }) {
           </svg>
           {concierge.phone}
         </a>
-      </motion.div>
+      </m.div>
     </section>
   )
 }

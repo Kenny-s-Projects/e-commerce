@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -26,13 +26,13 @@ export default function Accordion({ items, defaultOpen = 0, size = 'md' }) {
               className={`flex w-full items-center justify-between gap-5 text-left ${title}`}
             >
               {it.title}
-              <motion.span aria-hidden className="text-lg leading-none" animate={{ rotate: on ? 45 : 0 }} transition={{ duration: 0.4, ease }}>
+              <m.span aria-hidden className="text-lg leading-none" animate={{ rotate: on ? 45 : 0 }} transition={{ duration: 0.4, ease }}>
                 +
-              </motion.span>
+              </m.span>
             </button>
             <AnimatePresence initial={false}>
               {on && (
-                <motion.div
+                <m.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -40,7 +40,7 @@ export default function Accordion({ items, defaultOpen = 0, size = 'md' }) {
                   className="overflow-hidden"
                 >
                   <div className="max-w-[620px] pb-5 text-[13px] leading-[1.75] opacity-80">{it.content}</div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>

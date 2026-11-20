@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, PrimaryButton, fadeUp, readSession, underline } from './accountUi.jsx'
 import { authMessage, confirmCode, readPending, requestCode } from './auth.js'
@@ -96,7 +96,7 @@ export default function CodePage() {
 
   return (
     <AuthShell>
-      <motion.div {...fadeUp()}>
+      <m.div {...fadeUp()}>
         <span className="grid size-14 place-items-center rounded-full bg-[#f2efe8]" aria-hidden>
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="3.5" y="6" width="17" height="12" rx="1" />
@@ -109,9 +109,9 @@ export default function CodePage() {
         <p className="mt-4 text-[15px] leading-[1.7] text-ink/70">
           {t('Nous avons envoyé un code à 6 chiffres à')} <strong className="break-all font-medium text-ink">{email}</strong>. {t('Il est valable 10 minutes.')}
         </p>
-      </motion.div>
+      </m.div>
 
-      <motion.form onSubmit={submit} className="mt-8 flex flex-col gap-6" {...fadeUp(0.1)}>
+      <m.form onSubmit={submit} className="mt-8 flex flex-col gap-6" {...fadeUp(0.1)}>
         <fieldset>
           <legend className="mb-3 text-[13px] font-medium">{t('Code de connexion')}</legend>
           <div className="grid grid-cols-6 gap-2 sm:gap-3">
@@ -138,9 +138,9 @@ export default function CodePage() {
         <PrimaryButton type="submit" disabled={!complete || checking}>
           {checking ? t('Vérification…') : t('Valider')}
         </PrimaryButton>
-      </motion.form>
+      </m.form>
 
-      <motion.div className="mt-6 flex flex-col items-center gap-5 text-[14px]" {...fadeUp(0.16)}>
+      <m.div className="mt-6 flex flex-col items-center gap-5 text-[14px]" {...fadeUp(0.16)}>
         <p className="text-ink/70" aria-live="polite">
           {wait > 0 ? (
             <>
@@ -156,11 +156,11 @@ export default function CodePage() {
         <a href="#compte" className={underline}>
           {t('Modifier l’adresse e-mail')}
         </a>
-      </motion.div>
+      </m.div>
 
-      <motion.p className="mt-14 text-[13px] leading-[1.6] text-ink/65" {...fadeUp(0.24)}>
+      <m.p className="mt-14 text-[13px] leading-[1.6] text-ink/65" {...fadeUp(0.24)}>
         {t('Rien reçu ? Regardez dans les courriers indésirables, ou écrivez à la conciergerie sur WhatsApp.')}
-      </motion.p>
+      </m.p>
     </AuthShell>
   )
 }

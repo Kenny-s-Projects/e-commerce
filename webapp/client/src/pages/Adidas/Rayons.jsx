@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -22,7 +22,7 @@ export default function Rayons({ rayons, counts, onPick }) {
 
       <div className="mt-[clamp(48px,6vw,80px)] grid grid-cols-3 gap-6 max-md:grid-cols-1">
         {rayons.map((r, i) => (
-          <motion.button
+          <m.button
             key={r.id}
             type="button"
             onClick={() => onPick(r.id)}
@@ -45,7 +45,7 @@ export default function Rayons({ rayons, counts, onPick }) {
               <span className="mt-2 block text-[13px] text-white/60">{t(r.note)}</span>
               <span className="caps mt-5 block">{t('Explorer')} ↗</span>
             </span>
-          </motion.button>
+          </m.button>
         ))}
       </div>
     </section>

@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, m } from 'framer-motion'
 import Loader from './components/Loader/Loader.jsx'
 import Header from './components/Header/Header.jsx'
 import Hero from './components/Hero/Hero.jsx'
 import ScrollCue from './components/ScrollCue/ScrollCue.jsx'
-import CartDrawer from './components/CartDrawer/CartDrawer.jsx'
 import BrandSection from './sections/BrandSection/BrandSection.jsx'
 import Selection from './sections/Selection/Selection.jsx'
 import Gifts from './sections/Gifts/Gifts.jsx'
@@ -12,35 +11,42 @@ import Services from './sections/Services/Services.jsx'
 import About from './sections/About/About.jsx'
 import Concierge from './sections/Concierge/Concierge.jsx'
 import Footer from './sections/Footer/Footer.jsx'
-import Maison from './pages/Maison/Maison.jsx'
-import PatchiPage from './pages/Patchi/PatchiPage.jsx'
-import AdidasPage from './pages/Adidas/AdidasPage.jsx'
-import CelioPage from './pages/Celio/CelioPage.jsx'
-import ProductPage from './pages/Produit/ProductPage.jsx'
-import OffrirPage from './pages/Offrir/OffrirPage.jsx'
-import HistoirePage from './pages/Histoire/HistoirePage.jsx'
-import AidePage from './pages/Aide/AidePage.jsx'
-import QuickViewModal from './components/QuickView/QuickViewModal.jsx'
+import PageFallback from './components/PageFallback/PageFallback.jsx'
 import { QuickViewContext } from './context/quickView.js'
-import CheckoutPage from './pages/Checkout/CheckoutPage.jsx'
-import LoginPage from './pages/Compte/LoginPage.jsx'
-import SignupPage from './pages/Compte/SignupPage.jsx'
-import CodePage from './pages/Compte/CodePage.jsx'
-import ProfilePage from './pages/Compte/ProfilePage.jsx'
-import TrackingPage from './pages/Suivi/TrackingPage.jsx'
-import { LangContext, readLang, saveLang } from './i18n/lang.js'
+import { LangContext, loadEnglish, readLang, saveLang } from './i18n/lang.js'
 import { houses } from './data/houses.js'
 import { maisons } from './data/maisons.js'
 import { selection, gifts, services, contact, footer, about, concierge } from './data/home.js'
 import { hasSeenIntro } from './utils/intro.js'
+import { detectLiteMode } from './hooks/useLiteMode.js'
 import { useLive } from './data/live.js'
 import useHashRoute, { pageKeyOf } from './hooks/useHashRoute.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
+// Panier et aperçu rapide : téléchargés à la première ouverture
+const CartDrawer = lazy(() => import('./components/CartDrawer/CartDrawer.jsx'))
+const QuickViewModal = lazy(() => import('./components/QuickView/QuickViewModal.jsx'))
+
+// Pages chargées à la demande : l'accueil ne télécharge que ce dont il a besoin.
+const Maison = lazy(() => import('./pages/Maison/Maison.jsx'))
+const PatchiPage = lazy(() => import('./pages/Patchi/PatchiPage.jsx'))
+const AdidasPage = lazy(() => import('./pages/Adidas/AdidasPage.jsx'))
+const CelioPage = lazy(() => import('./pages/Celio/CelioPage.jsx'))
+const ProductPage = lazy(() => import('./pages/Produit/ProductPage.jsx'))
+const OffrirPage = lazy(() => import('./pages/Offrir/OffrirPage.jsx'))
+const HistoirePage = lazy(() => import('./pages/Histoire/HistoirePage.jsx'))
+const AidePage = lazy(() => import('./pages/Aide/AidePage.jsx'))
+const CheckoutPage = lazy(() => import('./pages/Checkout/CheckoutPage.jsx'))
+const LoginPage = lazy(() => import('./pages/Compte/LoginPage.jsx'))
+const SignupPage = lazy(() => import('./pages/Compte/SignupPage.jsx'))
+const CodePage = lazy(() => import('./pages/Compte/CodePage.jsx'))
+const ProfilePage = lazy(() => import('./pages/Compte/ProfilePage.jsx'))
+const TrackingPage = lazy(() => import('./pages/Suivi/TrackingPage.jsx'))
+
 export default function App() {
-  // Préchargeur une seule fois par session
-  const [ready, setReady] = useState(hasSeenIntro)
+  // Préchargeur une seule fois par session, jamais en mode léger (connexion lente, petit téléphone)
+  const [ready, setReady] = useState(() => hasSeenIntro() || detectLiteMode())
   const route = useHashRoute()
   const pageKey = pageKeyOf(route)
 
@@ -53,7 +59,12 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = lang
   }, [lang])
-  const langValue = useMemo(() => ({ lang, setLang }), [lang, setLang])
+  // Anglais : dictionnaire téléchargé à la demande, puis les textes se mettent à jour
+  const [dictVersion, setDictVersion] = useState(0)
+  useEffect(() => {
+    if (lang === 'en') loadEnglish().then(() => setDictVersion((v) => v + 1))
+  }, [lang])
+  const langValue = useMemo(() => ({ lang, setLang, version: dictVersion }), [lang, setLang, dictVersion])
 
   // Aperçu rapide : produit affiché dans la popup (null = fermée)
   const [quickProduct, setQuickProduct] = useState(null)
@@ -101,6 +112,12 @@ export default function App() {
 
   const closeCart = useCallback(() => setCartOpen(false), [])
 
+  // Le panier et l'aperçu restent montés après leur première ouverture (animation de fermeture)
+  const [cartUsed, setCartUsed] = useState(false)
+  const [quickUsed, setQuickUsed] = useState(false)
+  if (cartOpen && !cartUsed) setCartUsed(true)
+  if (quickProduct && !quickUsed) setQuickUsed(true)
+
   // Changement de page : une fois l'ancienne page effacée, on repart du haut,
   // ou on va à la section demandée (#patchi…) si l'adresse en désigne une.
   const lastKey = useRef(pageKey)
@@ -130,7 +147,7 @@ export default function App() {
       {route.page === 'home' && <ScrollCue ready={ready} />}
 
       <AnimatePresence mode="wait" initial={false} onExitComplete={onPageSwap}>
-        <motion.main
+        <m.main
           key={pageKey}
           className="pt-16"
           initial={{ opacity: 0 }}
@@ -138,6 +155,7 @@ export default function App() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.45, ease }}
         >
+          <Suspense fallback={<PageFallback />}>
           {route.page === 'maison' ? (
             <MaisonPage id={route.id} onAdd={addToCart} />
           ) : route.page === 'produit' ? (
@@ -176,12 +194,15 @@ export default function App() {
               <Concierge concierge={concierge} />
             </>
           )}
-        </motion.main>
+          </Suspense>
+        </m.main>
       </AnimatePresence>
 
       <Footer footer={footer} contact={contact} lang={lang} onLang={setLang} />
-      <CartDrawer open={cartOpen} items={cart} onQty={setQty} onClose={closeCart} onCheckout={checkoutCart} />
-      <QuickViewModal product={quickProduct} onClose={closeQuickView} onAdd={addToCart} />
+      <Suspense fallback={null}>
+        {cartUsed && <CartDrawer open={cartOpen} items={cart} onQty={setQty} onClose={closeCart} onCheckout={checkoutCart} />}
+        {quickUsed && <QuickViewModal product={quickProduct} onClose={closeQuickView} onAdd={addToCart} />}
+      </Suspense>
     </QuickViewContext.Provider>
     </LangContext.Provider>
   )

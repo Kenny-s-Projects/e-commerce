@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Reveal, { FadeUp } from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -30,7 +30,7 @@ export default function SizeGuide({ sizes }) {
         <table className="w-full border-collapse text-center text-[13px]">
           <tbody>
             {rows.map((r, i) => (
-              <motion.tr
+              <m.tr
                 key={r.label}
                 className={i === 0 ? 'border-b border-black' : 'border-b border-black/15'}
                 initial={{ opacity: 0, x: -30 }}
@@ -42,7 +42,7 @@ export default function SizeGuide({ sizes }) {
                 {r.values.map((v, j) => (
                   <td key={j} className="py-3.5">{v}</td>
                 ))}
-              </motion.tr>
+              </m.tr>
             ))}
           </tbody>
         </table>

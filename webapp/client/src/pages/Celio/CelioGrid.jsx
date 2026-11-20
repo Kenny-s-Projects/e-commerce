@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
@@ -18,9 +18,9 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
     <section ref={ref} id="grille" className="scroll-mt-16 bg-white px-gutter py-[clamp(72px,9vw,120px)] text-ink [--card:#f3f2ef] [--fg:#111111]">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45, ease }}>
+          <m.div key={title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45, ease }}>
             <Reveal as="h2" className="text-[clamp(34px,4.4vw,60px)] tracking-[-0.02em]">{t(title)}</Reveal>
-          </motion.div>
+          </m.div>
         </AnimatePresence>
         <div className="flex items-center gap-4 text-[12px]">
           <span className="accent text-base">{t('Affichage')}</span>
@@ -32,7 +32,7 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
               {i > 0 && <span className="text-ink/30">/</span>}
               <button type="button" aria-pressed={view === id} onClick={() => onView(id)} className={`relative py-1 transition-colors ${view === id ? 'text-ink' : 'text-ink/40 hover:text-ink/70'}`}>
                 {t(label)}
-                {view === id && <motion.span layoutId="celio-view" className="absolute inset-x-0 bottom-0 h-px bg-ink" />}
+                {view === id && <m.span layoutId="celio-view" className="absolute inset-x-0 bottom-0 h-px bg-ink" />}
               </button>
             </span>
           ))}
@@ -41,7 +41,7 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
 
       <AnimatePresence mode="wait" initial={false}>
         {view === 'grid' ? (
-          <motion.div
+          <m.div
             key="grid"
             layout
             className="mt-9 grid grid-cols-4 gap-5 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2"
@@ -52,7 +52,7 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
           >
             <AnimatePresence mode="popLayout">
               {products.map((p, i) => (
-                <motion.div
+                <m.div
                   key={p.id}
                   layout
                   initial={{ opacity: 0, y: 30 }}
@@ -61,10 +61,10 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
                   transition={{ duration: 0.6, delay: (i % 4) * 0.06, ease }}
                 >
                   <ProductSingle product={{ ...p, house: HOUSE }} onAdd={onAdd} href="#maison/celio" />
-                </motion.div>
+                </m.div>
               ))}
               {/* Tuile éditoriale glissée dans la grille */}
-              <motion.button
+              <m.button
                 key="edito"
                 layout
                 type="button"
@@ -79,13 +79,13 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
                   {t('La chemise')} <span className="accent">Oxford</span>{t(', du lundi au samedi.')}
                 </span>
                 <span className="caps">{t('Voir les chemises')} <span className="inline-block transition-transform duration-500 ease-lux group-hover:translate-x-1.5">⟶</span></span>
-              </motion.button>
+              </m.button>
             </AnimatePresence>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div key="list" className="mt-9 border-t border-ink" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+          <m.div key="list" className="mt-9 border-t border-ink" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
             {products.map((p, i) => (
-              <motion.div
+              <m.div
                 key={p.id}
                 className="group grid grid-cols-[70px_minmax(0,1.4fr)_minmax(0,1fr)_100px] items-center gap-5 border-b border-ink/15 py-4 transition-colors hover:bg-[#f6f6f4] max-sm:grid-cols-[56px_minmax(0,1fr)_auto]"
                 initial={{ opacity: 0, x: -24 }}
@@ -96,9 +96,9 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
                 <span className="accent text-[clamp(22px,2.4vw,30px)] transition-transform duration-500 ease-lux group-hover:translate-x-2">{t(p.name)}</span>
                 <span className="text-[12px] text-ink/60 max-sm:hidden">{t(p.store)}</span>
                 <span className="text-right text-[14px]">{t('[Prix]')}</span>
-              </motion.div>
+              </m.div>
             ))}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
       {products.length === 0 && <p className="py-12 text-sm opacity-70">{t('Aucun produit dans ce rayon pour le moment.')}</p>}

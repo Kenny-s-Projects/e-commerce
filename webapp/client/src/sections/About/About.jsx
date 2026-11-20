@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -15,7 +15,7 @@ export default function About({ about }) {
       <div className="grid grid-cols-12 gap-x-12 gap-y-14 max-[900px]:grid-cols-1">
         <div className="col-span-7 max-[900px]:col-span-1">
           <SectionTitle eyebrow={about.eyebrow} title={about.title} accent={about.accent} accentInline />
-          <motion.p
+          <m.p
             className="mt-8 max-w-[560px] text-[15px] leading-[1.8] text-white/70"
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -23,10 +23,10 @@ export default function About({ about }) {
             transition={{ duration: 0.9, delay: 0.3, ease }}
           >
             {t(about.text)}
-          </motion.p>
+          </m.p>
         </div>
 
-        <motion.dl
+        <m.dl
           className="col-span-5 grid grid-cols-2 gap-x-11 max-[900px]:col-span-1"
           initial="hidden"
           whileInView="show"
@@ -34,7 +34,7 @@ export default function About({ about }) {
           variants={{ show: { transition: { staggerChildren: 0.12 } } }}
         >
           {about.stats.map((s, i) => (
-            <motion.div
+            <m.div
               key={s.label}
               className={`border-t border-gold/45 pt-9 ${i < 2 ? 'pb-14' : ''}`}
               variants={{
@@ -47,9 +47,9 @@ export default function About({ about }) {
                 {s.suffix && <span className="text-gold">{s.suffix}</span>}
               </dd>
               <dt className="caps mt-5 text-white/70">{t(s.label)}</dt>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.dl>
+        </m.dl>
       </div>
 
       <a

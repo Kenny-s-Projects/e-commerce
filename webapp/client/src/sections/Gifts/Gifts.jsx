@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import GiftTile from '../../components/GiftTile/GiftTile.jsx'
 import { useT } from '../../i18n/lang.js'
@@ -18,7 +18,7 @@ export default function Gifts({ gifts }) {
 
       <div className="mb-[clamp(36px,4vw,52px)] flex items-end justify-between gap-8 max-sm:flex-col max-sm:items-start">
         <SectionTitle accent={gifts.title} />
-        <motion.p
+        <m.p
           className="max-w-[320px] text-[13px] leading-[1.7]"
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -26,10 +26,10 @@ export default function Gifts({ gifts }) {
           transition={{ duration: 0.8, delay: 0.2, ease }}
         >
           {t(gifts.text)}
-        </motion.p>
+        </m.p>
       </div>
 
-      <motion.div
+      <m.div
         className="grid grid-cols-4 gap-[clamp(16px,1.8vw,28px)] max-[900px]:grid-cols-2 max-[900px]:gap-y-10"
         initial="hidden"
         whileInView="show"
@@ -37,7 +37,7 @@ export default function Gifts({ gifts }) {
         variants={{ show: { transition: { staggerChildren: 0.12 } } }}
       >
         {gifts.items.map((item) => (
-          <motion.div
+          <m.div
             key={item.id}
             variants={{
               hidden: { opacity: 0, y: 40 },
@@ -45,9 +45,9 @@ export default function Gifts({ gifts }) {
             }}
           >
             <GiftTile item={item} />
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </section>
   )
 }
