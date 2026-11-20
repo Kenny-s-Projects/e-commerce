@@ -73,6 +73,7 @@ export function Gallery({ product, photos, tone, layout = 'side', rounded = 'rou
 
   const main = (
     <div
+      data-fly-origin
       className={`relative aspect-square overflow-hidden ${rounded} ${tone}`}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect()

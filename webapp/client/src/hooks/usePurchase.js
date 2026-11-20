@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { whatsappFor } from '../data/products.js'
 import { formatPrice } from '../data/houses.js'
 import { cartLine, defaultVariant, isPurchasable } from '../data/live.js'
+import { flyToCart } from '../components/FlyToCart/flyToCart.js'
 
 /**
  * Logique d'achat d'un produit, partagée par la fiche produit et l'aperçu rapide :
@@ -31,11 +32,23 @@ export default function usePurchase(product, onAdd) {
 
   const line = variant ? cartLine(product, variant, gift ? note : '') : null
 
-  const add = () => {
-    if (!available || !line) return
+  // Ajout au panier : un seul ajout par geste (clics répétés ignorés pendant l'animation),
+  // puis la photo du produit « vole » vers le panier (depuis la galerie si elle est à l'écran, sinon depuis le bouton)
+  const lock = useRef(false)
+  const add = (event) => {
+    if (!available || !line || lock.current) return
+    lock.current = true
     onAdd?.(line, qty)
+    const button = event?.currentTarget
+    const origin = button?.closest?.('[data-fly-scope]')?.querySelector('[data-fly-origin]')
+    const r = origin?.getBoundingClientRect()
+    const visible = r && r.bottom > 0 && r.top < window.innerHeight
+    flyToCart({ from: visible ? origin : button, src: product.images?.[0] ?? product.img })
     setAdded(true)
-    setTimeout(() => setAdded(false), 1800)
+    setTimeout(() => {
+      setAdded(false)
+      lock.current = false
+    }, 1800)
   }
 
   // « Commander maintenant » : uniquement cet article, directement vers la page de commande

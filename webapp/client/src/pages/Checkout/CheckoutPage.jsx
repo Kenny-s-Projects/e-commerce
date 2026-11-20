@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, m } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, m, useReducedMotion } from 'framer-motion'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { whatsappFor } from '../../data/products.js'
@@ -7,9 +7,11 @@ import { contact } from '../../data/home.js'
 import { api } from '../../lib/api.js'
 import { rememberOrder } from '../../lib/orderMemory.js'
 import { useT } from '../../i18n/lang.js'
+import useLiteMode from '../../hooks/useLiteMode.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const DEFAULT_FEE = 4 // Gombe, le jour même (remplacé par les paramètres de l'API)
+const PHONE_HINT_DELAY = 10000 // « Validez le paiement sur votre téléphone » après 10 s d'attente
 
 const PAYMENT = [
   { id: 'mobile_money', title: 'Mobile money', text: 'Validez le paiement sur votre téléphone' },
@@ -28,24 +30,52 @@ const ITEM_PROBLEMS = {
   NO_PRICE: 'Prix à venir',
 }
 
+// Les 3 étapes et les champs que chacune contrôle
+const STEPS = [
+  { n: 1, title: 'Vos coordonnées', short: 'Coordonnées', fields: ['name', 'phone', 'email'] },
+  { n: 2, title: 'Livraison ou retrait', short: 'Livraison', fields: ['address'] },
+  { n: 3, title: 'Paiement', short: 'Paiement', fields: ['momo'] },
+]
+
+// Champ renvoyé par l'API → champ du formulaire (pour afficher l'erreur sous le bon champ)
+const SERVER_FIELDS = { 'customer.name': 'name', 'customer.phone': 'phone', 'customer.email': 'email', 'address.street': 'address', 'address.commune': 'address', address: 'address', payerPhone: 'momo' }
+
+// Champ renvoyé par l'API (ex. « customer.phone », « payerPhone ») → étape à rouvrir
+function stepOfServerField(field = '') {
+  if (field.startsWith('customer')) return 1
+  if (field.startsWith('address') || field === 'mode') return 2
+  if (['paymentMethod', 'provider', 'payerPhone'].some((f) => field.startsWith(f))) return 3
+  return null
+}
+
 /**
- * Commande sur un écran (#checkout) : 1. Coordonnées · 2. Livraison ou retrait · 3. Paiement en ligne
+ * Commande (#checkout) en 3 étapes : 1. Coordonnées · 2. Livraison ou retrait · 3. Paiement en ligne
  * (mobile money ou carte ; pas de paiement à la livraison), récapitulatif collé à droite, puis confirmation.
+ * Une étape validée (« Continuer ») se replie en un résumé avec une coche ; la suivante s'ouvre.
  * Sans compte. La commande est créée par l'API (POST /orders) : prix et stock vérifiés par le serveur.
+ * Aucun prestataire de paiement n'est encore branché : la confirmation porte sur la COMMANDE,
+ * le paiement reste « en attente de confirmation ».
  *  items     : [{ product, qty }] à commander (tout le panier, ou un seul article « Commander maintenant »)
  *  fromCart  : true si la commande vient du panier (il est vidé après confirmation)
  *  onDone    : appelé à la confirmation
  */
 export default function CheckoutPage({ items, fromCart, onDone }) {
   const t = useT()
+  const lite = useLiteMode()
+  const reduce = useReducedMotion() || lite
   const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', quartier: '', commune: 'Gombe', notes: '', operator: DEFAULT_OPERATORS[0], momo: '' })
   const [delivery, setDelivery] = useState('livraison')
   const [payment, setPayment] = useState('mobile_money')
   const [errors, setErrors] = useState({})
   const [order, setOrder] = useState(null)
   const [sending, setSending] = useState(false)
-  const [serverError, setServerError] = useState(null) // { message, items: { variantId: motif } }
+  const [longWait, setLongWait] = useState(false) // paiement mobile money : plus de 10 s d'attente
+  const [serverError, setServerError] = useState(null) // { message, items: { variantId: motif }, fields }
   const [settings, setSettings] = useState(null)
+  const [open, setOpen] = useState(1) // étape ouverte
+  const [done, setDone] = useState(() => new Set()) // étapes validées
+  const sendingRef = useRef(false) // garde contre la double soumission
+  const [focusTick, setFocusTick] = useState(0) // > 0 : l'utilisateur a changé d'étape → le focus suit
 
   // Zones et frais de livraison, opérateurs mobile money (Paramètres › Livraison / Paiements)
   useEffect(() => {
@@ -58,6 +88,22 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       alive = false
     }
   }, [])
+
+  // Le focus suit l'étape ouverte (seulement après une action de l'utilisateur)
+  useEffect(() => {
+    if (!focusTick) return
+    const heading = document.getElementById(`co-step-${open}`)
+    heading?.focus({ preventScroll: true })
+    heading?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' })
+  }, [focusTick]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Après 10 s d'attente d'un paiement mobile money : rappeler de valider sur le téléphone
+  useEffect(() => {
+    if (!sending || payment !== 'mobile_money') return
+    const id = setTimeout(() => setLongWait(true), PHONE_HINT_DELAY)
+    return () => clearTimeout(id)
+  }, [sending, payment])
+
   const zones = settings?.delivery?.zones?.length ? settings.delivery.zones : [{ commune: 'Gombe', fee: DEFAULT_FEE, delay: 'Le jour même' }]
   const zone = zones.find((z) => z.commune === form.commune) ?? zones[0]
   const operators = settings?.payments?.mobileMoney?.length ? settings.payments.mobileMoney : DEFAULT_OPERATORS
@@ -82,16 +128,46 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     return r
   }, [delivery, payment])
 
-  const submit = async (e) => {
-    e.preventDefault()
-    if (sending) return
-    const errs = Object.fromEntries(required.filter((k) => !form[k].trim()).map((k) => [k, 'Champ obligatoire']))
-    for (const k of ['phone', 'momo']) if (!errs[k] && required.includes(k) && !PHONE.test(cleanPhone(form[k]))) errs[k] = 'Numéro invalide'
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'E-mail invalide'
+  // Erreurs de saisie d'une liste de champs (mêmes règles qu'avant le découpage en étapes)
+  const validate = (keys) => {
+    const errs = {}
+    for (const k of keys) {
+      if (required.includes(k) && !form[k].trim()) errs[k] = 'Champ obligatoire'
+      else if ((k === 'phone' || k === 'momo') && required.includes(k) && !PHONE.test(cleanPhone(form[k]))) errs[k] = 'Numéro invalide'
+      else if (k === 'email' && form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'E-mail invalide'
+    }
+    return errs
+  }
+
+  const goTo = (n) => {
+    setOpen(n)
+    setFocusTick((x) => x + 1)
+  }
+
+  // « Continuer » : valide l'étape, la replie, ouvre la suivante non validée
+  const continueFrom = (n) => {
+    const keys = STEPS[n - 1].fields
+    const errs = validate(keys)
+    setErrors((e) => ({ ...Object.fromEntries(Object.entries(e).filter(([k]) => !keys.includes(k))), ...errs }))
+    if (Object.keys(errs).length) {
+      document.getElementById(`co-${Object.keys(errs)[0]}`)?.focus()
+      return
+    }
+    const next = new Set(done).add(n)
+    setDone(next)
+    goTo(STEPS.find((s) => !next.has(s.n))?.n ?? 3)
+  }
+
+  const pay = async () => {
+    if (sendingRef.current) return
+    // Toutes les étapes sont revérifiées ; la première étape en erreur se rouvre
+    const errs = validate(STEPS.flatMap((s) => s.fields))
     setErrors(errs)
     setServerError(null)
     if (Object.keys(errs).length) {
-      document.getElementById(`co-${Object.keys(errs)[0]}`)?.focus()
+      const first = STEPS.find((s) => s.fields.some((f) => errs[f]))
+      if (first) goTo(first.n)
+      setTimeout(() => document.getElementById(`co-${Object.keys(errs)[0]}`)?.focus(), 50)
       return
     }
 
@@ -109,20 +185,35 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       items: items.map(({ product, qty }) => ({ variantId: product.variantId, quantity: qty, giftMessage: product.giftMessage || undefined })),
     }
 
+    sendingRef.current = true
     setSending(true)
+    setLongWait(false)
     try {
       const created = await api.post('/orders', body)
       rememberOrder(created.number, phone)
       setOrder({ number: created.number, total: created.total, count, delivery, payment, name: form.name.trim().split(' ')[0] })
-      onDone?.(fromCart)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      onDone?.(fromCart) // le panier n'est vidé qu'ici, une fois la commande enregistrée
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
     } catch (err) {
       const byItem = Object.fromEntries((Array.isArray(err.details) ? err.details : []).filter((d) => d.variantId).map((d) => [d.variantId, d]))
       const fields = Array.isArray(err.details) ? err.details.filter((d) => d.field) : []
       setServerError({ message: err.message, items: byItem, fields })
+      // Une erreur de saisie renvoyée par le serveur s'affiche sous le champ et rouvre l'étape concernée
+      const fieldErrors = Object.fromEntries(fields.filter((f) => SERVER_FIELDS[f.field]).map((f) => [SERVER_FIELDS[f.field], f.message]))
+      if (Object.keys(fieldErrors).length) setErrors((e) => ({ ...e, ...fieldErrors }))
+      const step = fields.map((f) => stepOfServerField(f.field)).find(Boolean)
+      if (step && step !== 3) goTo(step)
     } finally {
+      sendingRef.current = false
       setSending(false)
+      setLongWait(false)
     }
+  }
+
+  const submit = (e) => {
+    e.preventDefault()
+    if (open < 3) continueFrom(open)
+    else pay()
   }
 
   /* ---------- Confirmation ---------- */
@@ -131,16 +222,8 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     const momo = order.payment === 'mobile_money'
     return (
       <section className="grid min-h-[calc(100svh-4rem)] place-items-center bg-cream px-gutter py-20 text-center text-ink">
-        <m.div className="max-w-[560px]" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease }}>
-          <m.span
-            className="mx-auto grid size-16 place-items-center rounded-full bg-ink text-2xl text-cream"
-            initial={{ scale: 0, rotate: -90 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease }}
-            aria-hidden
-          >
-            ✓
-          </m.span>
+        <m.div className="max-w-[560px]" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}>
+          <DrawnCheck reduce={reduce} />
           <h1 className="mt-8 text-[clamp(44px,6vw,80px)] font-light leading-none">
             {t('Merci')}{order.name ? ',' : '.'} <span className="accent">{order.name ? `${order.name}.` : ''}</span>
           </h1>
@@ -153,11 +236,14 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
               ? t('Paiement en attente : validez la demande mobile money sur votre téléphone. La préparation commence dès que le paiement est confirmé.')
               : t('Paiement en attente : vous serez redirigé vers le paiement sécurisé par carte [prestataire à brancher].')}
           </p>
-          <p className="caps mt-8 text-gold">{t('Numéro de commande')}</p>
-          <p className="mt-2 text-[32px] font-light tracking-wide">{order.number}</p>
-          <p className="mt-2 text-[13px] text-ink/60">
-            {t('{n} article(s)', { n: order.count })} · {t('Total')} {formatPrice(order.total)}
-          </p>
+          {/* Le numéro apparaît une fois la coche dessinée */}
+          <m.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: reduce ? 0 : 0.75, ease }}>
+            <p className="caps mt-8 text-gold">{t('Numéro de commande')}</p>
+            <p className="mt-2 text-[32px] font-light tracking-wide">{order.number}</p>
+            <p className="mt-2 text-[13px] text-ink/60">
+              {t('{n} article(s)', { n: order.count })} · {t('Total')} {formatPrice(order.total)}
+            </p>
+          </m.div>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <a href={`#suivi/${order.number}`} className="rounded-full bg-ink px-7 py-4 text-[14px] text-white">{t('Suivre ma commande')}</a>
             <a href={follow} target="_blank" rel="noreferrer" className="rounded-full border border-ink px-7 py-4 text-[14px]">{t('Une question sur WhatsApp')}</a>
@@ -190,13 +276,33 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
         id={`co-${k}`}
         value={form[k]}
         onChange={set(k)}
-        aria-invalid={errors[k] || undefined}
+        aria-invalid={errors[k] ? true : undefined}
+        aria-describedby={errors[k] ? `co-${k}-err` : undefined}
         {...Object.fromEntries(Object.entries(props).filter(([p]) => p !== 'wide'))}
         className={`h-12 w-full rounded-lg border bg-white px-4 text-[14px] outline-none transition-colors focus:border-ink ${errors[k] ? 'border-celio' : 'border-ink/20'}`}
       />
-      {errors[k] && <p className="mt-1 text-[11px] text-celio">{t(errors[k])}</p>}
+      {errors[k] && <p id={`co-${k}-err`} className="mt-1 text-[11px] text-celio">{t(errors[k])}</p>}
     </div>
   )
+
+  // Résumé d'une étape validée (affiché quand elle est repliée)
+  const summary = {
+    1: [form.name.trim(), cleanPhone(form.phone), form.email.trim()].filter(Boolean).join(' · '),
+    2:
+      delivery === 'livraison'
+        ? `${t('Livraison à {c}', { c: zone.commune })} · ${[form.address.trim(), form.quartier.trim()].filter(Boolean).join(', ')}`
+        : `${t('Retrait en boutique')} · 124 Boulevard du 30 Juin, Gombe`,
+  }
+
+  const stepProps = (n) => ({
+    step: STEPS[n - 1],
+    open: open === n,
+    done: done.has(n) && open !== n,
+    summary: summary[n],
+    onEdit: () => goTo(n),
+    reduce,
+    t,
+  })
 
   return (
     <div className="bg-white text-ink">
@@ -206,68 +312,107 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
           {t('Votre')} <span className="accent">{t('commande')}</span>
         </Reveal>
         <p className="mt-3 text-[13px] text-ink/60">{t('Sans compte · Paiement en ligne par mobile money ou carte')}</p>
+        <Progress open={open} done={done} t={t} />
       </section>
 
       <form noValidate onSubmit={submit} className="flex flex-wrap items-start gap-[clamp(32px,5vw,72px)] px-gutter pb-[clamp(72px,8vw,120px)]">
-        <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-12">
+        <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
           {/* 1. Coordonnées */}
-          <Step n="1" title={t('Vos coordonnées')}>
+          <Step {...stepProps(1)}>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               {field('name', 'Prénom et nom', { autoComplete: 'name', wide: true })}
               {field('phone', 'Téléphone', { type: 'tel', autoComplete: 'tel', placeholder: '+243 …' })}
               {field('email', 'E-mail (facultatif)', { type: 'email', autoComplete: 'email' })}
             </div>
+            <ContinueButton t={t} />
           </Step>
 
           {/* 2. Livraison ou retrait */}
-          <Step n="2" title={t('Livraison ou retrait')}>
+          <Step {...stepProps(2)}>
             <Choices options={DELIVERY} value={delivery} onChange={setDelivery} name="delivery" t={t} showPrice />
-            <AnimatePresence initial={false}>
-              {delivery === 'livraison' && (
-                <m.div key="addr" className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease }}>
-                  <div className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1">
-                    {field('address', 'Adresse de livraison', { autoComplete: 'street-address', wide: true, placeholder: t('Avenue, numéro') })}
-                    {zones.length > 1 ? (
-                      <div>
-                        <label htmlFor="co-commune" className="mb-1.5 block text-[12px]">{t('Commune')}</label>
-                        <select id="co-commune" value={zone.commune} onChange={set('commune')} className="h-12 w-full rounded-lg border border-ink/20 bg-white px-4 text-[14px]">
-                          {zones.map((z) => <option key={z.commune} value={z.commune}>{z.commune} · {formatPrice(z.fee)}</option>)}
-                        </select>
-                      </div>
-                    ) : (
-                      field('commune', 'Commune', { readOnly: true })
-                    )}
-                    {field('quartier', 'Quartier (facultatif)')}
-                    {field('notes', 'Point de repère pour le livreur (facultatif)', { wide: true, placeholder: t('Ex. portail bleu, en face de la pharmacie') })}
-                  </div>
-                  <p className="mt-3 text-[12px] text-ink/60">{t('Livraison hors de Gombe : [à confirmer]. Écrivez au concierge pour une autre commune.')}</p>
-                </m.div>
-              )}
-            </AnimatePresence>
+            {delivery === 'livraison' && (
+              <m.div key="addr" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
+                <div className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1">
+                  {field('address', 'Adresse de livraison', { autoComplete: 'street-address', wide: true, placeholder: t('Avenue, numéro') })}
+                  {zones.length > 1 ? (
+                    <div>
+                      <label htmlFor="co-commune" className="mb-1.5 block text-[12px]">{t('Commune')}</label>
+                      <select id="co-commune" value={zone.commune} onChange={set('commune')} className="h-12 w-full rounded-lg border border-ink/20 bg-white px-4 text-[14px]">
+                        {zones.map((z) => <option key={z.commune} value={z.commune}>{z.commune} · {formatPrice(z.fee)}</option>)}
+                      </select>
+                    </div>
+                  ) : (
+                    field('commune', 'Commune', { readOnly: true })
+                  )}
+                  {field('quartier', 'Quartier (facultatif)')}
+                  {field('notes', 'Point de repère pour le livreur (facultatif)', { wide: true, placeholder: t('Ex. portail bleu, en face de la pharmacie') })}
+                </div>
+                <p className="mt-3 text-[12px] text-ink/60">{t('Livraison hors de Gombe : [à confirmer]. Écrivez au concierge pour une autre commune.')}</p>
+              </m.div>
+            )}
+            <ContinueButton t={t} />
           </Step>
 
           {/* 3. Paiement */}
-          <Step n="3" title={t('Paiement')}>
+          <Step {...stepProps(3)}>
             <Choices options={payments} value={payment} onChange={setPayment} name="payment" t={t} />
-            <AnimatePresence mode="wait" initial={false}>
-              {payment === 'mobile_money' && (
-                <m.div key="mobile" className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
-                  <div>
-                    <label htmlFor="co-operator" className="mb-1.5 block text-[12px]">{t('Opérateur')}</label>
-                    <select id="co-operator" value={form.operator} onChange={set('operator')} className="h-12 w-full rounded-lg border border-ink/20 bg-white px-4 text-[14px]">
-                      {operators.map((o) => <option key={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  {field('momo', 'Numéro mobile money', { type: 'tel', placeholder: '+243 …' })}
-                  <p className="col-span-2 text-[12px] text-ink/60 max-sm:col-span-1">{t('Vous recevrez une demande de validation sur ce numéro.')}</p>
-                </m.div>
-              )}
-              {payment === 'carte' && (
-                <m.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
-                  {t('Vous serez redirigé vers le paiement sécurisé pour saisir votre carte [prestataire à brancher]. Aucune donnée de carte ne passe par kclick.')}
-                </m.p>
-              )}
-            </AnimatePresence>
+            {payment === 'mobile_money' && (
+              <m.div key="mobile" className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
+                <div>
+                  <label htmlFor="co-operator" className="mb-1.5 block text-[12px]">{t('Opérateur')}</label>
+                  <select id="co-operator" value={form.operator} onChange={set('operator')} className="h-12 w-full rounded-lg border border-ink/20 bg-white px-4 text-[14px]">
+                    {operators.map((o) => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
+                {field('momo', 'Numéro mobile money', { type: 'tel', placeholder: '+243 …' })}
+                <p className="col-span-2 text-[12px] text-ink/60 max-sm:col-span-1">{t('Vous recevrez une demande de validation sur ce numéro.')}</p>
+              </m.div>
+            )}
+            {payment === 'carte' && (
+              <m.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
+                {t('Vous serez redirigé vers le paiement sécurisé pour saisir votre carte [prestataire à brancher]. Aucune donnée de carte ne passe par kclick.')}
+              </m.p>
+            )}
+
+            {/* Payer : état « Paiement en cours… », barre de progression, rappel après 10 s, erreur + Réessayer */}
+            <div className="mt-7 flex flex-col gap-3">
+              <m.button
+                type="submit"
+                disabled={sending}
+                aria-busy={sending}
+                whileTap={sending ? undefined : { scale: 0.98 }}
+                className="relative h-14 overflow-hidden rounded-full bg-ink text-[14px] text-white transition-opacity hover:opacity-90 disabled:cursor-progress disabled:opacity-80"
+              >
+                {sending ? t('Paiement en cours…') : t('Payer {p}', { p: formatPrice(total) })}
+                {sending && <span className="pay-progress absolute inset-x-0 bottom-0 h-[3px] overflow-hidden" aria-hidden />}
+              </m.button>
+              <p aria-live="polite" className="min-h-[1.25rem] text-center text-[13px] text-ink/75">
+                {sending && longWait && t('Validez le paiement sur votre téléphone.')}
+              </p>
+              <AnimatePresence>
+                {serverError && !sending && (
+                  <m.div
+                    key="error"
+                    role="alert"
+                    className="rounded-xl border border-celio/40 bg-white px-4 py-3 text-[13px] text-celio"
+                    initial={reduce ? false : { opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease }}
+                  >
+                    <p>{t('La commande n’a pas pu être envoyée.')} {t(serverError.message)}</p>
+                    {serverError.fields.map((f) => (
+                      <p key={f.field} className="mt-1 text-[12px]">· {t(f.message)}</p>
+                    ))}
+                    {Object.keys(serverError.items).length > 0 && <p className="mt-1 text-[12px]">{t('Les articles concernés sont signalés dans le récapitulatif.')}</p>}
+                    <p className="mt-1 text-[12px] text-ink/60">{t('Votre panier est conservé.')}</p>
+                    <button type="button" onClick={pay} className="mt-3 rounded-full border border-celio px-5 py-2 text-[13px] transition-colors hover:bg-celio hover:text-white">
+                      {t('Réessayer')}
+                    </button>
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </div>
           </Step>
         </div>
 
@@ -307,21 +452,10 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
           </div>
           <p className="flex items-baseline justify-between border-t border-ink pt-4">
             <span className="text-[15px]">{t('Total')}</span>
-            <m.span key={total} className="text-[32px] font-light" initial={{ opacity: 0.4, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
+            <m.span key={total} className="text-[32px] font-light" initial={reduce ? false : { opacity: 0.4, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
               {formatPrice(total)}
             </m.span>
           </p>
-          {serverError && (
-            <div role="alert" className="rounded-xl border border-celio/40 bg-white px-4 py-3 text-[13px] text-celio">
-              <p>{t(serverError.message)}</p>
-              {serverError.fields.map((f) => (
-                <p key={f.field} className="mt-1 text-[12px]">· {t(f.message)}</p>
-              ))}
-            </div>
-          )}
-          <m.button type="submit" disabled={sending} whileTap={{ scale: 0.98 }} className="h-14 rounded-full bg-ink text-[14px] text-white transition-opacity hover:opacity-90 disabled:opacity-60">
-            {sending ? t('Envoi de la commande…') : t('Payer {p}', { p: formatPrice(total) })}
-          </m.button>
           {fromCart && <p className="text-center text-[12px] text-ink/60">{t('Pour modifier les quantités, ouvrez le panier.')}</p>}
           <p className="text-center text-[11px] text-ink/50">
             {t('Une question ?')} <a href={whatsappFor(t('Bonjour, j’ai une question sur ma commande kclick.'))} target="_blank" rel="noreferrer" className="underline">{t('Le concierge vous répond sur WhatsApp')}</a> · {contact.email}
@@ -332,15 +466,109 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   )
 }
 
-function Step({ n, title, children }) {
+// Indicateur d'avancement : 1 Coordonnées · 2 Livraison · 3 Paiement
+function Progress({ open, done, t }) {
   return (
-    <m.fieldset initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: Number(n) * 0.08, ease }}>
-      <legend className="mb-5 flex items-center gap-3 text-[22px] font-light">
-        <span className="grid size-8 place-items-center rounded-full border border-ink text-[13px]">{n}</span>
-        {title}
-      </legend>
-      {children}
-    </m.fieldset>
+    <ol className="mt-7 flex max-w-[560px] items-center gap-2 text-[12px]" aria-label={t('Étapes de la commande')}>
+      {STEPS.map((s, i) => {
+        const current = open === s.n
+        const ok = done.has(s.n) && !current
+        return (
+          <li key={s.n} className="flex flex-1 items-center gap-2" aria-current={current ? 'step' : undefined}>
+            <span
+              className={`grid size-6 shrink-0 place-items-center rounded-full border text-[11px] transition-colors duration-300 ${
+                current ? 'border-ink bg-ink text-white' : ok ? 'border-ink text-ink' : 'border-ink/25 text-ink/45'
+              }`}
+            >
+              {ok ? '✓' : s.n}
+            </span>
+            <span className={`whitespace-nowrap transition-colors duration-300 ${current ? 'text-ink' : 'text-ink/55'}`}>
+              {t(s.short)}
+              <span className="sr-only">{ok ? ` (${t('validée')})` : current ? ` (${t('en cours')})` : ''}</span>
+            </span>
+            {i < STEPS.length - 1 && <span aria-hidden className="h-px min-w-3 flex-1 bg-ink/15" />}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+/**
+ * Une étape : ouverte (champs), repliée validée (résumé + coche + « Modifier ») ou à venir.
+ * Le passage de l'un à l'autre est un fondu court (opacity + translation), sans animation de hauteur.
+ */
+function Step({ step, open, done, summary, onEdit, reduce, t, children }) {
+  return (
+    <fieldset className={`rounded-2xl border px-[clamp(16px,2.4vw,28px)] py-5 transition-colors duration-300 ${open ? 'border-ink/20' : 'border-ink/10'}`}>
+      <legend className="sr-only">{t(step.title)}</legend>
+      <div className="flex items-center gap-3">
+        <span
+          className={`grid size-8 shrink-0 place-items-center rounded-full border text-[13px] transition-colors duration-300 ${
+            done ? 'border-ink bg-ink text-white' : open ? 'border-ink' : 'border-ink/25 text-ink/45'
+          }`}
+          aria-hidden
+        >
+          {done ? <CheckMark reduce={reduce} /> : step.n}
+        </span>
+        <h2 id={`co-step-${step.n}`} tabIndex={-1} className={`flex-1 text-[22px] font-light outline-none ${open || done ? '' : 'text-ink/45'}`}>
+          {t(step.title)}
+        </h2>
+        {done && (
+          <button type="button" onClick={onEdit} className="text-[12px] underline underline-offset-4 hover:text-ink/70">
+            {t('Modifier')}
+            <span className="sr-only"> : {t(step.title)}</span>
+          </button>
+        )}
+      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        {open ? (
+          <m.div key="open" className="pt-5" initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -6, transition: { duration: 0.15 } }} transition={{ duration: 0.3, ease }}>
+            {children}
+          </m.div>
+        ) : done && summary ? (
+          <m.p key="summary" className="truncate pl-11 pt-1 text-[13px] text-ink/65" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25, ease }}>
+            {summary}
+          </m.p>
+        ) : null}
+      </AnimatePresence>
+    </fieldset>
+  )
+}
+
+function ContinueButton({ t }) {
+  return (
+    <button type="submit" className="mt-6 h-12 rounded-full bg-ink px-8 text-[14px] text-white transition-opacity hover:opacity-90">
+      {t('Continuer')}
+    </button>
+  )
+}
+
+// Coche qui se dessine (étape validée)
+function CheckMark({ reduce }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <m.path d="M5 12.5l4.5 4.5L19 7.5" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35, ease }} />
+    </svg>
+  )
+}
+
+// Grande coche de la confirmation : le cercle puis le trait se dessinent
+function DrawnCheck({ reduce }) {
+  return (
+    <svg viewBox="0 0 64 64" className="mx-auto size-16 text-ink" fill="none" aria-hidden>
+      <m.circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" initial={reduce ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.45, ease }} />
+      <m.path
+        d="M20 33l8 8 16-17"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={reduce ? false : { pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.35, delay: reduce ? 0 : 0.35, ease }}
+      />
+    </svg>
   )
 }
 

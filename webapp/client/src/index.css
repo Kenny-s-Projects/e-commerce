@@ -133,6 +133,25 @@
 }
 html[data-lite] .sk::after { animation: none; display: none; }
 
+/* Paiement en cours : fine barre qui glisse sous le bouton « Payer » (transform uniquement).
+   Mouvement réduit / mode léger : barre fixe à mi-opacité. */
+.pay-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--color-gold);
+  transform: translateX(-100%);
+  animation: pay-progress 1.3s var(--ease-lux) infinite;
+}
+@keyframes pay-progress {
+  to { transform: translateX(250%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pay-progress::after { animation: none; width: 100%; transform: none; opacity: 0.5; }
+}
+html[data-lite] .pay-progress::after { animation: none; width: 100%; transform: none; opacity: 0.5; }
+
 /* Photo produit : apparaît en fondu une fois chargée (instantané si déjà en cache) */
 .img-fade {
   transition: opacity 0.4s var(--ease-lux);
