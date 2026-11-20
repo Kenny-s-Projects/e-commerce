@@ -104,7 +104,7 @@ function ProductView({ product, onAdd, onBuyNow }) {
   const addLabel = !buy.available ? unavailableLabel : buy.added ? t('Ajouté au panier ✓') : `${t('Ajouter au panier')} · ${formatPrice(buy.total)}`
 
   return (
-    <div className="bg-white text-ink [--card:#ffffff] [--fg:var(--color-ink)]">
+    <div data-fly-scope className="bg-white text-ink [--card:#ffffff] [--fg:var(--color-ink)]">
       {/* Fil d'Ariane */}
       <nav aria-label={t('Fil d’Ariane')} className="px-gutter pt-6 text-[12px] text-ink/60">
         <a href={`#maison/${product.maison}`} className="hover:text-ink">{product.house.name}</a>

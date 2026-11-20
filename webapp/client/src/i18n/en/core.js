@@ -147,4 +147,17 @@ export default {
   'Suivre ma commande sur WhatsApp': 'Track my order on WhatsApp',
   'Retour à l’accueil': 'Back to home',
   'Bonjour, je souhaite suivre ma commande kclick {n}.': 'Hello, I would like to track my kclick order {n}.',
+  /* Commande en 3 étapes, paiement en cours (lot 3) */
+  'Coordonnées': 'Details',
+  'Continuer': 'Continue',
+  'Modifier': 'Edit',
+  'validée': 'completed',
+  'en cours': 'in progress',
+  'Paiement en cours…': 'Payment in progress…',
+  'Validez le paiement sur votre téléphone.': 'Approve the payment on your phone.',
+  'La commande n’a pas pu être envoyée.': 'The order could not be sent.',
+  'Les articles concernés sont signalés dans le récapitulatif.': 'The affected items are flagged in the summary.',
+  'Votre panier est conservé.': 'Your bag has been kept.',
+  'Connexion au serveur impossible. Vérifiez votre connexion internet.': 'Cannot reach the server. Please check your internet connection.',
+  'Certains articles ne peuvent pas être commandés': 'Some items cannot be ordered',
 }

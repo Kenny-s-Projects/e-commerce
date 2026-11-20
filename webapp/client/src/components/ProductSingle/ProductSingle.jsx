@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { getProduct, productHref } from '../../data/products.js'
 import { cartLine, defaultVariant, isPurchasable, useLive } from '../../data/live.js'
 import { useQuickView } from '../../context/quickView.js'
 import { useT } from '../../i18n/lang.js'
+import { flyToCart } from '../FlyToCart/flyToCart.js'
 
 /**
  * Carte produit : Image + Store + Name + Price + CTA.
@@ -31,17 +32,25 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
   const images = full?.images ?? productImages(product)
   const fit = full?.live ? (full.hasPhoto ? 'bleed' : 'boxed') : full?.images ? 'bleed' : product.boxed ? 'boxed' : 'contain'
 
+  // Un seul ajout par geste : les clics répétés pendant l'animation sont ignorés
+  const lock = useRef(false)
+  const media = useRef(null)
   const handleAdd = () => {
-    if (!variant) return
+    if (!variant || lock.current) return
+    lock.current = true
     onAdd?.(cartLine(item, variant), 1)
+    flyToCart({ from: media.current, src: images[0] })
     setAdded(true)
-    setTimeout(() => setAdded(false), 1600)
+    setTimeout(() => {
+      setAdded(false)
+      lock.current = false
+    }, 1600)
   }
 
   return (
     <article className="group flex flex-col">
       {/* Image + bouton Aperçu (apparaît au survol sur ordinateur) */}
-      <div className="relative mb-[18px]">
+      <div ref={media} className="relative mb-[18px]">
         <ProductMedia
           images={images}
           fit={fit}

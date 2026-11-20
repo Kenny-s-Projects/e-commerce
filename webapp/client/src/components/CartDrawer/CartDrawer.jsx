@@ -62,17 +62,19 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
               <p className="mt-10 text-sm text-ink/60">{t('Votre panier est vide.')}</p>
             ) : (
               <ul className="-mr-2 flex-1 overflow-y-auto pr-2">
-                <AnimatePresence initial={false}>
-                  {items.map(({ product, qty }) => (
+                {/* Ouverture : les lignes apparaissent l'une après l'autre (40 ms d'écart, 0,3 s au total).
+                    Retrait : la ligne s'efface puis l'espace se referme en douceur (seule animation de hauteur du site). */}
+                <AnimatePresence initial>
+                  {items.map(({ product, qty }, i) => (
                     <m.li
                       key={product.id}
-                      layout
-                      className="flex gap-4 border-b border-ink/10 py-5"
-                      initial={{ opacity: 0, x: 30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 30, transition: { duration: 0.25 } }}
-                      transition={{ duration: 0.5, ease }}
+                      layout="position"
+                      className="overflow-hidden border-b border-ink/10"
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0, transition: { duration: 0.18, delay: Math.min(i, 3) * 0.04, ease } }}
+                      exit={{ opacity: 0, x: 24, height: 0, borderBottomWidth: 0, transition: { opacity: { duration: 0.18 }, x: { duration: 0.18 }, height: { duration: 0.25, delay: 0.12, ease }, borderBottomWidth: { duration: 0, delay: 0.12 } } }}
                     >
+                      <div className="flex gap-4 py-5">
                       <div className="relative size-[84px] shrink-0 overflow-hidden bg-[#f3f2ef]">
                         {productImages(product)[0] && (
                           <img
@@ -103,6 +105,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                         </div>
                       </div>
                       <span className="shrink-0 text-sm">{formatPrice(Math.round((product.price ?? 0) * qty * 100) / 100)}</span>
+                      </div>
                     </m.li>
                   ))}
                 </AnimatePresence>

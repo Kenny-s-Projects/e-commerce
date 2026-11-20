@@ -42,6 +42,7 @@ export default function QuickViewModal({ product, onClose, onAdd }) {
             exit={{ opacity: 0 }}
           />
           <m.div
+            data-fly-scope
             className="relative grid max-h-[calc(100svh-32px)] w-[min(980px,100%)] grid-cols-2 overflow-auto rounded-2xl bg-white text-ink shadow-[0_40px_100px_rgba(0,0,0,0.3)] max-md:grid-cols-1"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

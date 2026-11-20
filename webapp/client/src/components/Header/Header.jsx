@@ -6,6 +6,7 @@ import MenuPanel from './MenuPanel.jsx'
 import SearchBar from './SearchBar.jsx'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
 import { useT } from '../../i18n/lang.js'
+import { CART_ARRIVE } from '../FlyToCart/flyToCart.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -29,6 +30,13 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
   const t = useT()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  // Rebond du compteur quand la vignette d'un produit arrive dans le panier (voir FlyToCart)
+  const [bump, setBump] = useState(0)
+  useEffect(() => {
+    const onArrive = () => setBump((b) => b + 1)
+    window.addEventListener(CART_ARRIVE, onArrive)
+    return () => window.removeEventListener(CART_ARRIVE, onArrive)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80)
@@ -124,6 +132,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                 {scrolled && (
                   <m.button
                     key="cart-pill"
+                    data-cart-target
                     type="button"
                     onClick={onCart}
                     aria-label={t('Panier, {n} article(s)', { n: cartCount })}
@@ -134,7 +143,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     transition={{ duration: 0.35, delay: 0.05, ease }}
                   >
                     <BagIcon className="size-[18px]" />
-                    <CartCount count={cartCount} />
+                    <CartCount count={cartCount} bump={bump} />
                   </m.button>
                 )}
                 {scrolled && (
@@ -166,20 +175,27 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                   <LangSwitch className="caps max-sm:hidden" />
                   <LangSwitch compact className="sm:hidden" />
                   <button type="button" className={`${linkClass} max-sm:hidden`} onClick={openSearch}>{t('Recherche')}</button>
-                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={onCart}>
-                    {t('Panier')} (<CartCount count={cartCount} />)
+                  <button type="button" data-cart-target className={`${linkClass} max-sm:hidden`} onClick={onCart}>
+                    {t('Panier')} (<CartCount count={cartCount} bump={bump} />)
                   </button>
                   {/* Mobile : icône sac + pastille */}
                   <button
                     type="button"
+                    data-cart-target
                     className="relative -m-2 p-2 sm:hidden"
                     onClick={onCart}
                     aria-label={t('Panier, {n} article(s)', { n: cartCount })}
                   >
                     <BagIcon className="size-[22px]" />
-                    <span className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-ink text-[9px] leading-none text-cream">
+                    <m.span
+                      key={bump}
+                      className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded-full bg-ink text-[9px] leading-none text-cream"
+                      initial={bump ? { scale: 1.5 } : false}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.35, ease }}
+                    >
                       {cartCount}
-                    </span>
+                    </m.span>
                   </button>
                 </m.nav>
               )}
@@ -194,10 +210,10 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
   )
 }
 
-// Le nombre d'articles « saute » à chaque ajout
-function CartCount({ count }) {
+// Le nombre d'articles « rebondit » quand un produit arrive dans le panier (bump change)
+function CartCount({ count, bump }) {
   return (
-    <m.span key={count} className="inline-block text-[13px] tabular-nums" initial={{ scale: 1.6 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease }}>
+    <m.span key={bump} className="inline-block text-[13px] tabular-nums" initial={bump ? { scale: 1.6 } : false} animate={{ scale: 1 }} transition={{ duration: 0.35, ease }}>
       {count}
     </m.span>
   )
