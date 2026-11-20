@@ -8,6 +8,7 @@ import usePurchase from '../../hooks/usePurchase.js'
 import { getProduct, productGallery, relatedProducts } from '../../data/products.js'
 import { formatPrice } from '../../data/houses.js'
 import { loadLive, useLive } from '../../data/live.js'
+import { Block, Lines, SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -32,12 +33,30 @@ export default function ProductPage({ id, onAdd, onBuyNow }) {
   if (!product) {
     // Catalogue réel pas encore chargé, injoignable, ou produit inconnu
     const loading = live.status === 'idle' || live.status === 'loading'
+    // Chargement : la fiche se dessine tout de suite (galerie + achat) ; le contenu la remplacera
+    if (loading) {
+      return (
+        <SkeletonGroup label={t('Chargement du produit…')} className="min-h-[60svh] bg-white text-ink">
+          <div className="px-gutter pt-6">
+            <Block className="h-3 w-48 rounded-full" />
+          </div>
+          <div className="flex flex-wrap items-start gap-[clamp(32px,5vw,72px)] px-gutter pb-[clamp(72px,8vw,112px)] pt-6">
+            <Block className="aspect-square min-w-0 flex-[999_1_560px] rounded-none" />
+            <div className="flex max-w-[480px] flex-[1_1_380px] flex-col gap-6">
+              <Block className="h-2.5 w-40 rounded-full" />
+              <Block className="h-10 w-4/5" />
+              <Lines count={3} />
+              <Block className="h-9 w-32" />
+              <Block className="h-14 w-full rounded-none" />
+            </div>
+          </div>
+        </SkeletonGroup>
+      )
+    }
     return (
       <div className="grid min-h-[60svh] place-items-center bg-white px-gutter text-center text-ink">
         <div className="max-w-md">
-          {loading ? (
-            <p className="text-[15px] text-ink/60">{t('Chargement du produit…')}</p>
-          ) : live.status === 'error' ? (
+          {live.status === 'error' ? (
             <>
               <p className="text-[18px]">{t('Impossible de charger ce produit.')}</p>
               <p className="mt-2 text-[14px] text-ink/60">{live.error?.message}</p>

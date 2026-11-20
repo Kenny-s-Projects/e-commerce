@@ -68,6 +68,7 @@ export function DashboardStore({ space, brand, children }) {
   const [auth, setAuth] = useState({ status: 'loading', me: null })
   const [data, setData] = useState(EMPTY)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null) // échec du premier chargement (rien à afficher) → écran d'erreur + « Réessayer »
   const [toast, setToast] = useState(null) // { kind: 'error' | 'ok', text }
   const [lastNewOrder, setLastNewOrder] = useState(null)
   const [now, setNow] = useState(() => Date.now())
@@ -138,12 +139,22 @@ export function DashboardStore({ space, brand, children }) {
       }
       known.current = new Set(numbers)
       setNow(Date.now())
+      setLoadError(null)
     } catch (err) {
       notify(err.message)
+      // Premier chargement raté : pas de squelette sans fin, on affiche l'erreur (les actualisations suivantes gardent les données)
+      if (!known.current) setLoadError(err)
     } finally {
       setLoading(false)
     }
   }, [ready, space, brand, notify])
+
+  // « Réessayer » après un premier chargement raté : squelettes de nouveau, puis nouvel essai
+  const retryLoad = useCallback(() => {
+    setLoadError(null)
+    setLoading(true)
+    reload()
+  }, [reload])
 
   // Le store est recréé à chaque changement d'espace (clé dans DashboardApp) : on charge simplement les données
   useEffect(() => {
@@ -271,6 +282,8 @@ export function DashboardStore({ space, brand, children }) {
       auth,
       me: auth.me,
       loading,
+      loadError,
+      retryLoad,
       now,
       lastNewOrder,
       toast,
@@ -281,12 +294,12 @@ export function DashboardStore({ space, brand, children }) {
       refreshMe,
       logout,
     }),
-    [data, auth, loading, now, lastNewOrder, toast, notify, dispatch, reload, refreshMe, logout],
+    [data, auth, loading, loadError, retryLoad, now, lastNewOrder, toast, notify, dispatch, reload, refreshMe, logout],
   )
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
-/** { orders, riders, users, brands, shopsOpen, dashboard, riderSelf, me, auth, loading, now, dispatch, notify, reload, logout } */
+/** { orders, riders, users, brands, shopsOpen, dashboard, riderSelf, me, auth, loading, loadError, retryLoad, now, dispatch, notify, reload, logout } */
 export const useStore = () => useContext(StoreContext)
 
 export const useOrder = (number) => useStore().orders.find((o) => o.number === number) ?? null

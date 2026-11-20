@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
+import { LoadError, OrdersSkeleton } from '../ui/skeletons.jsx'
 import { useMemo, useState } from 'react'
 import { useStore } from '../store/store.jsx'
 import { orderStatus } from '../lib/status.js'
@@ -187,7 +188,7 @@ export function SearchField({ value, onChange, onSubmit, className = '' }) {
 
 /** Toutes les commandes, filtrables par onglet et par recherche */
 export default function Orders() {
-  const { orders, lastNewOrder } = useStore()
+  const { orders, lastNewOrder, loading, loadError, retryLoad } = useStore()
   const [tab, setTab] = useState('toutes')
   const [q, setQ] = useState('')
 
@@ -226,9 +227,15 @@ export default function Orders() {
         ))}
       </div>
 
-      <Card className="overflow-hidden">
-        <OrdersTable orders={visible} highlight={lastNewOrder} />
-      </Card>
+      {loading ? (
+        <OrdersSkeleton />
+      ) : loadError ? (
+        <LoadError error={loadError} onRetry={retryLoad} />
+      ) : (
+        <Card className="overflow-hidden">
+          <OrdersTable orders={visible} highlight={lastNewOrder} />
+        </Card>
+      )}
     </>
   )
 }
