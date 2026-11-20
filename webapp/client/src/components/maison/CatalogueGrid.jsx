@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../ProductSingle/ProductSingle.jsx'
 import FilterPanel from './FilterPanel.jsx'
 import { useT } from '../../i18n/lang.js'
@@ -58,7 +58,7 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
                   >
                     {/* Pastille pleine qui glisse d'un filtre à l'autre */}
                     {on && (
-                      <motion.span
+                      <m.span
                         layoutId={`pill-${g.key}`}
                         className={`absolute inset-[-1px] bg-(--fg) ${radius}`}
                         transition={{ type: 'spring', stiffness: 380, damping: 32 }}
@@ -85,10 +85,10 @@ function Grid({ items, cols, house, onAdd }) {
   const grid = cols === 4 ? 'grid-cols-4 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2' : 'grid-cols-3 max-[900px]:grid-cols-2'
   return (
     <section className="px-gutter py-[clamp(48px,6vw,88px)]">
-      <motion.div layout className={`grid ${grid} gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)]`}>
+      <m.div layout className={`grid ${grid} gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)]`}>
         <AnimatePresence mode="popLayout">
           {items.map((p, i) => (
-            <motion.div
+            <m.div
               key={p.id}
               layout
               initial={{ opacity: 0, y: 40 }}
@@ -98,10 +98,10 @@ function Grid({ items, cols, house, onAdd }) {
               transition={{ duration: 0.8, delay: (i % cols) * 0.07, ease }}
             >
               <ProductSingle product={{ ...p, house }} onAdd={onAdd} href={`#maison/${house.id}`} />
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     </section>
   )
 }

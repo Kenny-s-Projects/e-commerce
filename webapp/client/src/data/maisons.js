@@ -9,7 +9,7 @@ export const maisons = {
     name: 'Kyra',
     wordmark: 'kyra',
     // Hero : le logo officiel Kyra (blanc, sur l'orange) à la place du nom en texte
-    logo: '/img/logos/logo-kyra.png',
+    logo: '/img/logos/logo-kyra.webp',
     logoClass: 'mx-auto h-auto w-[clamp(220px,30vw,440px)] drop-shadow-[0_12px_24px_rgba(20,11,6,0.25)]',
     next: 'patchi',
     // Couleurs : hero sur l'orange officiel, catalogue sur une base claire

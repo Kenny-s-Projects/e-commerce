@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -16,7 +16,7 @@ export default function Footer({ footer, contact, lang = 'fr', onLang }) {
   const t = useT()
   return (
     <footer className="bg-black px-gutter pt-[clamp(56px,7vw,96px)] pb-8 text-white">
-      <motion.div
+      <m.div
         className="grid grid-cols-4 gap-10 max-[900px]:grid-cols-2 max-sm:grid-cols-1"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function Footer({ footer, contact, lang = 'fr', onLang }) {
             <li><a href={`mailto:${contact.email}`} className={`${link} break-all`}>{contact.email}</a></li>
           </ul>
         </div>
-      </motion.div>
+      </m.div>
 
       <div className="mt-[clamp(48px,6vw,80px)] flex items-center justify-between border-t border-white/10 pt-6 text-[11px] text-white/50">
         <span>{footer.copyright}</span>

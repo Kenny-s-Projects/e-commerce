@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { useT } from '../../i18n/lang.js'
 
@@ -35,7 +35,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={t('Panier')}>
-          <motion.button
+          <m.button
             type="button"
             aria-label={t('Fermer le panier')}
             className="absolute inset-0 cursor-default bg-black/45"
@@ -46,7 +46,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
             transition={{ duration: 0.5, ease }}
           />
 
-          <motion.aside
+          <m.aside
             className="absolute inset-y-0 right-0 flex w-[min(460px,100vw)] flex-col bg-white px-8 pt-7 pb-8 text-ink shadow-[-30px_0_60px_rgba(0,0,0,0.15)] max-sm:px-5"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -64,7 +64,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
               <ul className="-mr-2 flex-1 overflow-y-auto pr-2">
                 <AnimatePresence initial={false}>
                   {items.map(({ product, qty }) => (
-                    <motion.li
+                    <m.li
                       key={product.id}
                       layout
                       className="flex gap-4 border-b border-ink/10 py-5"
@@ -76,6 +76,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                       <div className="relative size-[84px] shrink-0 overflow-hidden bg-[#f3f2ef]">
                         {productImages(product)[0] && (
                           <img
+                            loading="lazy" decoding="async"
                             src={productImages(product)[0]}
                             alt=""
                             className={`absolute inset-0 m-auto ${product.boxed ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'}`}
@@ -102,7 +103,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                         </div>
                       </div>
                       <span className="shrink-0 text-sm">{formatPrice(Math.round((product.price ?? 0) * qty * 100) / 100)}</span>
-                    </motion.li>
+                    </m.li>
                   ))}
                 </AnimatePresence>
               </ul>
@@ -125,7 +126,7 @@ export default function CartDrawer({ open, items, onQty, onClose, onCheckout }) 
                 {t('Commander')}
               </button>
             </div>
-          </motion.aside>
+          </m.aside>
         </div>
       )}
     </AnimatePresence>

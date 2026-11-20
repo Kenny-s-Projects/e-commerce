@@ -8,10 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" type="image/x-icon" href="/images/kclick.png">
 
+    <!-- Polices : seules les graisses utilisées ; les fichiers ne sont téléchargés que si une page s'en sert
+         (JetBrains Mono : suivi, compte, dashboard ; Jost 600 : dashboard). display=swap : le texte s'affiche tout de suite. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Jost:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400&family=Jost:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Visuels du Hero de l'accueil, demandés tout de suite (affichage principal) -->
+    <link rel="preload" as="image" href="/img/logos/kyra-heroSection.webp" type="image/webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="/img/logos/patchi-heroSection.webp" type="image/webp" />
   </head>
   <body>
     <div id="root"></div>

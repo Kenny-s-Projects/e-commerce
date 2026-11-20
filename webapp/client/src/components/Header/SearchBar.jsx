@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { kyraCatalog, adidasCatalog, celioCatalog } from '../../data/catalog.js'
 import { formatPrice } from '../../data/houses.js'
 import { useLive } from '../../data/live.js'
@@ -51,7 +51,7 @@ function SearchPanel({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={t('Recherche')}>
-      <motion.button
+      <m.button
         type="button"
         aria-label={t('Fermer la recherche')}
         className="absolute inset-0 cursor-default bg-ink/30 backdrop-blur-[2px]"
@@ -62,7 +62,7 @@ function SearchPanel({ onClose }) {
         transition={{ duration: 0.4 }}
       />
 
-      <motion.div
+      <m.div
         className="absolute inset-x-0 top-0 bg-white px-gutter pb-8 pt-5 text-ink shadow-[0_30px_60px_rgba(0,0,0,0.12)]"
         initial={{ y: '-100%' }}
         animate={{ y: '0%' }}
@@ -99,14 +99,14 @@ function SearchPanel({ onClose }) {
 
           {/* Suggestions (champ vide) ou résultats */}
           {q.trim() === '' ? (
-            <motion.div className="mt-5 flex flex-wrap items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+            <m.div className="mt-5 flex flex-wrap items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
               <span className="caps mr-1 text-ink/60">{t('Suggestions')}</span>
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" onClick={() => setQ(s)} className="rounded-full border border-ink/20 px-3.5 py-1.5 text-[12px] transition-colors hover:border-ink">
                   {s}
                 </button>
               ))}
-            </motion.div>
+            </m.div>
           ) : (
             <div className="mt-4" aria-live="polite">
               <p className="caps mb-2 text-ink/60">
@@ -115,7 +115,7 @@ function SearchPanel({ onClose }) {
               <ul>
                 <AnimatePresence initial={false}>
                   {results.map((p, i) => (
-                    <motion.li
+                    <m.li
                       key={`${p.maison}-${p.id}`}
                       layout
                       initial={{ opacity: 0, y: 8 }}
@@ -125,7 +125,7 @@ function SearchPanel({ onClose }) {
                     >
                       <a href={p.href} onClick={onClose} className="group flex items-center gap-4 border-b border-ink/10 py-3">
                         <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded bg-[#f4f4f4]">
-                          {p.img && <img src={p.img} alt="" className={p.boxed ? 'size-full object-cover' : 'size-[80%] object-contain'} />}
+                          {p.img && <img loading="lazy" decoding="async" src={p.img} alt="" className={p.boxed ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'} />}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="caps block text-[9px] text-ink/60">{p.maison}{p.store ? ` · ${p.store}` : ''}</span>
@@ -135,14 +135,14 @@ function SearchPanel({ onClose }) {
                           {p.live ? `${p.byWeight ? `${t('dès')} ` : ''}${formatPrice(p.price)}` : t('Bientôt disponible')}
                         </span>
                       </a>
-                    </motion.li>
+                    </m.li>
                   ))}
                 </AnimatePresence>
               </ul>
             </div>
           )}
         </div>
-      </motion.div>
+      </m.div>
     </div>
   )
 }

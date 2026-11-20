@@ -1,29 +1,24 @@
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import useScrollDirection from '../../hooks/useScrollDirection.js'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
+import useLiteMode from '../../hooks/useLiteMode.js'
 
-const ease = [0.22, 1, 0.36, 1]
+const ease = [0.22, 1, 0.36, 1] // --ease-lux
 
 /*
- * Animation liée au défilement, dans les deux sens :
- *  - on descend : les lignes montent depuis le bas en entrant, et sortent par le haut en quittant l'écran ;
- *  - on remonte : elles redescendent depuis le haut en entrant, et sortent par le bas.
- * En plus, le bloc glisse légèrement (parallaxe) et le mot en italique se décale
- * pendant toute la traversée de l'écran.
+ * Apparition des titres, une seule fois, quand le titre entre à l'écran :
+ *  - chaque ligne monte derrière un masque (translateY) avec un léger fondu, décalée de 70 ms ;
+ *  - le petit sur-titre et le sous-titre apparaissent en fondu.
+ * Seulement transform et opacity : aucun recalcul de mise en page, aucun décalage (CLS).
+ * Mode léger ou « Réduire les animations » : le titre est affiché directement.
  */
 const line = {
-  // Avant la toute première apparition : en bas, prête à monter
-  start: { y: '110%' },
-  // Hors écran : la ligne attend du côté par lequel elle va entrer
-  hidden: ({ dir }) => ({ y: dir === 'down' ? '-110%' : '110%' }),
-  show: ({ i }) => ({ y: '0%', transition: { duration: 0.9, delay: 0.08 * i, ease } }),
+  start: { y: '105%', opacity: 0 },
+  show: (i) => ({ y: '0%', opacity: 1, transition: { duration: 0.6, delay: 0.07 * i, ease } }),
 }
 
 const fade = {
-  start: { opacity: 0, y: 16 },
-  hidden: ({ dir }) => ({ opacity: 0, y: dir === 'down' ? -16 : 16 }),
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.3, ease } },
+  start: { opacity: 0, y: 10 },
+  show: (i) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.07 * i + 0.1, ease } }),
 }
 
 /**
@@ -50,80 +45,63 @@ export default function SectionTitle({
 }) {
   // Les textes arrivent en français et sont traduits ici (une seule fois pour toutes les sections)
   const t = useT()
+  const lite = useLiteMode()
   const tr = (v) => (typeof v === 'string' ? t(v) : v)
   const eyebrow = tr(eyebrowFr)
   const title = tr(titleFr)
   const accent = tr(accentFr)
   const subtitle = tr(subtitleFr)
-  const ref = useRef(null)
-  const dir = useScrollDirection()
-
-  // 0 quand le haut du bloc entre par le bas de l'écran, 1 quand son bas sort par le haut
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const blockY = useTransform(scrollYProgress, [0, 1], [40, -40])
-  const accentX = useTransform(scrollYProgress, [0, 1], ['-0.15em', '0.15em'])
 
   const pad = (n) => String(n).padStart(2, '0')
-  const accentEl = (
-    <motion.span className="accent inline-block text-[1.08em] leading-none" style={{ x: accentX }}>
-      {accent}
-    </motion.span>
-  )
-
+  const accentEl = <span className="accent inline-block text-[1.08em] leading-none">{accent}</span>
   const small = eyebrow ?? (index != null ? `${pad(index)}${total ? ` / ${pad(total)}` : ''}` : null)
 
   return (
-    <motion.div
-      ref={ref}
+    <m.div
       className="max-w-[720px]"
-      style={{ y: blockY }}
-      initial="start"
+      initial={lite ? false : 'start'}
       whileInView="show"
-      viewport={{ once: false, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.4 }}
     >
       {small && (
-        <div className="overflow-hidden">
-          <motion.p
-            className={`caps mb-7 ${eyebrow ? 'text-gold' : 'opacity-80'}`}
-            variants={line}
-            custom={{ i: 0, dir }}
-          >
-            {small}
-          </motion.p>
-        </div>
+        <m.p className={`caps mb-7 ${eyebrow ? 'text-gold' : 'opacity-80'}`} variants={fade} custom={0}>
+          {small}
+        </m.p>
       )}
-
 
       <Tag className="text-[clamp(36px,4.6vw,64px)] font-light leading-[1.08] tracking-[-0.015em]">
         {accentInline || !title ? (
-          <span className="block overflow-hidden pb-[0.08em]">
-            <motion.span className="block" variants={line} custom={{ i: 1, dir }}>
-              {title} {accent && accentEl}
-            </motion.span>
-          </span>
+          <Line i={1} last>
+            {title} {accent && accentEl}
+          </Line>
         ) : (
           <>
-            <span className="block overflow-hidden">
-              <motion.span className="block" variants={line} custom={{ i: 1, dir }}>
-                {title}
-              </motion.span>
-            </span>
+            <Line i={1}>{title}</Line>
             {accent && (
-              <span className="block overflow-hidden pb-[0.08em]">
-                <motion.span className="block" variants={line} custom={{ i: 2, dir }}>
-                  {accentEl}
-                </motion.span>
-              </span>
+              <Line i={2} last>
+                {accentEl}
+              </Line>
             )}
           </>
         )}
       </Tag>
 
       {subtitle && (
-        <motion.p className="mt-6 max-w-[440px] text-sm leading-[1.75]" variants={fade} custom={{ dir }}>
+        <m.p className="mt-6 max-w-[440px] text-sm leading-[1.75]" variants={fade} custom={3}>
           {subtitle}
-        </motion.p>
+        </m.p>
       )}
-    </motion.div>
+    </m.div>
+  )
+}
+
+// Une ligne masquée (overflow caché) dont le texte monte à l'apparition
+function Line({ i, last, children }) {
+  return (
+    <span className={`block overflow-hidden ${last ? 'pb-[0.08em]' : ''}`}>
+      <m.span className="block will-change-transform" variants={line} custom={i}>
+        {children}
+      </m.span>
+    </span>
   )
 }

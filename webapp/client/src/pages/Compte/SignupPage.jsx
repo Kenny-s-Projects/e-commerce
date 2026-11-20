@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useLang, useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, PrimaryButton, fadeUp, inputClass, underline, writeSession } from './accountUi.jsx'
 import { authMessage, requestCode, savePending } from './auth.js'
@@ -66,7 +66,7 @@ export default function SignupPage() {
 
   return (
     <AuthShell>
-      <motion.div {...fadeUp()}>
+      <m.div {...fadeUp()}>
         <a href="#compte" className="mb-6 inline-flex items-center gap-2 text-[13px] text-ink/60 transition-colors hover:text-ink">
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <path d="M15 5l-7 7 7 7" />
@@ -77,9 +77,9 @@ export default function SignupPage() {
           {t('Créer un')} <span className="accent">{t('compte')}</span>
         </h1>
         <p className="mt-3 text-[15px] leading-[1.6] text-ink/70">{t('Un compte pour les quatre Maisons. Vous confirmerez votre e-mail avec un code.')}</p>
-      </motion.div>
+      </m.div>
 
-      <motion.form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5" {...fadeUp(0.1)}>
+      <m.form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5" {...fadeUp(0.1)}>
         <div className="grid grid-cols-2 gap-3">
           <Field id="su-firstName" label={t('Prénom')} error={errors.firstName}>
             {input('firstName', { autoComplete: 'given-name' })}
@@ -159,7 +159,7 @@ export default function SignupPage() {
             {t('Se connecter')}
           </a>
         </p>
-      </motion.form>
+      </m.form>
     </AuthShell>
   )
 }

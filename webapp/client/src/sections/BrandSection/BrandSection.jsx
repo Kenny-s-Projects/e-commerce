@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import SectionTitle from '../../components/SectionTitle/SectionTitle.jsx'
 import TitleCta from '../../components/TitleCta/TitleCta.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
@@ -36,7 +36,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
         />
       </div>
 
-      <motion.div
+      <m.div
         className="grid grid-cols-4 gap-[clamp(16px,1.8vw,28px)] max-[900px]:grid-cols-2 max-[900px]:gap-y-10"
         initial="hidden"
         whileInView="show"
@@ -44,7 +44,7 @@ export default function BrandSection({ house, index, total, onAdd }) {
         variants={{ show: { transition: { staggerChildren: 0.12 } } }}
       >
         {house.products.slice(0, 4).map((product) => (
-          <motion.div
+          <m.div
             key={product.id}
             variants={{
               hidden: { opacity: 0, y: 40 },
@@ -52,9 +52,9 @@ export default function BrandSection({ house, index, total, onAdd }) {
             }}
           >
             <ProductSingle product={product} onAdd={onAdd} href={maisonHref(house.id)} />
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </section>
   )
 }

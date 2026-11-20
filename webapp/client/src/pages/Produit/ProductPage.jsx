@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Accordion from '../../components/Accordion/Accordion.jsx'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
@@ -94,11 +94,11 @@ function ProductView({ product, onAdd, onBuyNow }) {
 
       {/* ============ Galerie + achat ============ */}
       <section className="flex flex-wrap items-start gap-[clamp(32px,5vw,72px)] px-gutter pb-[clamp(72px,8vw,112px)] pt-6">
-        <motion.div className="min-w-0 flex-[999_1_560px]" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
+        <m.div className="min-w-0 flex-[999_1_560px]" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
           <Gallery product={product} photos={photos} tone={theme.tone} />
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="flex max-w-[480px] flex-[1_1_380px] flex-col gap-6 md:sticky md:top-24"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,7 +132,7 @@ function ProductView({ product, onAdd, onBuyNow }) {
                 </span>
               </label>
               {buy.gift && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.4, ease }} className="overflow-hidden">
+                <m.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.4, ease }} className="overflow-hidden">
                   <label htmlFor="mot-produit" className="mb-2 mt-4 block text-[12px]">{t('Votre mot (120 caractères)')}</label>
                   <input
                     id="mot-produit"
@@ -143,7 +143,7 @@ function ProductView({ product, onAdd, onBuyNow }) {
                     placeholder={t('Joyeux anniversaire…')}
                     className="w-full rounded-lg border border-ink/25 bg-white px-4 py-3 text-[14px] outline-none focus:border-ink"
                   />
-                </motion.div>
+                </m.div>
               )}
             </div>
           )}
@@ -151,7 +151,7 @@ function ProductView({ product, onAdd, onBuyNow }) {
           {/* Quantité + panier */}
           <div className="flex gap-2.5">
             {buy.available && <QtyStepper value={buy.qty} onChange={buy.setQty} />}
-            <motion.button
+            <m.button
               type="button"
               onClick={buy.add}
               disabled={!buy.available}
@@ -159,7 +159,7 @@ function ProductView({ product, onAdd, onBuyNow }) {
               className={`h-[54px] flex-1 rounded-full text-[14px] disabled:cursor-not-allowed disabled:opacity-50 ${theme.solid}`}
             >
               {addLabel}
-            </motion.button>
+            </m.button>
           </div>
           {/* Commander maintenant : cet article seul, directement vers la page de commande */}
           <button
@@ -192,21 +192,21 @@ function ProductView({ product, onAdd, onBuyNow }) {
           )}
 
           <Accordion items={panels} />
-        </motion.div>
+        </m.div>
       </section>
 
       {/* ============ Bande éditoriale (Patchi) ============ */}
       {isPatchi && (
         <section className="grid grid-cols-[1.2fr_1fr] bg-forest-deep text-paper max-md:grid-cols-1">
           {/* Volet de gauche à droite ; le déclencheur est le conteneur (un élément entièrement masqué n'est jamais « visible ») */}
-          <motion.div className="min-h-[420px]" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
-            <motion.img
+          <m.div className="min-h-[420px]" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }}>
+            <m.img
               src="/img/products/patchi/Chocolate Milk Filled with Praline/Chocolate Milk Filled with Praline 3.webp"
               alt=""
               className="size-full min-h-[420px] object-cover"
               variants={{ hidden: { clipPath: 'inset(0% 100% 0% 0%)' }, show: { clipPath: 'inset(0% 0% 0% 0%)', transition: { duration: 1.2, ease } } }}
             />
-          </motion.div>
+          </m.div>
           <div className="flex flex-col justify-center px-[clamp(32px,5vw,80px)] py-[clamp(48px,6vw,96px)]">
             <Reveal as="p" className="caps text-gold">{t('Le geste Patchi')}</Reveal>
             <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(30px,3.4vw,46px)] font-light leading-[1.12]">
@@ -229,9 +229,9 @@ function ProductView({ product, onAdd, onBuyNow }) {
           </div>
           <div className="mt-10 grid grid-cols-4 gap-6 max-[1000px]:grid-cols-2">
             {related.map((p, i) => (
-              <motion.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7, delay: i * 0.07, ease }}>
+              <m.div key={p.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7, delay: i * 0.07, ease }}>
                 <ProductSingle product={p} onAdd={onAdd} />
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </section>

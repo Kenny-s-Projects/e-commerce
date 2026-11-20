@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { whatsappFor } from '../../data/products.js'
@@ -131,8 +131,8 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     const momo = order.payment === 'mobile_money'
     return (
       <section className="grid min-h-[calc(100svh-4rem)] place-items-center bg-cream px-gutter py-20 text-center text-ink">
-        <motion.div className="max-w-[560px]" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease }}>
-          <motion.span
+        <m.div className="max-w-[560px]" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease }}>
+          <m.span
             className="mx-auto grid size-16 place-items-center rounded-full bg-ink text-2xl text-cream"
             initial={{ scale: 0, rotate: -90 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -140,7 +140,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             aria-hidden
           >
             ✓
-          </motion.span>
+          </m.span>
           <h1 className="mt-8 text-[clamp(44px,6vw,80px)] font-light leading-none">
             {t('Merci')}{order.name ? ',' : '.'} <span className="accent">{order.name ? `${order.name}.` : ''}</span>
           </h1>
@@ -163,7 +163,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             <a href={follow} target="_blank" rel="noreferrer" className="rounded-full border border-ink px-7 py-4 text-[14px]">{t('Une question sur WhatsApp')}</a>
           </div>
           <a href="#" className="caps mt-8 inline-block border-b border-current pb-1 text-[10px]">{t('Retour à l’accueil')}</a>
-        </motion.div>
+        </m.div>
       </section>
     )
   }
@@ -224,7 +224,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             <Choices options={DELIVERY} value={delivery} onChange={setDelivery} name="delivery" t={t} showPrice />
             <AnimatePresence initial={false}>
               {delivery === 'livraison' && (
-                <motion.div key="addr" className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease }}>
+                <m.div key="addr" className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.45, ease }}>
                   <div className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1">
                     {field('address', 'Adresse de livraison', { autoComplete: 'street-address', wide: true, placeholder: t('Avenue, numéro') })}
                     {zones.length > 1 ? (
@@ -241,7 +241,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
                     {field('notes', 'Point de repère pour le livreur (facultatif)', { wide: true, placeholder: t('Ex. portail bleu, en face de la pharmacie') })}
                   </div>
                   <p className="mt-3 text-[12px] text-ink/60">{t('Livraison hors de Gombe : [à confirmer]. Écrivez au concierge pour une autre commune.')}</p>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </Step>
@@ -251,7 +251,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             <Choices options={payments} value={payment} onChange={setPayment} name="payment" t={t} />
             <AnimatePresence mode="wait" initial={false}>
               {payment === 'mobile_money' && (
-                <motion.div key="mobile" className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
+                <m.div key="mobile" className="grid grid-cols-2 gap-4 pt-5 max-sm:grid-cols-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
                   <div>
                     <label htmlFor="co-operator" className="mb-1.5 block text-[12px]">{t('Opérateur')}</label>
                     <select id="co-operator" value={form.operator} onChange={set('operator')} className="h-12 w-full rounded-lg border border-ink/20 bg-white px-4 text-[14px]">
@@ -260,12 +260,12 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
                   </div>
                   {field('momo', 'Numéro mobile money', { type: 'tel', placeholder: '+243 …' })}
                   <p className="col-span-2 text-[12px] text-ink/60 max-sm:col-span-1">{t('Vous recevrez une demande de validation sur ce numéro.')}</p>
-                </motion.div>
+                </m.div>
               )}
               {payment === 'carte' && (
-                <motion.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
+                <m.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease }}>
                   {t('Vous serez redirigé vers le paiement sécurisé pour saisir votre carte [prestataire à brancher]. Aucune donnée de carte ne passe par kclick.')}
-                </motion.p>
+                </m.p>
               )}
             </AnimatePresence>
           </Step>
@@ -280,7 +280,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
               return (
                 <li key={product.id} className="flex items-center gap-4">
                   <span className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-white">
-                    {img && <img src={img} alt="" className={`absolute inset-0 m-auto ${product.boxed || product.images ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'}`} />}
+                    {img && <img loading="lazy" decoding="async" src={img} alt="" className={`absolute inset-0 m-auto ${product.boxed || product.images ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'}`} />}
                     <span className="absolute -right-0 -top-0 grid size-5 place-items-center rounded-bl-lg bg-ink text-[10px] text-white">{qty}</span>
                   </span>
                   <span className="min-w-0 flex-1">
@@ -307,9 +307,9 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
           </div>
           <p className="flex items-baseline justify-between border-t border-ink pt-4">
             <span className="text-[15px]">{t('Total')}</span>
-            <motion.span key={total} className="text-[32px] font-light" initial={{ opacity: 0.4, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
+            <m.span key={total} className="text-[32px] font-light" initial={{ opacity: 0.4, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
               {formatPrice(total)}
-            </motion.span>
+            </m.span>
           </p>
           {serverError && (
             <div role="alert" className="rounded-xl border border-celio/40 bg-white px-4 py-3 text-[13px] text-celio">
@@ -319,9 +319,9 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
               ))}
             </div>
           )}
-          <motion.button type="submit" disabled={sending} whileTap={{ scale: 0.98 }} className="h-14 rounded-full bg-ink text-[14px] text-white transition-opacity hover:opacity-90 disabled:opacity-60">
+          <m.button type="submit" disabled={sending} whileTap={{ scale: 0.98 }} className="h-14 rounded-full bg-ink text-[14px] text-white transition-opacity hover:opacity-90 disabled:opacity-60">
             {sending ? t('Envoi de la commande…') : t('Payer {p}', { p: formatPrice(total) })}
-          </motion.button>
+          </m.button>
           {fromCart && <p className="text-center text-[12px] text-ink/60">{t('Pour modifier les quantités, ouvrez le panier.')}</p>}
           <p className="text-center text-[11px] text-ink/50">
             {t('Une question ?')} <a href={whatsappFor(t('Bonjour, j’ai une question sur ma commande kclick.'))} target="_blank" rel="noreferrer" className="underline">{t('Le concierge vous répond sur WhatsApp')}</a> · {contact.email}
@@ -334,13 +334,13 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
 
 function Step({ n, title, children }) {
   return (
-    <motion.fieldset initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: Number(n) * 0.08, ease }}>
+    <m.fieldset initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: Number(n) * 0.08, ease }}>
       <legend className="mb-5 flex items-center gap-3 text-[22px] font-light">
         <span className="grid size-8 place-items-center rounded-full border border-ink text-[13px]">{n}</span>
         {title}
       </legend>
       {children}
-    </motion.fieldset>
+    </m.fieldset>
   )
 }
 

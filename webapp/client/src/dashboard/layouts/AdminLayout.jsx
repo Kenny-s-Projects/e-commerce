@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import Icon from '../ui/Icon.jsx'
 import { Avatar } from '../ui/ui.jsx'
 import { useStore } from '../store/store.jsx'
@@ -117,7 +117,7 @@ export default function AdminLayout({ current, children }) {
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-            <motion.button
+            <m.button
               type="button"
               aria-label="Fermer le menu"
               className="absolute inset-0 bg-black/50"
@@ -126,7 +126,7 @@ export default function AdminLayout({ current, children }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
-            <motion.aside
+            <m.aside
               className="absolute inset-y-0 left-0 flex w-[min(300px,85vw)] flex-col justify-between overflow-y-auto bg-d-ink px-4 pb-5 pt-5"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
@@ -145,7 +145,7 @@ export default function AdminLayout({ current, children }) {
               <div className="mt-6">
                 <Me />
               </div>
-            </motion.aside>
+            </m.aside>
           </div>
         )}
       </AnimatePresence>

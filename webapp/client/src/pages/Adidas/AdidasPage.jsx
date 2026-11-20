@@ -71,7 +71,7 @@ export default function AdidasPage({ onAdd }) {
         id="celio"
         name="Celio"
         className="bg-white text-ink"
-        visual={<img src="/img/logos/celio.png" alt="" className="h-[clamp(40px,4.4vw,64px)] w-auto max-sm:hidden" />}
+        visual={<img loading="lazy" decoding="async" src="/img/logos/celio.png" alt="" className="h-[clamp(40px,4.4vw,64px)] w-auto max-sm:hidden" />}
       />
     </div>
   )

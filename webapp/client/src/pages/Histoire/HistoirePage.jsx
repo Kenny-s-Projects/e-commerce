@@ -1,5 +1,6 @@
 import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { m, useScroll, useTransform } from 'framer-motion'
+import useLiteMode from '../../hooks/useLiteMode.js'
 import Reveal, { DrawLine, FadeUp } from '../../components/maison/Reveal.jsx'
 import { histoire } from '../../data/pages.js'
 import { about } from '../../data/home.js'
@@ -18,6 +19,7 @@ export default function HistoirePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const photoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12])
   const emblemRotate = useTransform(scrollYProgress, [0, 1], [0, 90])
+  const lite = useLiteMode() // mode léger : pas d'effet lié au défilement
 
   return (
     <div className="bg-white text-ink">
@@ -31,20 +33,20 @@ export default function HistoirePage() {
               <Reveal as="span" delay={0.25} className="accent block tracking-[-0.01em]">{t(histoire.accent)}</Reveal>
             </h1>
           </div>
-          <motion.div
+          <m.div
             className="size-[clamp(110px,11vw,150px)] rounded-full bg-cream p-1.5"
-            style={{ rotate: emblemRotate }}
+            style={lite ? undefined : { rotate: emblemRotate }}
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2, delay: 0.3, ease }}
           >
-            <img src="/img/emblem.png" alt={t('Emblème Kenny’s International')} className="size-full" />
-          </motion.div>
+            <img decoding="async" src="/img/emblem.webp" alt={t('Emblème Kenny’s International')} className="size-full" />
+          </m.div>
         </div>
         <div className="mt-14 overflow-hidden rounded">
-          <motion.div className="grid aspect-[21/8] place-items-center bg-[#1c1c1c] max-sm:aspect-[4/3]" style={{ scale: photoScale }}>
+          <m.div className="grid aspect-[21/8] place-items-center bg-[#1c1c1c] max-sm:aspect-[4/3]" style={lite ? undefined : { scale: photoScale }}>
             <span className="caps text-[9px] text-cream/50">{t('[Photo d’une boutique Kenny’s, plein cadre, à fournir]')}</span>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -62,7 +64,7 @@ export default function HistoirePage() {
       {/* ============ Chiffres clés ============ */}
       <section className="px-gutter pb-[clamp(80px,10vw,140px)]">
         <DrawLine className="bg-ink" />
-        <motion.div
+        <m.div
           className="grid grid-cols-4 max-md:grid-cols-2"
           initial="hidden"
           whileInView="show"
@@ -70,7 +72,7 @@ export default function HistoirePage() {
           variants={{ show: { transition: { staggerChildren: 0.1 } } }}
         >
           {about.stats.map((s, i) => (
-            <motion.div
+            <m.div
               key={s.label}
               className={`pt-7 ${i > 0 ? 'border-l border-ink/15 pl-6 max-md:[&:nth-child(3)]:border-0 max-md:[&:nth-child(3)]:pl-0' : 'pr-6'}`}
               variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } }}
@@ -80,9 +82,9 @@ export default function HistoirePage() {
                 {s.suffix && <span className="text-gold">{s.suffix}</span>}
               </p>
               <p className="mt-3 text-[13px]">{t(s.label)}</p>
-            </motion.div>
+            </m.div>
           ))}
-        </motion.div>
+        </m.div>
       </section>
 
       {/* ============ Les chapitres ============ */}
@@ -91,7 +93,7 @@ export default function HistoirePage() {
           {t('Les')} <span className="accent">{t('chapitres')}</span>
         </Reveal>
         {histoire.chapters.map((c, i) => (
-          <motion.div
+          <m.div
             key={c.title}
             className={`grid grid-cols-[180px_1fr_1fr] items-center gap-10 border-t border-ink/20 py-8 max-md:grid-cols-1 max-md:gap-4 ${i === histoire.chapters.length - 1 ? 'border-b' : ''}`}
             initial={{ opacity: 0, y: 40 }}
@@ -105,7 +107,7 @@ export default function HistoirePage() {
               <p className="mt-2 text-[14px] leading-[1.7] text-ink/70">{t(c.text)}</p>
             </div>
             <ChapterVisual visual={c.visual} t={t} />
-          </motion.div>
+          </m.div>
         ))}
       </section>
 
@@ -143,7 +145,7 @@ function ChapterVisual({ visual, t }) {
   if (visual.kind === 'logo') {
     return (
       <div className={`grid aspect-video place-items-center ${visual.bg}`}>
-        <img src={visual.src} alt="" className={visual.w} />
+        <img loading="lazy" decoding="async" src={visual.src} alt="" className={visual.w} />
       </div>
     )
   }

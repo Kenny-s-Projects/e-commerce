@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -13,7 +13,7 @@ export default function Services({ items }) {
   const t = useT()
   return (
     <section className="px-gutter py-[clamp(24px,3vw,40px)]">
-      <motion.ul
+      <m.ul
         className="mx-auto grid max-w-[1200px] grid-cols-4 rounded-2xl bg-cream px-[clamp(12px,3vw,48px)] py-[clamp(28px,3.4vw,44px)] text-ink max-[900px]:grid-cols-2 max-[900px]:gap-y-8"
         initial="hidden"
         whileInView="show"
@@ -23,7 +23,7 @@ export default function Services({ items }) {
         {items.map((item) => {
           const Tag = item.href ? 'a' : 'div'
           return (
-            <motion.li
+            <m.li
               key={item.icon}
               className="flex justify-center"
               variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } }}
@@ -41,10 +41,10 @@ export default function Services({ items }) {
                   <strong className={`font-medium ${item.href ? 'border-b border-ink/30 transition-colors group-hover:border-gold' : ''}`}>{t(item.bold)}</strong>
                 </span>
               </Tag>
-            </motion.li>
+            </m.li>
           )
         })}
-      </motion.ul>
+      </m.ul>
     </section>
   )
 }

@@ -40,7 +40,7 @@ export default function CelioPage({ onAdd }) {
         id="patchi"
         name="Patchi"
         className="bg-green text-forest"
-        visual={<img src={PATCHI_IMG} alt="" className="size-[clamp(120px,13vw,180px)] rounded-2xl object-cover shadow-xl max-sm:hidden" />}
+        visual={<img loading="lazy" decoding="async" src={PATCHI_IMG} alt="" className="size-[clamp(120px,13vw,180px)] rounded-2xl object-cover shadow-xl max-sm:hidden" />}
       />
     </div>
   )

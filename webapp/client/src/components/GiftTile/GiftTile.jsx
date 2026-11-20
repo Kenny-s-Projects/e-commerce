@@ -16,6 +16,7 @@ export default function GiftTile({ item }) {
     <a href={`#offrir/${item.id}`} className="group block">
       <div className={`relative grid aspect-[5/6] place-items-center overflow-hidden ${item.tone}`}>
         <img
+          loading="lazy" decoding="async"
           src={item.img}
           alt=""
           loading="lazy"

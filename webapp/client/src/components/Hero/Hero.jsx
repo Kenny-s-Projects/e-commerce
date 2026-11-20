@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { formatPrice, maisonHref } from '../../data/houses.js'
+import { m, AnimatePresence } from 'framer-motion'
+import { maisonHref } from '../../data/houses.js'
 import { heroThemes } from '../../data/themes.js'
 import { useT } from '../../i18n/lang.js'
 
@@ -36,14 +36,14 @@ export default function Hero({ houses, ready = true }) {
         />
       ))}
 
-      <motion.p
+      <m.p
         className="caps pointer-events-none absolute bottom-[22px] left-1/2 z-10 -translate-x-1/2 whitespace-nowrap text-white mix-blend-difference max-md:static max-md:col-span-2 max-md:translate-x-0 max-md:py-5 max-md:text-center max-md:text-ink max-md:mix-blend-normal"
         initial={{ opacity: 0, y: 10 }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.8, delay: 1.2, ease }}
       >
         {t('Quatre maisons, une seule adresse')}
-      </motion.p>
+      </m.p>
     </section>
   )
 }
@@ -53,16 +53,19 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
   const t = useT()
 
   return (
-    <motion.article
+    <m.article
       className={`relative flex min-w-0 flex-[1_1_0] cursor-pointer flex-col px-[clamp(16px,2vw,32px)] pb-14 pt-10 outline-none max-md:min-h-[46vh] max-md:px-4 max-md:pb-6 max-md:pt-5 ${heroThemes[house.theme]}`}
       onMouseEnter={onActivate}
       onFocus={onActivate}
       tabIndex={0}
-      animate={{ flexGrow: isActive ? 2.2 : 1 }}
-      transition={{ duration: 0.9, ease }}
+      // La largeur change d'un coup (flex-grow), Framer Motion anime le passage en transform (FLIP) :
+      // une seule mesure par changement au lieu d'un recalcul de mise en page à chaque image.
+      layout
+      style={{ flexGrow: isActive ? 2.2 : 1 }}
+      transition={{ layout: { duration: 0.9, ease } }}
     >
       {/* Rideau : chaque colonne se dévoile l'une après l'autre, une fois le préchargeur parti */}
-      <motion.div
+      <m.div
         className="pointer-events-none absolute inset-0 z-[5] origin-top bg-beige"
         initial={{ scaleY: 1 }}
         animate={ready ? { scaleY: 0 } : {}}
@@ -70,10 +73,11 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
       />
 
 
-      <header className="flex items-start justify-between gap-3">
+      <m.header layout="position" transition={{ layout: { duration: 0.9, ease } }} className="flex items-start justify-between gap-3">
         <span className="caps opacity-70">{String(index + 1).padStart(2, '0')}</span>
         {house.logo ? (
           <img
+            decoding="async"
             src={house.logo}
             alt={house.name}
             className={
@@ -87,18 +91,21 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             {house.name}
           </span>
         )}
-      </header>
+      </m.header>
 
       {/* Visuel */}
-      <motion.div
+      <m.div
+        layout="position"
         className="grid min-h-0 flex-1 place-items-center py-6"
         animate={{ scale: isActive ? 1.08 : 1 }}
-        transition={{ duration: 0.9, ease }}
+        transition={{ duration: 0.9, ease, layout: { duration: 0.9, ease } }}
       >
         {hero.img ? (
           <img
             src={hero.img}
             alt={hero.name}
+            decoding="async"
+            fetchPriority={isActive ? 'high' : 'auto'}
             className={
               hero.boxed
                 ? 'aspect-square w-[min(70%,220px)] object-cover shadow-[0_30px_60px_rgba(0,0,0,0.18)] '
@@ -114,15 +121,15 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
             {t('Photo produit')}<br />{t('à venir')}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Bas : catégorie + détails du produit quand la colonne est ouverte */}
-      <footer className="min-h-[110px] max-md:min-h-0">
+      <m.footer layout="position" transition={{ layout: { duration: 0.9, ease } }} className="min-h-[110px] max-md:min-h-0">
         <p className="caps max-w-[180px] leading-[1.7]">{t(house.tagline)}</p>
 
         <AnimatePresence>
           {isActive && (
-            <motion.div
+            <m.div
               className="mt-1 max-md:hidden"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -140,10 +147,10 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
                   ⟶
                 </span>
               </a>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
-      </footer>
-    </motion.article>
+      </m.footer>
+    </m.article>
   )
 }

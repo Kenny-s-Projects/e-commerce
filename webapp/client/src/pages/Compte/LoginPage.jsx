@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, OutlineButton, PrimaryButton, fadeUp, inputClass, readSession, underline, writeSession } from './accountUi.jsx'
 import { authAvailable, authMessage, requestCode, savePending } from './auth.js'
@@ -35,15 +35,15 @@ export default function LoginPage() {
 
   return (
     <AuthShell>
-      <motion.div {...fadeUp()}>
+      <m.div {...fadeUp()}>
         <p className="caps text-[#86671f]">{t('Mon compte')}</p>
         <h1 className="mt-4 text-[clamp(38px,4vw,52px)] font-light leading-[1.05] tracking-[-0.01em]">
           {t('Bon')} <span className="accent">{t('retour.')}</span>
         </h1>
         <p className="mt-4 text-[15px] leading-[1.6] text-ink/70">{t('Recevez un code à 6 chiffres par e-mail pour vous connecter. Aucun mot de passe à retenir.')}</p>
-      </motion.div>
+      </m.div>
 
-      <motion.form onSubmit={submit} noValidate className="mt-9 flex flex-col gap-6" {...fadeUp(0.1)}>
+      <m.form onSubmit={submit} noValidate className="mt-9 flex flex-col gap-6" {...fadeUp(0.1)}>
         <Field id="login-email" label={t('Adresse e-mail')} error={error}>
           <input
             id="login-email"
@@ -63,9 +63,9 @@ export default function LoginPage() {
         </Field>
         {!authAvailable() && <p className="text-[13px] text-celio">{t(authMessage(null))}</p>}
         <PrimaryButton type="submit" disabled={sending}>{sending ? t('Envoi du code…') : t('Recevoir mon code')}</PrimaryButton>
-      </motion.form>
+      </m.form>
 
-      <motion.div className="mt-8 flex flex-col items-center gap-7" {...fadeUp(0.18)}>
+      <m.div className="mt-8 flex flex-col items-center gap-7" {...fadeUp(0.18)}>
         <div className="flex w-full items-center gap-4 text-[12px] text-ink/50" aria-hidden>
           <span className="h-px flex-1 bg-ink/12" />
           {t('ou')}
@@ -75,14 +75,14 @@ export default function LoginPage() {
         <a href="#checkout" className={`text-[14px] ${underline}`}>
           {t('Commander sans compte')}
         </a>
-      </motion.div>
+      </m.div>
 
-      <motion.p className="mt-14 flex items-start gap-3 text-[13px] leading-[1.6] text-ink/65" {...fadeUp(0.26)}>
+      <m.p className="mt-14 flex items-start gap-3 text-[13px] leading-[1.6] text-ink/65" {...fadeUp(0.26)}>
         <svg viewBox="0 0 24 24" className="mt-0.5 size-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <path d="M12 3 5 6v5.5c0 4.2 3 7.8 7 9.5 4-1.7 7-5.3 7-9.5V6l-7-3Z" />
         </svg>
         {t('Avec un compte, vos adresses sont enregistrées et vous suivez vos commandes en direct.')}
-      </motion.p>
+      </m.p>
     </AuthShell>
   )
 }

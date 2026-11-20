@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion, useMotionValue, useSpring } from 'framer-motion'
+import { AnimatePresence, m, useMotionValue, useSpring } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
 import { useT } from '../../i18n/lang.js'
@@ -40,7 +40,7 @@ export default function CollectionIndex({ collections, counts, total, onPick }) 
         {/* Vignette qui suit la souris */}
         <AnimatePresence>
           {hover && (
-            <motion.div
+            <m.div
               className="pointer-events-none absolute left-0 top-0 z-10 w-[clamp(140px,14vw,200px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl shadow-2xl max-md:hidden"
               style={{ x: sx, y: sy }}
               initial={{ opacity: 0, scale: 0.6, rotate: -8 }}
@@ -48,8 +48,8 @@ export default function CollectionIndex({ collections, counts, total, onPick }) 
               exit={{ opacity: 0, scale: 0.6 }}
               transition={{ duration: 0.35, ease }}
             >
-              <img src={PATCHI_IMG} alt="" className="aspect-square w-full object-cover" />
-            </motion.div>
+              <img loading="lazy" decoding="async" src={PATCHI_IMG} alt="" className="aspect-square w-full object-cover" />
+            </m.div>
           )}
         </AnimatePresence>
 

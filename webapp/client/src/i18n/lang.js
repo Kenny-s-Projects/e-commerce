@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext } from 'react'
-import EN from './en/index.js'
 
 /*
  * Traduction FR / EN.
@@ -9,6 +8,27 @@ import EN from './en/index.js'
  */
 
 export const LANGS = ['fr', 'en']
+
+/*
+ * Dictionnaire anglais : chargé seulement quand un visiteur choisit l'anglais
+ * (les visiteurs en français ne le téléchargent jamais). Rempli par loadEnglish().
+ * Les noms de produits venant de l'API y sont ajoutés par addTranslations().
+ */
+const EN = {}
+let englishPromise = null
+
+/** Charge le dictionnaire anglais (une seule fois) */
+export function loadEnglish() {
+  englishPromise ??= import('./en/index.js').then((mod) => {
+    Object.assign(EN, mod.default) // le dictionnaire écrit à la main a priorité sur les noms venant de l'API
+  })
+  return englishPromise
+}
+
+/** Ajoute des traductions (ex. noms de produits de l'API) sans écraser les existantes */
+export function addTranslations(entries) {
+  for (const [k, v] of entries) if (k && v && !(k in EN)) EN[k] = v
+}
 const STORAGE_KEY = 'kclick-lang'
 
 export const LangContext = createContext({ lang: 'fr', setLang: () => {} })
@@ -24,8 +44,9 @@ export function translate(lang, text, params) {
 
 /** const t = useT() ; t('Ajouter au panier') */
 export function useT() {
-  const { lang } = useLang()
-  return useCallback((text, params) => translate(lang, text, params), [lang])
+  const { lang, version } = useLang()
+  // version change quand le dictionnaire anglais vient d'arriver : les textes se mettent à jour
+  return useCallback((text, params) => translate(lang, text, params), [lang, version]) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 export function readLang() {

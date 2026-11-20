@@ -1,14 +1,6 @@
 import { useRef } from 'react'
-import {
-  motion,
-  useAnimationFrame,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-  useVelocity,
-} from 'framer-motion'
+import { m, useAnimationFrame, useMotionValue, useScroll, useSpring, useTransform, useVelocity,  } from 'framer-motion'
+import useLiteMode from '../../hooks/useLiteMode.js'
 import { useT } from '../../i18n/lang.js'
 
 // Ramène v dans l'intervalle [min, max[ (pour boucler sans fin)
@@ -26,7 +18,7 @@ const wrap = (min, max, v) => {
  */
 export default function Marquee({ items, speed = 2.5, separator = '✕', className = '' }) {
   const t = useT()
-  const reduce = useReducedMotion()
+  const reduce = useLiteMode() // mode léger ou « Réduire les animations »
   const baseX = useMotionValue(0)
   const { scrollY } = useScroll()
   const velocity = useSpring(useVelocity(scrollY), { damping: 50, stiffness: 400 })
@@ -50,10 +42,10 @@ export default function Marquee({ items, speed = 2.5, separator = '✕', classNa
 
   return (
     <div className={`overflow-hidden whitespace-nowrap ${className}`} aria-label={items.map((w) => t(w)).join(', ')}>
-      <motion.div className="flex w-max gap-12" style={{ x }} aria-hidden>
+      <m.div className="flex w-max gap-12" style={{ x }} aria-hidden>
         <div className="flex gap-12">{row}</div>
         <div className="flex gap-12">{row}</div>
-      </motion.div>
+      </m.div>
     </div>
   )
 }

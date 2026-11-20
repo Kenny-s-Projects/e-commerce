@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- composants et petites fonctions liées, gardés ensemble */
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { useLang, useT } from '../../i18n/lang.js'
 import { addresses as demoAddresses, favorites, STATUS } from '../../data/account.js'
 import { getProduct, productGallery } from '../../data/products.js'
@@ -65,7 +65,7 @@ export default function ProfilePage({ tab = 'commandes' }) {
   return (
     <div className="min-h-[calc(100svh-4rem)] bg-white text-ink">
       <header className="bg-[#f2efe8]">
-        <motion.div className="mx-auto flex max-w-[1100px] items-center gap-5 px-gutter pb-6 pt-[clamp(28px,4vw,56px)]" {...fadeUp()}>
+        <m.div className="mx-auto flex max-w-[1100px] items-center gap-5 px-gutter pb-6 pt-[clamp(28px,4vw,56px)]" {...fadeUp()}>
           <span className="grid size-[56px] shrink-0 place-items-center rounded-full bg-ink text-[17px] text-white md:size-[72px] md:text-[20px]" aria-hidden>
             {initials}
           </span>
@@ -75,7 +75,7 @@ export default function ProfilePage({ tab = 'commandes' }) {
               {firstName} <span className="accent">{lastName}</span>
             </h1>
           </div>
-        </motion.div>
+        </m.div>
         <nav aria-label={t('Mon compte')} className="mx-auto flex max-w-[1100px] overflow-x-auto px-gutter max-sm:px-2">
           {PROFILE_TABS.map((tb) => {
             const on = tb.id === tab
@@ -87,7 +87,7 @@ export default function ProfilePage({ tab = 'commandes' }) {
                 className={`relative shrink-0 px-[14px] pb-3.5 pt-2 text-[15px] transition-colors ${on ? 'text-ink' : 'text-ink/60 hover:text-ink'}`}
               >
                 {t(tb.label)}
-                {on && <motion.span layoutId="profile-tab" className="absolute inset-x-0 bottom-0 h-0.5 bg-ink" transition={{ duration: 0.4, ease }} />}
+                {on && <m.span layoutId="profile-tab" className="absolute inset-x-0 bottom-0 h-0.5 bg-ink" transition={{ duration: 0.4, ease }} />}
               </a>
             )
           })}
@@ -96,9 +96,9 @@ export default function ProfilePage({ tab = 'commandes' }) {
 
       <div className="mx-auto max-w-[1100px] px-gutter py-[clamp(22px,3vw,48px)] max-sm:px-[22px]">
         <AnimatePresence mode="wait">
-          <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }}>
+          <m.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }}>
             {tab === 'adresses' ? <Addresses /> : tab === 'favoris' ? <Favorites /> : tab === 'infos' ? <Infos me={me} /> : <Orders orders={orders ?? []} />}
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
     </div>
@@ -260,7 +260,7 @@ function Favorites() {
         <li key={p.id}>
           <a href={`#produit/${p.id}`} className="group block">
             <span className="block aspect-[4/5] overflow-hidden bg-kyra-card">
-              <img src={productGallery(p)[0]} alt={t(p.name)} loading="lazy" className="size-full object-contain p-4 transition-transform duration-700 ease-lux group-hover:scale-[1.04]" />
+              <img src={productGallery(p)[0]} alt={t(p.name)} loading="lazy" decoding="async" className="size-full object-contain p-4 mix-blend-multiply transition-transform duration-700 ease-lux group-hover:scale-[1.04]" />
             </span>
             <span className="caps mt-3 block text-[9px] text-ink/55">{p.house?.name}{p.store ? ` · ${t(p.store)}` : ''}</span>
             <span className="mt-1 block text-[14px] leading-snug">{t(p.name)}</span>

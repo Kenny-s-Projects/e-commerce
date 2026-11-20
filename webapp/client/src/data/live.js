@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { api } from '../lib/api.js'
-import EN from '../i18n/en/index.js'
+import { addTranslations } from '../i18n/lang.js'
 
 /*
  * Catalogue réel (API Express) : Maisons ouvertes ou non, et produits des Maisons en vente.
@@ -76,11 +76,7 @@ export async function loadLive() {
     ])
     const products = lists.flatMap((l) => l.items.map(toSiteProduct))
     // Les noms anglais viennent de la base : on les ajoute au dictionnaire pour que t(nom) les traduise
-    for (const p of products) {
-      if (p.nameEn) EN[p.name] ??= p.nameEn
-      if (p.storeEn && p.store) EN[p.store] ??= p.storeEn
-      if (p.descEn && p.desc) EN[p.desc] ??= p.descEn
-    }
+    addTranslations(products.flatMap((p) => [[p.name, p.nameEn], [p.store, p.storeEn], [p.desc, p.descEn]]))
     emit({
       status: 'ready',
       brands: Object.fromEntries(brands.map((b) => [b.slug, b])),

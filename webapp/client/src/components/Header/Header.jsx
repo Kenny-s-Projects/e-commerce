@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
+import { AnimatePresence, LayoutGroup, m } from 'framer-motion'
 import BagIcon from '../icons/BagIcon.jsx'
 import SearchIcon from '../icons/SearchIcon.jsx'
 import MenuPanel from './MenuPanel.jsx'
@@ -60,7 +60,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
 
   return (
     <>
-      <motion.header
+      <m.header
         className={`pointer-events-none fixed inset-x-0 top-0 z-50 h-16 px-gutter text-ink transition-[background-color,border-color] duration-500 ease-lux ${
           scrolled ? 'border-b border-transparent bg-transparent' : 'border-b border-ink/10 bg-white'
         }`}
@@ -73,7 +73,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
             {/* Logo : disparaît au défilement */}
             <AnimatePresence initial={false}>
               {!scrolled && (
-                <motion.a
+                <m.a
                   key="logo"
                   href="#"
                   className="pointer-events-auto text-[17px] font-medium tracking-wide"
@@ -83,13 +83,13 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                   transition={{ duration: 0.4, ease }}
                 >
                   kclick
-                </motion.a>
+                </m.a>
               )}
             </AnimatePresence>
 
             {/* Centre : pastille Menu (+ Recherche et Panier une fois réduit) */}
-            <motion.div layout className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5" transition={{ duration: 0.5, ease }}>
-              <motion.button
+            <m.div layout className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5" transition={{ duration: 0.5, ease }}>
+              <m.button
                 layout
                 type="button"
                 onClick={openMenu}
@@ -98,16 +98,16 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                 className={`${pill} justify-between gap-10 px-4 ${scrolled ? 'w-[min(280px,52vw)]' : 'w-[min(400px,46vw)] max-sm:w-[44vw]'}`}
                 transition={{ duration: 0.5, ease }}
               >
-                <motion.span layout="position" className="text-[14px]">{t('Menu')}</motion.span>
-                <motion.span layout="position" aria-hidden className="flex w-[60px] flex-col gap-[6px] max-sm:w-8">
+                <m.span layout="position" className="text-[14px]">{t('Menu')}</m.span>
+                <m.span layout="position" aria-hidden className="flex w-[60px] flex-col gap-[6px] max-sm:w-8">
                   <span className="block h-px bg-current" />
                   <span className="block h-px bg-current" />
-                </motion.span>
-              </motion.button>
+                </m.span>
+              </m.button>
 
               <AnimatePresence initial={false}>
                 {scrolled && (
-                  <motion.button
+                  <m.button
                     key="search-pill"
                     type="button"
                     onClick={openSearch}
@@ -119,10 +119,10 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     transition={{ duration: 0.35, ease }}
                   >
                     <SearchIcon />
-                  </motion.button>
+                  </m.button>
                 )}
                 {scrolled && (
-                  <motion.button
+                  <m.button
                     key="cart-pill"
                     type="button"
                     onClick={onCart}
@@ -135,10 +135,10 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                   >
                     <BagIcon className="size-[18px]" />
                     <CartCount count={cartCount} />
-                  </motion.button>
+                  </m.button>
                 )}
                 {scrolled && (
-                  <motion.span
+                  <m.span
                     key="lang-pill"
                     className={`${pill} w-10 justify-center`}
                     initial={{ opacity: 0, scale: 0.6 }}
@@ -147,15 +147,15 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                     transition={{ duration: 0.35, delay: 0.1, ease }}
                   >
                     <LangSwitch compact className="size-full" />
-                  </motion.span>
+                  </m.span>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
 
             {/* Droite : Recherche + Panier, en haut de page */}
             <AnimatePresence initial={false}>
               {!scrolled && (
-                <motion.nav
+                <m.nav
                   key="right"
                   className="pointer-events-auto flex items-center gap-[clamp(18px,2.4vw,36px)]"
                   initial={{ opacity: 0, x: 12 }}
@@ -181,12 +181,12 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                       {cartCount}
                     </span>
                   </button>
-                </motion.nav>
+                </m.nav>
               )}
             </AnimatePresence>
           </div>
         </LayoutGroup>
-      </motion.header>
+      </m.header>
 
       <MenuPanel open={menuOpen} onClose={() => setMenuOpen(false)} onSearch={openSearch} />
       <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -197,9 +197,9 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
 // Le nombre d'articles « saute » à chaque ajout
 function CartCount({ count }) {
   return (
-    <motion.span key={count} className="inline-block text-[13px] tabular-nums" initial={{ scale: 1.6 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease }}>
+    <m.span key={count} className="inline-block text-[13px] tabular-nums" initial={{ scale: 1.6 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease }}>
       {count}
-    </motion.span>
+    </m.span>
   )
 }
 

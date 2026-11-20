@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { useT } from '../../i18n/lang.js'
 
 /**
@@ -20,7 +20,7 @@ export default function ScrollCue({ ready }) {
   return (
     <AnimatePresence>
       {ready && atTop && (
-        <motion.button
+        <m.button
           type="button"
           aria-label={t('Défiler vers le bas')}
           onClick={() => window.scrollBy({ top: window.innerHeight * 0.9, behavior: 'smooth' })}
@@ -34,7 +34,7 @@ export default function ScrollCue({ ready }) {
           <span className="relative h-12 w-px overflow-hidden bg-white/30">
             <span className="animate-scroll-cue absolute inset-x-0 top-0 h-1/2 bg-white" />
           </span>
-        </motion.button>
+        </m.button>
       )}
     </AnimatePresence>
   )
