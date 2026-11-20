@@ -1,4 +1,5 @@
 import { useT } from '../../i18n/lang.js'
+import useImageState from '../../hooks/useImageState.js'
 
 /**
  * Tuile « idée cadeau » : image + libellé en italique + « Voir ».
@@ -12,16 +13,25 @@ const FIT = {
 
 export default function GiftTile({ item }) {
   const t = useT()
+  const { attach, onLoad, onError, ready, failed, cached } = useImageState()
   return (
     <a href={`#offrir/${item.id}`} className="group block">
       <div className={`relative grid aspect-[5/6] place-items-center overflow-hidden ${item.tone}`}>
-        <img
-          loading="lazy" decoding="async"
-          src={item.img}
-          alt=""
-          loading="lazy"
-          className={`absolute inset-0 m-auto transition-[scale] duration-[1100ms] ease-lux group-hover:scale-106 ${FIT[item.fit]}`}
-        />
+        {/* Fond de la tuile tout de suite, photo en fondu une fois chargée (sans fondu si déjà en cache) */}
+        {!failed && (
+          <img
+            ref={attach}
+            loading="lazy"
+            decoding="async"
+            src={item.img}
+            alt=""
+            onLoad={onLoad}
+            onError={onError}
+            className={`absolute inset-0 m-auto group-hover:scale-106 ${FIT[item.fit]} ${
+              cached ? 'transition-[scale] duration-[1100ms] ease-lux' : 'img-reveal [transition:opacity_0.4s_var(--ease-lux),scale_1.1s_var(--ease-lux)]'
+            } ${ready ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )}
       </div>
 
       <div className="mt-4 flex items-baseline justify-between">

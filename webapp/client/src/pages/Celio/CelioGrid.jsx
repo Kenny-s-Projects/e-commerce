@@ -3,6 +3,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../../components/ProductSingle/ProductSingle.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { useT } from '../../i18n/lang.js'
+import { ListRow, ProductGrid, SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
 
 const ease = [0.22, 1, 0.36, 1]
 const HOUSE = { id: 'celio', name: 'Celio' }
@@ -11,8 +12,10 @@ const HOUSE = { id: 'celio', name: 'Celio' }
  * Grille Celio avec deux affichages : Grille (4 colonnes + tuile éditoriale) ou Liste (grands noms en italique).
  * Le passage de l'un à l'autre est animé ; les produits se réorganisent quand on change de rayon.
  *  products · title · view ('grid' | 'list') · onView · onAdd · onShirts (tuile éditoriale)
+ *  status : 'ready' (défaut) | 'loading' → squelettes | 'error' → message + « Réessayer » (onRetry).
+ *           Le catalogue Celio est aujourd'hui fixe (data/catalog.js) : prêt pour le jour où il viendra de l'API.
  */
-const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView, onAdd, onShirts }, ref) {
+const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView, onAdd, onShirts, status = 'ready', error = null, onRetry }, ref) {
   const t = useT()
   return (
     <section ref={ref} id="grille" className="scroll-mt-16 bg-white px-gutter py-[clamp(72px,9vw,120px)] text-ink [--card:#f3f2ef] [--fg:#111111]">
@@ -39,6 +42,27 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
         </div>
       </div>
 
+      {status === 'loading' ? (
+        <SkeletonGroup label={t('Chargement des produits…')} className="mt-9">
+          {view === 'grid' ? (
+            <ProductGrid count={8} className="grid-cols-4 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2" />
+          ) : (
+            <div className="border-t border-ink">
+              {Array.from({ length: 6 }, (_, i) => <ListRow key={i} className="border-b border-ink/15" />)}
+            </div>
+          )}
+        </SkeletonGroup>
+      ) : status === 'error' ? (
+        <div className="py-12 text-center" role="alert">
+          <p className="text-[17px]">{t('Les produits ne répondent pas pour le moment.')}</p>
+          {error?.message && <p className="mt-2 text-[13px] text-ink/60">{t(error.message)}</p>}
+          {onRetry && (
+            <button type="button" onClick={onRetry} className="caps mt-5 border-b border-current pb-1">
+              {t('Réessayer')}
+            </button>
+          )}
+        </div>
+      ) : (
       <AnimatePresence mode="wait" initial={false}>
         {view === 'grid' ? (
           <m.div
@@ -101,7 +125,8 @@ const CelioGrid = forwardRef(function CelioGrid({ products, title, view, onView,
           </m.div>
         )}
       </AnimatePresence>
-      {products.length === 0 && <p className="py-12 text-sm opacity-70">{t('Aucun produit dans ce rayon pour le moment.')}</p>}
+      )}
+      {status === 'ready' && products.length === 0 && <p className="py-12 text-sm opacity-70">{t('Aucun produit dans ce rayon pour le moment.')}</p>}
     </section>
   )
 })

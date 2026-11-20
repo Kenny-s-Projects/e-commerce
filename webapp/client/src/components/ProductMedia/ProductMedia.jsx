@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import useMediaQuery from '../../hooks/useMediaQuery.js'
+import useImageState from '../../hooks/useImageState.js'
 import { useT } from '../../i18n/lang.js'
 
 /**
@@ -18,6 +19,9 @@ import { useT } from '../../i18n/lang.js'
  *  swipe     : false → sur mobile, une seule image (utile dans un carrousel déjà horizontal)
  *
  *  La carte parente doit porter la classe `group` pour le survol.
+ *
+ *  Chargement : le cadre (couleur de la Maison) est visible tout de suite, la photo apparaît en fondu
+ *  (0,4 s) une fois chargée — sans fondu si elle était déjà en cache. Photo introuvable : « Photo à venir ».
  */
 export default function ProductMedia({
   images = [],
@@ -27,14 +31,12 @@ export default function ProductMedia({
   className = '',
   swipe = true,
 }) {
-  const t = useT()
   const canHover = useMediaQuery('(hover: hover) and (pointer: fine)')
-  const [loaded, setLoaded] = useState(false)
 
   if (images.length === 0) {
     return (
       <a href={href} className={`relative grid place-items-center overflow-hidden ${className}`}>
-        <span className="caps text-[8px] opacity-50">{t('Photo à venir')}</span>
+        <NoPhoto />
       </a>
     )
   }
@@ -45,28 +47,31 @@ export default function ProductMedia({
       ? [{ src: images[0] }, { src: images[0], detail: true }]
       : images.map((src) => ({ src }))
 
-  // Le cadre apparaît en fondu quand la 1re image est chargée
-  const frame = `relative overflow-hidden transition-opacity duration-700 ease-lux ${
-    loaded ? 'opacity-100' : 'opacity-0'
-  } ${className}`
+  // Le cadre (fond de la Maison) est affiché tout de suite : la page ne « saute » pas
+  const frame = `relative overflow-hidden ${className}`
 
   if (!canHover && !swipe) {
     return (
       <a href={href} className={`block ${frame}`}>
-        <View view={views[0]} fit={fit} alt={alt} onLoad={() => setLoaded(true)} />
+        <View view={views[0]} fit={fit} alt={alt} main />
       </a>
     )
   }
 
   return canHover ? (
-    <HoverSwap views={views} fit={fit} alt={alt} href={href} className={frame} onLoad={() => setLoaded(true)} />
+    <HoverSwap views={views} fit={fit} alt={alt} href={href} className={frame} />
   ) : (
-    <SwipeGallery views={views} fit={fit} alt={alt} href={href} className={frame} onLoad={() => setLoaded(true)} />
+    <SwipeGallery views={views} fit={fit} alt={alt} href={href} className={frame} />
   )
 }
 
+function NoPhoto() {
+  const t = useT()
+  return <span className="caps absolute inset-0 m-auto grid place-items-center text-[8px] opacity-50">{t('Photo à venir')}</span>
+}
+
 /* ---------- Ordinateur : changement d'image au survol ---------- */
-function HoverSwap({ views, fit, alt, href, className, onLoad }) {
+function HoverSwap({ views, fit, alt, href, className }) {
   const [first, second] = views
 
   return (
@@ -75,14 +80,16 @@ function HoverSwap({ views, fit, alt, href, className, onLoad }) {
         view={first}
         fit={fit}
         alt={alt}
-        onLoad={onLoad}
-        className="transition-[opacity,scale] duration-700 ease-lux group-hover:scale-104 group-hover:opacity-0"
+        main
+        ownTransition
+        className="img-reveal [transition:opacity_0.4s_var(--ease-lux),scale_0.7s_var(--ease-lux)] group-hover:scale-104 group-hover:opacity-0"
       />
       {second && (
         <View
           view={second}
           fit={fit}
           alt=""
+          fade={false}
           className="scale-104 opacity-0 transition-[opacity,scale] duration-700 ease-lux group-hover:scale-100 group-hover:opacity-100"
         />
       )}
@@ -91,7 +98,7 @@ function HoverSwap({ views, fit, alt, href, className, onLoad }) {
 }
 
 /* ---------- Mobile : défilement horizontal + barre de progression ---------- */
-function SwipeGallery({ views, fit, alt, href, className, onLoad }) {
+function SwipeGallery({ views, fit, alt, href, className }) {
   const trackRef = useRef(null)
   const [progress, setProgress] = useState(0) // 0 → 1 sur toute la galerie
 
@@ -110,7 +117,7 @@ function SwipeGallery({ views, fit, alt, href, className, onLoad }) {
       >
         {views.map((view, i) => (
           <a key={i} href={href} className="relative h-full w-full shrink-0 snap-center overflow-hidden">
-            <View view={view} fit={fit} alt={i === 0 ? alt : ''} onLoad={i === 0 ? onLoad : undefined} />
+            <View view={view} fit={fit} alt={i === 0 ? alt : ''} main={i === 0} />
           </a>
         ))}
       </div>
@@ -143,16 +150,26 @@ const DETAIL = {
   bleed: 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[150%] max-w-none object-cover',
 }
 
-function View({ view, fit, alt, onLoad, className = '' }) {
+/**
+ *  main          : photo principale → « Photo à venir » si elle ne se charge pas
+ *  fade          : false → pas de fondu de chargement (image cachée jusqu'au survol, par ex.)
+ *  ownTransition : la classe fournit déjà la transition d'opacité (ne pas ajouter .img-fade)
+ */
+function View({ view, fit, alt, main = false, fade = true, ownTransition = false, className = '' }) {
+  const { attach, onLoad, onError, ready, failed, fadeClass } = useImageState()
+  if (failed) return main ? <NoPhoto /> : null
+  const state = fade ? (ownTransition ? (ready ? '' : 'opacity-0') : fadeClass) : ''
   return (
     <img
+      ref={attach}
       src={view.src}
       alt={alt}
       loading="lazy"
       decoding="async"
       draggable={false}
       onLoad={onLoad}
-      className={`absolute ${view.detail ? DETAIL[fit] : FIT[fit]} ${className}`}
+      onError={onError}
+      className={`absolute ${view.detail ? DETAIL[fit] : FIT[fit]} ${className} ${state}`}
     />
   )
 }

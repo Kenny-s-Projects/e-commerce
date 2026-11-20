@@ -1,3 +1,4 @@
+import { ColumnsSkeleton, LoadError } from '../ui/skeletons.jsx'
 import { useState } from 'react'
 import { BRANDS } from '../data/demo.js'
 import { riderState, useStore } from '../store/store.jsx'
@@ -129,7 +130,7 @@ function RunCard({ order, rider }) {
 }
 
 export default function Dispatch() {
-  const { orders, riders, dispatch } = useStore()
+  const { orders, riders, dispatch, loading, loadError, retryLoad } = useStore()
   const toAssign = orders
     .filter((o) => o.mode === 'livraison' && !o.riderId && !o.cancelled && !o.deliveredAt && o.parts.some(isActivePart))
     .sort((a, b) => Number(canDispatch(b)) - Number(canDispatch(a)) || new Date(a.createdAt) - new Date(b.createdAt))
@@ -155,6 +156,11 @@ export default function Dispatch() {
         </p>
       </header>
 
+      {loading ? (
+        <ColumnsSkeleton cards={[2, 3, 1]} label="Chargement du dispatch…" />
+      ) : loadError ? (
+        <LoadError error={loadError} onRetry={retryLoad} />
+      ) : (
       <div className="grid items-start gap-[18px] lg:grid-cols-2 xl:grid-cols-3">
         <section aria-labelledby="h-todo" className="flex flex-col gap-3">
           <ColumnTitle id="h-todo" count={toAssign.length}>
@@ -183,6 +189,7 @@ export default function Dispatch() {
           )}
         </section>
       </div>
+      )}
 
     </>
   )

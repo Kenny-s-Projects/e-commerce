@@ -3,6 +3,7 @@ import { AnimatePresence, m, useMotionValue, useSpring } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
 import { useT } from '../../i18n/lang.js'
+import { SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -11,8 +12,9 @@ const ease = [0.22, 1, 0.36, 1]
  * Animations : les filets se dessinent un à un ; au survol, la ligne glisse
  * et une vignette suit la souris (ordinateur).
  *  collections : [{ id, label, note }] · counts : { id: n } · onPick(id)
+ *  loading     : catalogue en cours de chargement → lignes squelettes à la place des chapitres
  */
-export default function CollectionIndex({ collections, counts, total, onPick }) {
+export default function CollectionIndex({ collections, counts, total, onPick, loading = false }) {
   const t = useT()
   const [hover, setHover] = useState(null)
   const x = useMotionValue(0)
@@ -32,9 +34,22 @@ export default function CollectionIndex({ collections, counts, total, onPick }) 
         <Reveal as="h2" className="text-[clamp(34px,4.4vw,60px)] font-light">
           {t('Les')} <span className="accent text-[1.06em]">{t('collections')}</span>
         </Reveal>
-        <p className="text-[12px]">{t('{n} produits · {m} chapitres', { n: total, m: collections.length })}</p>
+        {!loading && <p className="text-[12px]">{t('{n} produits · {m} chapitres', { n: total, m: collections.length })}</p>}
       </div>
       <DrawLine className="bg-forest" />
+
+      {loading && (
+        <SkeletonGroup label={t('Chargement des collections…')} className="[--sk:color-mix(in_srgb,var(--color-forest)_9%,transparent)]">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="grid grid-cols-[60px_minmax(0,1fr)_minmax(0,1fr)_150px] items-center gap-6 border-b border-forest/20 px-2 py-7 max-md:grid-cols-[40px_minmax(0,1fr)_auto] max-md:gap-3">
+              <div className="sk h-2.5 w-6 rounded-full" />
+              <div className="sk h-[clamp(26px,3vw,42px)] w-3/5 rounded" />
+              <div className="sk h-3 w-4/5 rounded-full max-md:hidden" />
+              <div className="sk ml-auto h-2.5 w-20 rounded-full" />
+            </div>
+          ))}
+        </SkeletonGroup>
+      )}
 
       <div className="relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {/* Vignette qui suit la souris */}

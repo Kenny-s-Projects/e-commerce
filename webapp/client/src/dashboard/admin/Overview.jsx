@@ -1,3 +1,4 @@
+import { LoadError, OverviewSkeleton } from '../ui/skeletons.jsx'
 import { useMemo, useState } from 'react'
 import { BRANDS } from '../data/demo.js'
 import { riderState, useStore } from '../store/store.jsx'
@@ -188,7 +189,7 @@ function Riders({ riders, orders }) {
 
 /** Super admin · Vue d'ensemble */
 export default function Overview() {
-  const { orders, riders, now, lastNewOrder, dispatch, dashboard, loading } = useStore()
+  const { orders, riders, now, lastNewOrder, dispatch, dashboard, loading, loadError, retryLoad } = useStore()
   const [q, setQ] = useState('')
 
   // Commandes du jour (l'API renvoie aussi les plus anciennes, utiles à la recherche)
@@ -234,8 +235,14 @@ export default function Overview() {
         </div>
       </header>
 
+      {loading ? (
+        <OverviewSkeleton />
+      ) : loadError ? (
+        <LoadError error={loadError} onRetry={retryLoad} />
+      ) : (
+      <>
       <section aria-label="Indicateurs du jour" className="mb-[18px] grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="Commandes aujourd’hui" value={loading ? '…' : todays.length} note="Depuis minuit" />
+        <Kpi label="Commandes aujourd’hui" value={todays.length} note="Depuis minuit" />
         <Kpi label="Chiffre d’affaires" value={money(revenue)} note="Hors commandes annulées" />
         <Kpi
           label="En cours"
@@ -262,7 +269,7 @@ export default function Overview() {
           {todays.length ? (
             <OrdersTable orders={todays.slice(0, 8)} highlight={lastNewOrder} />
           ) : (
-            <p className="px-5 pb-6 text-sm text-d-muted">{loading ? 'Chargement des commandes…' : 'Aucune commande aujourd’hui pour l’instant.'}</p>
+            <p className="px-5 pb-6 text-sm text-d-muted">Aucune commande aujourd’hui pour l’instant.</p>
           )}
         </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:flex lg:flex-col">
@@ -270,6 +277,8 @@ export default function Overview() {
           <Riders riders={riders} orders={todays} />
         </div>
       </section>
+      </>
+      )}
 
     </>
   )

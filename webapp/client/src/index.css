@@ -108,3 +108,39 @@
 @media (prefers-reduced-motion: reduce) {
   .page-fallback-bar { animation: none; transform: none; }
 }
+
+/* ---------- Squelettes de chargement (components/Skeleton) ----------
+   Fond doux + reflet qui glisse (transform uniquement). Statique en mouvement réduit et en mode léger.
+   --sk : couleur de la forme ; --sk-shine : couleur du reflet. */
+.sk {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--sk, color-mix(in srgb, currentColor 9%, transparent));
+}
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, var(--sk-shine, rgb(255 255 255 / 0.55)) 50%, transparent 100%);
+  animation: sk-shine 1.5s var(--ease-lux) infinite;
+}
+@keyframes sk-shine {
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk::after { animation: none; display: none; }
+}
+html[data-lite] .sk::after { animation: none; display: none; }
+
+/* Photo produit : apparaît en fondu une fois chargée (instantané si déjà en cache) */
+.img-fade {
+  transition: opacity 0.4s var(--ease-lux);
+}
+/* .img-reveal : photo qui a sa propre transition (zoom au survol) en plus du fondu de chargement */
+html[data-lite] .img-fade,
+html[data-lite] .img-reveal { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .img-fade,
+  .img-reveal { transition: none !important; }
+}

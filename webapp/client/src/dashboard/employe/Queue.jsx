@@ -1,3 +1,5 @@
+import { RideCard, SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
+import { LoadError } from '../ui/skeletons.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
@@ -182,7 +184,7 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
 }
 
 export default function Queue({ brand }) {
-  const { orders, now, dispatch, loading } = useStore()
+  const { orders, now, dispatch, loading, loadError, retryLoad } = useStore()
   const b = BRANDS[brand]
 
   // Ma part de chaque commande ouverte
@@ -231,6 +233,8 @@ export default function Queue({ brand }) {
         <p className="text-sm text-d-muted">Seule la part {b.name} de chaque commande s’affiche ici.</p>
       </header>
 
+      {loadError && <LoadError error={loadError} onRetry={retryLoad} className="mb-4" />}
+
       {/* Ordinateur : 3 colonnes · téléphone : colonnes qui défilent sur le côté */}
       <div className="-mx-[clamp(16px,3vw,40px)] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[clamp(16px,3vw,40px)] pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
         {columns.map((col) => (
@@ -242,9 +246,14 @@ export default function Queue({ brand }) {
             <h2 id={`col-${col.id}`} className="flex items-center gap-2.5 px-1 py-1 text-[15px] font-medium">
               <span className="size-2.5 rounded-[3px]" style={{ background: PART_STATUS[col.id].bar }} aria-hidden />
               {col.title}
-              <span className="font-mono text-[13px] font-normal text-d-muted">{col.items.length}</span>
+              <span className="font-mono text-[13px] font-normal text-d-muted">{loading ? '…' : col.items.length}</span>
             </h2>
-            {col.items.length ? (
+            {loading ? (
+              // Premier chargement : cartes squelettes dans les vraies colonnes
+              <SkeletonGroup label="Chargement des commandes…" className="flex flex-col gap-3 [--sk:var(--color-d-soft)]">
+                {Array.from({ length: col.id === COLUMNS[0].id ? 2 : 1 }, (_, i) => <RideCard key={i} />)}
+              </SkeletonGroup>
+            ) : col.items.length ? (
               col.items.map(({ order, part }) => (
                 <PartCard key={order.number} order={order} part={part} brand={brand} now={now} fresh={fresh.includes(order.number)} dispatch={dispatch} />
               ))

@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../ProductSingle/ProductSingle.jsx'
 import FilterPanel from './FilterPanel.jsx'
+import { ProductGrid, SkeletonGroup } from '../Skeleton/Skeleton.jsx'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -20,9 +21,10 @@ const ease = [0.22, 1, 0.36, 1]
  *  onAdd      : ajout au panier
  *  insert     : élément glissé après les `insertAfter` premiers produits (bandeau éditorial…)
  *  title      : titre au-dessus des filtres (facultatif)
+ *  status     : 'ready' (défaut) | 'loading' → squelettes | 'error' → message + « Réessayer » (onRetry)
  */
 const CatalogueGrid = forwardRef(function CatalogueGrid(
-  { products, total, groups, value, onChange, barClass = '', pill = 'square', cols = 3, house, onAdd, insert = null, insertAfter = 6, title = null },
+  { products, total, groups, value, onChange, barClass = '', pill = 'square', cols = 3, house, onAdd, insert = null, insertAfter = 6, title = null, status = 'ready', error = null, onRetry },
   ref
 ) {
   const t = useT()
@@ -73,16 +75,36 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
         </FilterPanel>
       </div>
 
-      <Grid items={first} cols={cols} house={house} onAdd={onAdd} />
-      {insert && rest.length > 0 && insert}
-      {rest.length > 0 && <Grid items={rest} cols={cols} house={house} onAdd={onAdd} />}
-      {products.length === 0 && <p className="px-gutter py-16 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
+      {status === 'loading' ? (
+        <SkeletonGroup label={t('Chargement des produits…')} className="px-gutter py-[clamp(48px,6vw,88px)]">
+          <ProductGrid count={cols * 2} className={gridClass(cols)} />
+        </SkeletonGroup>
+      ) : status === 'error' ? (
+        <div className="px-gutter py-16 text-center" role="alert">
+          <p className="text-[17px]">{t('Les produits ne répondent pas pour le moment.')}</p>
+          {error?.message && <p className="mt-2 text-[13px] opacity-75">{t(error.message)}</p>}
+          {onRetry && (
+            <button type="button" onClick={onRetry} className="caps mt-5 border-b border-current pb-1">
+              {t('Réessayer')}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <Grid items={first} cols={cols} house={house} onAdd={onAdd} />
+          {insert && rest.length > 0 && insert}
+          {rest.length > 0 && <Grid items={rest} cols={cols} house={house} onAdd={onAdd} />}
+          {products.length === 0 && <p className="px-gutter py-16 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
+        </>
+      )}
     </div>
   )
 })
 
+const gridClass = (cols) => (cols === 4 ? 'grid-cols-4 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2' : 'grid-cols-3 max-[900px]:grid-cols-2')
+
 function Grid({ items, cols, house, onAdd }) {
-  const grid = cols === 4 ? 'grid-cols-4 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2' : 'grid-cols-3 max-[900px]:grid-cols-2'
+  const grid = gridClass(cols)
   return (
     <section className="px-gutter py-[clamp(48px,6vw,88px)]">
       <m.div layout className={`grid ${grid} gap-x-[clamp(16px,2.2vw,32px)] gap-y-[clamp(40px,4.5vw,64px)]`}>

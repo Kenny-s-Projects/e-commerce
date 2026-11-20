@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import { kyraCatalog, adidasCatalog, celioCatalog } from '../../data/catalog.js'
 import { formatPrice } from '../../data/houses.js'
-import { useLive } from '../../data/live.js'
+import { loadLive, useLive } from '../../data/live.js'
+import { ListRow, SkeletonGroup } from '../Skeleton/Skeleton.jsx'
+import useImageState from '../../hooks/useImageState.js'
 import SearchIcon from '../icons/SearchIcon.jsx'
 import { useT } from '../../i18n/lang.js'
 
@@ -109,9 +111,24 @@ function SearchPanel({ onClose }) {
             </m.div>
           ) : (
             <div className="mt-4" aria-live="polite">
+              {/* Catalogue réel encore en route : on n'annonce pas « Aucun résultat » trop tôt */}
+              {(live.status === 'idle' || live.status === 'loading') && !results.length ? (
+                <SkeletonGroup label={t('Recherche en cours…')}>
+                  {Array.from({ length: 3 }, (_, i) => <ListRow key={i} className="border-b border-ink/10" />)}
+                </SkeletonGroup>
+              ) : (
               <p className="caps mb-2 text-ink/60">
                 {results.length ? t('{n} résultat(s)', { n: results.length }) : t('Aucun résultat')}
               </p>
+              )}
+              {live.status === 'error' && (
+                <p className="mb-2 text-[13px] text-ink/60">
+                  {t('Les produits Patchi ne répondent pas pour le moment.')}{' '}
+                  <button type="button" onClick={loadLive} className="underline underline-offset-4 hover:text-ink">
+                    {t('Réessayer')}
+                  </button>
+                </p>
+              )}
               <ul>
                 <AnimatePresence initial={false}>
                   {results.map((p, i) => (
@@ -125,7 +142,7 @@ function SearchPanel({ onClose }) {
                     >
                       <a href={p.href} onClick={onClose} className="group flex items-center gap-4 border-b border-ink/10 py-3">
                         <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded bg-[#f4f4f4]">
-                          {p.img && <img loading="lazy" decoding="async" src={p.img} alt="" className={p.boxed ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'} />}
+                          {p.img && <Thumb src={p.img} boxed={p.boxed} />}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="caps block text-[9px] text-ink/60">{p.maison}{p.store ? ` · ${p.store}` : ''}</span>
@@ -144,5 +161,23 @@ function SearchPanel({ onClose }) {
         </div>
       </m.div>
     </div>
+  )
+}
+
+// Vignette d'un résultat : fond gris tout de suite, photo en fondu une fois chargée
+function Thumb({ src, boxed }) {
+  const { attach, onLoad, onError, failed, fadeClass } = useImageState()
+  if (failed) return null
+  return (
+    <img
+      ref={attach}
+      loading="lazy"
+      decoding="async"
+      src={src}
+      alt=""
+      onLoad={onLoad}
+      onError={onError}
+      className={`${boxed ? 'size-full object-cover' : 'size-[80%] object-contain mix-blend-multiply'} ${fadeClass}`}
+    />
   )
 }

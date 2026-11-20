@@ -9,6 +9,7 @@ import { useLive } from '../../data/live.js'
 import { api } from '../../lib/api.js'
 import { signOut } from '../../lib/supabase.js'
 import { Houses, StatusPill, ease, fadeUp, inputClass, underline } from './accountUi.jsx'
+import { ListRow, Profile as ProfileSkeleton, SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
 
 export const PROFILE_TABS = [
   { id: 'commandes', label: 'Commandes' },
@@ -23,6 +24,7 @@ export default function ProfilePage({ tab = 'commandes' }) {
   const [me, setMe] = useState(null)
   const [orders, setOrders] = useState(null)
   const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0) // « Réessayer » relance le chargement
 
   // Profil et commandes réels (API) ; sans session : retour à la connexion
   useEffect(() => {
@@ -41,20 +43,36 @@ export default function ProfilePage({ tab = 'commandes' }) {
     return () => {
       alive = false
     }
-  }, [])
+  }, [attempt])
 
+  if (!me && error) {
+    return (
+      <div className="grid min-h-[60svh] place-items-center bg-white px-gutter text-center text-ink" role="alert">
+        <div>
+          <p className="text-[17px]">{t('Votre compte ne répond pas pour le moment.')}</p>
+          <p className="mt-2 text-[13px] text-ink/60">{t(error.message)}</p>
+          <button type="button" onClick={() => {
+              setError(null)
+              setAttempt((n) => n + 1)
+            }} className="caps mt-6 border-b border-ink pb-1">
+            {t('Réessayer')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Chargement : la page de compte se dessine tout de suite (en-tête, onglets, lignes de commandes)
   if (!me) {
     return (
-      <div className="grid min-h-[60svh] place-items-center bg-white px-gutter text-center text-ink">
-        {error ? (
-          <div>
-            <p className="text-[17px]">{t('Votre compte ne répond pas pour le moment.')}</p>
-            <p className="mt-2 text-[13px] text-ink/60">{t(error.message)}</p>
-          </div>
-        ) : (
-          <p className="text-[15px] text-ink/60">{t('Chargement de votre compte…')}</p>
-        )}
-      </div>
+      <SkeletonGroup label={t('Chargement de votre compte…')} className="min-h-[calc(100svh-4rem)] bg-white text-ink">
+        <div className="bg-[#f2efe8]">
+          <ProfileSkeleton className="mx-auto max-w-[1100px] px-gutter pb-4 pt-[clamp(28px,4vw,56px)]" />
+        </div>
+        <div className="mx-auto max-w-[1100px] px-gutter py-[clamp(22px,3vw,48px)] max-sm:px-[22px]">
+          {Array.from({ length: 4 }, (_, i) => <ListRow key={i} className="border-b border-ink/10" />)}
+        </div>
+      </SkeletonGroup>
     )
   }
 

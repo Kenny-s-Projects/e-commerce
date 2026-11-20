@@ -8,7 +8,6 @@ import CatalogueGrid from '../../components/maison/CatalogueGrid.jsx'
 import NextMaison from '../../components/maison/NextMaison.jsx'
 import { patchiFlavors, patchiPage } from '../../data/maisonPages.js'
 import { loadLive, useLive } from '../../data/live.js'
-import { useT } from '../../i18n/lang.js'
 
 const HOUSE = { id: 'patchi', name: 'Patchi' }
 
@@ -29,7 +28,6 @@ const COLLECTION_NOTES = {
 }
 
 export default function PatchiPage({ onAdd }) {
-  const t = useT()
   const [filter, setFilter] = useState({})
   const composerRef = useRef(null)
   const barRef = useRef(null)
@@ -50,6 +48,9 @@ export default function PatchiPage({ onAdd }) {
     [live.status, products],
   )
 
+  // Chargement du catalogue réel : squelettes, puis produits ; erreur → message + « Réessayer » (jamais de squelette sans fin)
+  const catalogStatus = live.status === 'error' ? 'error' : live.status === 'ready' ? 'ready' : 'loading'
+
   const list = useMemo(() => products.filter((p) => !filter.cat || p.cat === filter.cat), [products, filter])
   const counts = useMemo(() => Object.fromEntries(collections.map((c) => [c.id, products.filter((p) => p.cat === c.id).length])), [collections, products])
 
@@ -65,20 +66,7 @@ export default function PatchiPage({ onAdd }) {
       <MaisonCode pillars={patchiPage.pillars} />
       {flavors.length > 0 && <PralineShowcase flavors={flavors} weights={patchiPage.weights} pricePerKg={patchiPage.pricePerKg} onAdd={onAdd} />}
       <BoxComposer ref={composerRef} flavors={patchiFlavors} sizes={patchiPage.boxSizes} pricePerKg={patchiPage.pricePerKg} />
-      {live.status !== 'ready' && (
-        <div className="px-gutter py-16 text-center">
-          {live.status === 'error' ? (
-            <>
-              <p className="text-[17px]">{t('Le catalogue Patchi ne répond pas pour le moment.')}</p>
-              <p className="mt-2 text-[13px] opacity-75">{live.error?.message}</p>
-              <button type="button" onClick={loadLive} className="caps mt-5 border-b border-current pb-1">{t('Réessayer')}</button>
-            </>
-          ) : (
-            <p className="text-[15px] opacity-75">{t('Chargement du catalogue…')}</p>
-          )}
-        </div>
-      )}
-      <CollectionIndex collections={collections} counts={counts} total={products.length} onPick={pickCollection} />
+      <CollectionIndex collections={collections} counts={counts} total={products.length} onPick={pickCollection} loading={catalogStatus === 'loading'} />
       <CatalogueGrid
         ref={barRef}
         products={list}
@@ -90,6 +78,9 @@ export default function PatchiPage({ onAdd }) {
         pill="round"
         house={HOUSE}
         onAdd={onAdd}
+        status={catalogStatus}
+        error={live.error}
+        onRetry={loadLive}
       />
       <NextMaison
         id="kyra"

@@ -1,3 +1,5 @@
+import { LoadError, RidesSkeleton } from '../ui/skeletons.jsx'
+import { useStore } from '../store/store.jsx'
 import { BRANDS } from '../data/demo.js'
 import { hour, today } from '../lib/format.js'
 import { Card, Mono, Pill } from '../ui/ui.jsx'
@@ -86,7 +88,32 @@ function Row({ label, children, muted }) {
 /** Livreur · Mes courses */
 export default function Courses() {
   const { rider, current, delivered, dispatch, loading } = useRider()
-  if (!rider) return <p className="px-5 py-16 text-center text-sm text-d-muted">{loading ? 'Chargement de vos courses…' : 'Profil livreur introuvable.'}</p>
+  const { loadError, retryLoad } = useStore()
+  // Premier chargement : bandeau + cartes de course squelettes ; échec : message + « Réessayer »
+  if (!rider && loading) {
+    return (
+      <>
+        <header className="bg-d-ink px-5 pb-5 pt-[calc(22px+env(safe-area-inset-top))]" aria-hidden>
+          <div className="mb-[18px] flex items-center justify-between">
+            <span className="text-lg tracking-[0.04em] text-[#f2efe8]">kclick</span>
+          </div>
+          <div className="sk h-7 w-48 rounded-full [--sk:rgb(255_255_255/0.1)] [--sk-shine:rgb(255_255_255/0.12)]" />
+          <div className="sk mt-4 h-12 w-full rounded-[14px] [--sk:rgb(255_255_255/0.1)] [--sk-shine:rgb(255_255_255/0.12)]" />
+        </header>
+        <div className="px-4 pt-[18px]">
+          <RidesSkeleton />
+        </div>
+      </>
+    )
+  }
+  if (!rider && loadError) {
+    return (
+      <div className="px-4 pt-[18px]">
+        <LoadError error={loadError} onRetry={retryLoad} />
+      </div>
+    )
+  }
+  if (!rider) return <p className="px-5 py-16 text-center text-sm text-d-muted">Profil livreur introuvable.</p>
 
   return (
     <>
