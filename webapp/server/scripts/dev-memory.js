@@ -16,7 +16,10 @@ process.env.CORS_ORIGINS ??= 'http://localhost:5173,http://localhost:4173'
 const { SignJWT } = await import('jose')
 const { createTestDatabase } = await import('../tests/db.js')
 const { createApp } = await import('../src/app.js')
+<<<<<<< HEAD
 const { startEmailWorker } = await import('../src/modules/notifications/notifications.service.js')
+=======
+>>>>>>> 4c11913 (Front : client de l'API et connexion Supabase ; API de développement en mémoire)
 
 const db = await createTestDatabase()
 
@@ -51,7 +54,10 @@ const users = {
 }
 await db.query('update public.riders set is_available = true')
 
+<<<<<<< HEAD
 startEmailWorker() // sans RESEND_API_KEY, les e-mails sont seulement journalisés
+=======
+>>>>>>> 4c11913 (Front : client de l'API et connexion Supabase ; API de développement en mémoire)
 const port = Number(process.env.PORT ?? 4000)
 createApp().listen(port, async () => {
   console.log(`\nAPI en mémoire prête : http://localhost:${port}/api/v1`)
