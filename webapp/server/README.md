@@ -71,6 +71,45 @@ Tout le monde se connecte avec un code reçu par e-mail, sans mot de passe. Le f
 4. URL Configuration : Site URL = adresse du site (Netlify), et ajouter `http://localhost:5173` aux Redirect URLs.
 5. Plus tard : SMTP personnalisé (service d'e-mails) — l'envoi par défaut de Supabase est limité à quelques e-mails par heure.
 
+## E-mails (Resend)
+
+Les e-mails transactionnels partent par l'API Resend, depuis le domaine vérifié `notification.kclick-api.com`.
+(Les codes de connexion, eux, sont envoyés par Supabase Auth via le SMTP de Resend : voir la section Connexion.)
+
+Variables (`.env`, jamais dans Git) :
+
+| Variable | Rôle |
+|---|---|
+| `RESEND_API_KEY` | Clé Resend (accès « Sending »). Vide = aucun e-mail envoyé, seulement journalisé (statut `ignore`). |
+| `EMAIL_FROM` | Expéditeur, par défaut `kclick <commandes@notification.kclick-api.com>` |
+| `EMAIL_REPLY_TO` | Adresse de réponse, par défaut `ecommerce@kennysinternational.com` |
+| `PUBLIC_SITE_URL` | Adresse du site pour les liens (suivi, connexion, dashboard) |
+
+Ce qui est envoyé (réglable dans Paramètres › Notifications pour les e-mails clients et les destinataires de l'équipe) :
+
+| Événement | Destinataire | E-mail |
+|---|---|---|
+| Commande passée | client (e-mail du checkout ou du compte) | « Commande KC-… reçue » : articles, total, adresse ou point de retrait, lien de suivi |
+| Commande passée | équipe (`teamRecipients`) | « Nouvelle commande KC-… » : client, téléphone, articles, lien vers le dashboard |
+| Paiement confirmé | client | « Paiement reçu » |
+| Rupture d'une part | client (toujours) | Ce qui manque, motif, nouveau total, remboursement, annulation possible |
+| Retrait : toutes les parts prêtes | client | « Prête en boutique » |
+| Toutes les parts récupérées par le livreur | client | « En route » (prénom du livreur, temps annoncé) |
+| Livrée / retirée | client | « Livrée » ou « Retirée » |
+| Commande annulée | client (toujours) | Motif et remboursement éventuel |
+| Invitation (création ou renvoi) | personne invitée | « Votre accès à kclick » : rôle, Maison, lien de connexion par code |
+
+Le client reçoit ses e-mails en anglais si son compte est réglé en anglais ; sinon en français.
+
+**File d'envoi** : chaque e-mail est d'abord enregistré dans la table `email_outbox`, puis envoyé en arrière-plan (passage toutes les 10 s, démarré par `server.js`). Une commande n'échoue jamais à cause d'un e-mail.
+En cas de panne de Resend (5xx, 429), nouvel essai après 1 min, 5 min puis 30 min ; après 4 essais l'e-mail passe en `echec`. Une adresse refusée (4xx) passe directement en `echec`.
+
+**Vérifier** :
+- `GET /api/v1/notifications/emails?status=echec` (super admin) : e-mails envoyés, en attente, en échec ou ignorés ;
+- `POST /api/v1/notifications/emails/:id/retry` (super admin) : renvoyer un e-mail en échec ou ignoré ;
+- Resend › Logs : ce que Resend a reçu et délivré ;
+- Supabase › Table editor › `email_outbox`.
+
 ## Photos (Supabase Storage)
 
 Un bucket public par Maison (`kyra`, `patchi`, `adidas`, `celio`). Ranger les photos dans

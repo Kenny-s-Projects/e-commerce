@@ -2,6 +2,8 @@ import { query, transaction } from '../../config/db.js'
 import { logger } from '../../config/logger.js'
 import { badRequest, conflict, forbidden, notFound } from '../../shared/errors.js'
 import * as model from './users.model.js'
+import { events } from '../../shared/events.js'
+import { hasEmailProvider } from '../notifications/channels/email.js'
 
 // Comptes de l'équipe : invitation, rôle, activation. Réservé au super admin (sauf « moi »).
 // Une invitation donne son rôle à la première connexion par code e-mail (trigger handle_new_user).
@@ -98,7 +100,7 @@ export async function invite(admin, data) {
     const id = await model.upsertInvitation(db, { ...data, brandId, invitedBy: admin.id })
     return { id, kind: 'invitation' }
   })
-  logger.info({ email: data.email, role: data.role }, 'Invitation équipe (e-mail à brancher)')
+  events.emit('user.invited', { email: data.email, firstName: data.firstName, role: data.role, brandName: await brandName(data.brand) })
   return get(result.id)
 }
 
@@ -170,12 +172,22 @@ export async function revokeInvitation(id) {
   return { id, revoked: true }
 }
 
-/** Pas encore de service d'e-mails : la demande est enregistrée dans les journaux */
+/** Renvoyer l'e-mail d'invitation (file d'envoi Resend) */
 export async function resendInvitation(id) {
   const inv = await model.findInvitation({ query }, id)
   if (!inv || inv.accepted_at || inv.revoked_at) throw notFound('Invitation')
-  logger.info({ email: inv.email }, 'Renvoi d’invitation demandé (e-mail à brancher)')
-  return { id, sent: false, reason: 'E-mail à brancher' }
+  events.emit('user.invited', { email: inv.email, firstName: inv.first_name, role: inv.role, brandName: await brandName(inv.brand) })
+  if (!hasEmailProvider()) {
+    logger.info('Renvoi d’invitation enregistré, mais RESEND_API_KEY manquante : aucun e-mail envoyé')
+    return { id, sent: false, reason: 'Service d’e-mails non configuré (RESEND_API_KEY)' }
+  }
+  return { id, sent: true }
+}
+
+async function brandName(slug) {
+  if (!slug) return null
+  const { rows } = await query('select name from public.brands where slug = $1', [slug])
+  return rows[0]?.name ?? null
 }
 
 /* ---------- Mon compte (tout utilisateur connecté) ---------- */
