@@ -76,6 +76,7 @@ export default {
   'Vérification…': 'Checking…',
   'Aucun compte avec cette adresse. Créez un compte pour continuer.': 'No account with this address. Create an account to continue.',
   'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.': 'Wrong or expired code. Check the 6 digits or ask for a new code.',
+  'Votre code est bon, mais votre compte n’est pas encore prêt. Réessayez dans un instant ou contactez la conciergerie.': 'Your code is correct, but your account is not ready yet. Try again in a moment or contact the concierge.',
   'Trop de tentatives. Patientez une minute avant de réessayer.': 'Too many attempts. Please wait a minute before trying again.',
   'Connexion impossible. Vérifiez votre connexion internet.': 'Cannot connect. Please check your internet connection.',
   'La connexion n’est pas encore configurée sur ce site (VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).':

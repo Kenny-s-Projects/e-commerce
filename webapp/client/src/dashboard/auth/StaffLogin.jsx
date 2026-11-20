@@ -256,25 +256,39 @@ function CodeStep({ email }) {
     else if (e.key === 'ArrowRight' && i < 5) refs.current[i + 1]?.focus()
   }
 
+  // Un code ne sert qu'une fois : on bloque toute seconde vérification (double clic, Entrée + bouton…)
+  const inFlight = useRef(false)
+
   const submit = async (e) => {
     e.preventDefault()
+    if (inFlight.current) return
     if (!complete) {
       setError('Saisissez les 6 chiffres du code.')
       return
     }
+    inFlight.current = true
     setChecking(true)
     try {
-      await verifyCode(email, code)
+      try {
+        await verifyCode(email, code)
+      } catch (err) {
+        setError(/expired|invalid/i.test(err.message ?? '') ? 'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.' : err.message)
+        return
+      }
+      // Le code est bon et déjà consommé : on ne le renverra plus jamais à Supabase
+      setDigits(['', '', '', '', '', ''])
       const me = await refreshMe()
-      if (!me) throw new Error('Connexion impossible. Réessayez.')
+      if (!me) {
+        setError('Votre code est bon, mais votre compte n’est pas encore prêt côté kclick. Contactez l’administrateur, puis demandez un nouveau code.')
+        return
+      }
       if (me.home === '#compte/profil') {
         setError('Ce compte n’a pas d’accès équipe. Demandez une invitation à l’administrateur.')
         return
       }
       window.location.hash = me.home.replace(/^#/, '')
-    } catch (err) {
-      setError(/expired|invalid/i.test(err.message ?? '') ? 'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.' : err.message)
     } finally {
+      inFlight.current = false
       setChecking(false)
     }
   }
