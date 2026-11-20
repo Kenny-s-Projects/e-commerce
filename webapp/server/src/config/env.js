@@ -15,6 +15,11 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL manquante (voir .env.example)'),
   SUPABASE_URL: z.url('SUPABASE_URL doit être une URL'),
   SUPABASE_JWT_SECRET: z.string().optional().transform((v) => v || undefined),
+  // E-mails (Resend) : sans clé, rien n'est envoyé (les e-mails sont seulement journalisés)
+  RESEND_API_KEY: z.string().optional().transform((v) => v || undefined),
+  EMAIL_FROM: z.string().default('kclick <commandes@notification.kclick-api.com>'),
+  EMAIL_REPLY_TO: z.string().default('ecommerce@kennysinternational.com'),
+  PUBLIC_SITE_URL: z.string().default('http://localhost:5173').transform((v) => v.replace(/\/$/, '')),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:5173')

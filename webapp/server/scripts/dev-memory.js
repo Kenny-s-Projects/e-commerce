@@ -16,6 +16,7 @@ process.env.CORS_ORIGINS ??= 'http://localhost:5173,http://localhost:4173'
 const { SignJWT } = await import('jose')
 const { createTestDatabase } = await import('../tests/db.js')
 const { createApp } = await import('../src/app.js')
+const { startEmailWorker } = await import('../src/modules/notifications/notifications.service.js')
 
 const db = await createTestDatabase()
 
@@ -50,6 +51,7 @@ const users = {
 }
 await db.query('update public.riders set is_available = true')
 
+startEmailWorker() // sans RESEND_API_KEY, les e-mails sont seulement journalisés
 const port = Number(process.env.PORT ?? 4000)
 createApp().listen(port, async () => {
   console.log(`\nAPI en mémoire prête : http://localhost:${port}/api/v1`)
