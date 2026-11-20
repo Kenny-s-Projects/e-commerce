@@ -37,13 +37,20 @@ export async function confirmCode(email, code) {
   if (pending?.mode === 'signup' && (pending.fullName || pending.phone || pending.lang)) {
     await api.patch('/users/me', { fullName: pending.fullName, phone: pending.phone, lang: pending.lang }).catch(() => {})
   }
-  const me = await api.get('/auth/me')
+  // Le code est déjà consommé : une erreur ici ne doit pas être présentée comme « code incorrect »
+  let me
+  try {
+    me = await api.get('/auth/me')
+  } catch {
+    throw Object.assign(new Error('Votre code est bon, mais votre compte n’est pas encore prêt. Réessayez dans un instant ou contactez la conciergerie.'), { accountNotReady: true })
+  }
   return me?.home && me.home !== '#compte/profil' ? me.home : '#compte/profil'
 }
 
 /** Messages d'erreur Supabase / API en français */
 export function authMessage(err) {
   const text = `${err?.code ?? ''} ${err?.message ?? ''}`.toLowerCase()
+  if (err?.accountNotReady) return err.message
   if (!isConfigured) return 'La connexion n’est pas encore configurée sur ce site (VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).'
   if (text.includes('signups not allowed') || text.includes('otp_disabled') || text.includes('user not found'))
     return 'Aucun compte avec cette adresse. Créez un compte pour continuer.'
