@@ -1,0 +1,12 @@
+# The deployable site is the Vite + React storefront in webapp/client.
+# (webapp/server is a separate Express API and is not part of this static build.)
+[build]
+  base = "webapp/client"
+  # Install from the lockfile first so the Vite CLI is always available
+  command = "npm ci && npm run build"
+  # Relative to base: Vite writes the built site to webapp/client/dist
+  publish = "dist"
+
+[build.environment]
+  # Vite 8 requires Node ^20.19 or >=22.12
+  NODE_VERSION = "24"
