@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
-import { maisonHref } from '../../data/houses.js'
+import { formatPrice, maisonHref } from '../../data/houses.js'
+import { useLive } from '../../data/live.js'
 import { heroThemes } from '../../data/themes.js'
 import { useT } from '../../i18n/lang.js'
 
@@ -48,8 +49,17 @@ export default function Hero({ houses, ready = true }) {
   )
 }
 
+// Produit vedette tiré du catalogue réel (hero.slug) : nom, prix et photo de l'API dès qu'ils arrivent
+function useHeroProduct(hero) {
+  const live = useLive()
+  if (!hero.slug) return { ...hero, pending: false }
+  const p = live.bySlug.get(hero.slug)
+  if (!p) return { ...hero, pending: live.status === 'idle' || live.status === 'loading' }
+  return { ...hero, name: p.name, price: p.price, img: p.hasPhoto ? p.img : hero.img, href: `#produit/${p.slug}`, live: true, pending: false }
+}
+
 function HeroColumn({ house, index, ready, isActive, onActivate }) {
-  const { hero } = house
+  const hero = useHeroProduct(house.hero)
   const t = useT()
 
   return (
@@ -103,7 +113,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
         {hero.img ? (
           <img
             src={hero.img}
-            alt={hero.name}
+            alt={t(hero.name)}
             decoding="async"
             fetchPriority={isActive ? 'high' : 'auto'}
             className={
@@ -136,8 +146,15 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
               exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
               transition={{ duration: 0.6, delay: 0.35, ease }}
             >
-              {/* <p className="mt-0.5 text-[15px]">{hero.name}</p> */}
-              {/* <p className="mt-0.5 text-[13px] opacity-75">{formatPrice(hero.price)}</p> */}
+              {/* Produit vedette (catalogue réel) : nom + prix réel ; squelette pendant le chargement */}
+              {hero.slug && (
+                <p className="mt-0.5 text-[15px]">
+                  {hero.href ? <a href={hero.href} className="hover:underline hover:underline-offset-4">{t(hero.name)}</a> : t(hero.name)}
+                  <span className="mt-0.5 block h-[18px] text-[13px] opacity-75">
+                    {hero.pending ? <span aria-hidden className="sk inline-block h-3 w-14 rounded-full align-middle" /> : hero.live && hero.price != null ? formatPrice(hero.price) : null}
+                  </span>
+                </p>
+              )}
               <a
                 href={maisonHref(house.id)}
                 className="caps group mt-3.5 inline-flex items-center gap-2.5 whitespace-nowrap border-b border-current pb-1.5"

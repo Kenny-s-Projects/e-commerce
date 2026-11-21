@@ -9,6 +9,8 @@ import { rememberOrder } from '../../lib/orderMemory.js'
 import { getAccessToken } from '../../lib/supabase.js'
 import { useT } from '../../i18n/lang.js'
 import useLiteMode from '../../hooks/useLiteMode.js'
+import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+import { DEFAULT_CODE, formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const DEFAULT_FEE = 4 // Gombe, le jour même (remplacé par les paramètres de l'API)
@@ -20,8 +22,8 @@ const PAYMENT = [
 ]
 
 const DEFAULT_OPERATORS = ['M-Pesa', 'Orange Money', 'Airtel Money']
-const PHONE = /^\+?[0-9 ]{8,20}$/
-const cleanPhone = (v) => v.replace(/[^\d+ ]/g, '').replace(/\s+/g, ' ').trim()
+// Champs téléphone : numéro national + indicatif (form.phoneCode, form.momoCode), voir PhoneField
+const PHONE_FIELDS = { phone: 'phoneCode', momo: 'momoCode' }
 
 // Motifs renvoyés par l'API pour un article (CART_INVALID)
 const ITEM_PROBLEMS = {
@@ -90,7 +92,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   const lite = useLiteMode()
   const reduce = useReducedMotion() || lite
   const [form, setForm] = useState(() => {
-    const empty = { name: '', phone: '', email: '', address: '', quartier: '', commune: 'Gombe', notes: '', operator: DEFAULT_OPERATORS[0], momo: '' }
+    const empty = { name: '', phone: '', phoneCode: DEFAULT_CODE, email: '', address: '', quartier: '', commune: 'Gombe', notes: '', operator: DEFAULT_OPERATORS[0], momo: '', momoCode: DEFAULT_CODE }
     const last = readLastAddress()
     return last ? fillEmpty(empty, { address: last.address, quartier: last.quartier, notes: last.notes }) : empty
   })
@@ -114,7 +116,15 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       .then((token) => (token ? api.get('/users/me') : null))
       .then((me) => {
         if (!alive || !me) return
-        setForm((f) => fillEmpty(f, { name: me.fullName, phone: me.phone, email: me.email }))
+        setForm((f) => {
+          const next = fillEmpty(f, { name: me.fullName, email: me.email })
+          // Téléphone du profil (« +243 812345678 ») : indicatif + numéro, seulement si le champ est vide
+          if (me.phone && !f.phone.trim()) {
+            const { code, number } = splitPhone(me.phone)
+            Object.assign(next, { phone: number, phoneCode: code })
+          }
+          return next
+        })
       })
       .catch(() => {})
     return () => {
@@ -178,7 +188,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     const errs = {}
     for (const k of keys) {
       if (required.includes(k) && !form[k].trim()) errs[k] = 'Champ obligatoire'
-      else if ((k === 'phone' || k === 'momo') && required.includes(k) && !PHONE.test(cleanPhone(form[k]))) errs[k] = 'Numéro invalide'
+      else if (PHONE_FIELDS[k] && required.includes(k) && phoneError(form[PHONE_FIELDS[k]], form[k])) errs[k] = phoneError(form[PHONE_FIELDS[k]], form[k])
       else if (k === 'email' && form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'E-mail invalide'
     }
     return errs
@@ -216,7 +226,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       return
     }
 
-    const phone = cleanPhone(form.phone)
+    const phone = formatPhone(form.phoneCode, form.phone)
     const body = {
       customer: { name: form.name.trim(), phone, email: form.email.trim() || undefined },
       mode: delivery,
@@ -226,7 +236,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
           : undefined,
       paymentMethod: payment,
       provider: payment === 'mobile_money' ? form.operator : undefined,
-      payerPhone: payment === 'mobile_money' ? cleanPhone(form.momo) : undefined,
+      payerPhone: payment === 'mobile_money' ? formatPhone(form.momoCode, form.momo) : undefined,
       items: items.map(({ product, qty }) => ({ variantId: product.variantId, quantity: qty, giftMessage: product.giftMessage || undefined })),
     }
 
@@ -331,9 +341,30 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     </div>
   )
 
+  // Téléphone : indicatif pays + numéro national (même mise en forme que les autres champs)
+  const phoneField = (k, label) => (
+    <div>
+      <label htmlFor={`co-${k}`} className="mb-1.5 block text-[12px]">
+        {t(label)} {required.includes(k) && <span className="text-celio">*</span>}
+      </label>
+      <PhoneField
+        id={`co-${k}`}
+        code={form[PHONE_FIELDS[k]]}
+        onCodeChange={(code) => setForm((f) => ({ ...f, [PHONE_FIELDS[k]]: code }))}
+        value={form[k]}
+        onChange={(v) => setForm((f) => ({ ...f, [k]: v }))}
+        autoComplete={k === 'phone' ? 'tel-national' : 'off'}
+        invalid={!!errors[k]}
+        describedBy={errors[k] ? `co-${k}-err` : undefined}
+        className={`h-12 rounded-lg ${errors[k] ? 'border-celio' : 'border-ink/20'}`}
+      />
+      {errors[k] && <p id={`co-${k}-err`} className="mt-1 text-[11px] text-celio">{t(errors[k])}</p>}
+    </div>
+  )
+
   // Résumé d'une étape validée (affiché quand elle est repliée)
   const summary = {
-    1: [form.name.trim(), cleanPhone(form.phone), form.email.trim()].filter(Boolean).join(' · '),
+    1: [form.name.trim(), form.phone.trim() && formatPhone(form.phoneCode, form.phone), form.email.trim()].filter(Boolean).join(' · '),
     2:
       delivery === 'livraison'
         ? `${t('Livraison à {c}', { c: zone.commune })} · ${[form.address.trim(), form.quartier.trim()].filter(Boolean).join(', ')}`
@@ -367,7 +398,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
           <Step {...stepProps(1)}>
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               {field('name', 'Prénom et nom', { autoComplete: 'name', wide: true })}
-              {field('phone', 'Téléphone', { type: 'tel', autoComplete: 'tel', placeholder: '+243 …' })}
+              {phoneField('phone', 'Téléphone')}
               {field('email', 'E-mail (facultatif)', { type: 'email', autoComplete: 'email' })}
             </div>
             <ContinueButton t={t} />
@@ -410,7 +441,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
                     {operators.map((o) => <option key={o}>{o}</option>)}
                   </select>
                 </div>
-                {field('momo', 'Numéro mobile money', { type: 'tel', placeholder: '+243 …' })}
+                {phoneField('momo', 'Numéro mobile money')}
                 <p className="col-span-2 text-[12px] text-ink/60 max-sm:col-span-1">{t('Vous recevrez une demande de validation sur ce numéro.')}</p>
               </m.div>
             )}

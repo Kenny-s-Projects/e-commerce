@@ -112,4 +112,17 @@ export default {
   'Bientôt : vos adresses seront enregistrées avec votre compte. En attente, elles restent sur cet appareil.':
     'Coming soon: your addresses will be saved with your account. Until then, they stay on this device.',
   'Nom': 'Name',
+
+  /* Téléphone : indicatif pays */
+  'Indicatif': 'Country code',
+  'RDC': 'DR Congo',
+  'Tanzanie': 'Tanzania',
+  'Ouganda': 'Uganda',
+  'Zambie': 'Zambia',
+  'Afrique du Sud': 'South Africa',
+  'Belgique': 'Belgium',
+  'États-Unis/Canada': 'United States/Canada',
+  'Royaume-Uni': 'United Kingdom',
+  'Numéro invalide : 9 chiffres après +243.': 'Invalid number: 9 digits after +243.',
+  'Numéro invalide : 6 à 12 chiffres après l’indicatif.': 'Invalid number: 6 to 12 digits after the country code.',
 }

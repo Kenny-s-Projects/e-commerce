@@ -29,6 +29,9 @@ const hasStoredSession = () => {
   }
 }
 
+/** Une session est-elle gardée sur cet appareil ? (lecture du stockage seulement : supabase-js n'est pas chargé) */
+export const hasSession = () => hasStoredSession()
+
 let clientPromise = null
 function getClient() {
   if (!isConfigured) return Promise.resolve(null)

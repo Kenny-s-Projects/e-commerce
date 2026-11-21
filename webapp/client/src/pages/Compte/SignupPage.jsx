@@ -4,6 +4,8 @@ import { useLang, useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, PrimaryButton, fadeUp, inputClass, underline, writeSession } from './accountUi.jsx'
 import { authMessage, requestCode, savePending } from './auth.js'
 import { api } from '../../lib/api.js'
+import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+import { DEFAULT_CODE, formatPhone, phoneError } from '../../components/PhoneField/phone.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -11,7 +13,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export default function SignupPage() {
   const t = useT()
   const { lang, setLang } = useLang()
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', terms: false, news: false })
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', phoneCode: DEFAULT_CODE, email: '', terms: false, news: false })
   const [errors, setErrors] = useState({})
   const [sending, setSending] = useState(false)
   const [serverError, setServerError] = useState('')
@@ -30,7 +32,8 @@ export default function SignupPage() {
     const er = {}
     if (!form.firstName.trim()) er.firstName = t('Indiquez votre prénom.')
     if (!form.lastName.trim()) er.lastName = t('Indiquez votre nom.')
-    if (form.phone.replace(/\D/g, '').length < 9) er.phone = t('Numéro incomplet : 9 chiffres après +243.')
+    const phoneProblem = phoneError(form.phoneCode, form.phone)
+    if (phoneProblem) er.phone = t(phoneProblem)
     if (!EMAIL_RE.test(form.email.trim())) er.email = t('Saisissez une adresse e-mail valide.')
     if (!form.terms) er.terms = t('Acceptez les conditions pour créer votre compte.')
     setErrors(er)
@@ -40,7 +43,7 @@ export default function SignupPage() {
       return
     }
     const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`
-    const phone = `+243 ${form.phone.replace(/\D/g, '').replace(/^243/, '')}`
+    const phone = formatPhone(form.phoneCode, form.phone)
     setSending(true)
     setServerError('')
     try {
@@ -101,21 +104,21 @@ export default function SignupPage() {
         </div>
 
         <Field id="su-phone" label={t('Téléphone (WhatsApp)')} error={errors.phone} hint={t('Le livreur et la conciergerie vous joignent sur ce numéro.')}>
-          <div className={`flex h-14 border transition-colors focus-within:border-ink ${errors.phone ? 'border-celio' : 'border-[#cfc9bd]'}`}>
-            <span className="grid w-[60px] shrink-0 place-items-center border-r border-[#cfc9bd] bg-[#f2efe8] text-[15px]">+243</span>
-            <input
-              id="su-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel-national"
-              placeholder="81 000 0000"
-              value={form.phone}
-              onChange={set('phone')}
-              aria-invalid={!!errors.phone || undefined}
-              aria-describedby={errors.phone ? 'su-phone-error' : undefined}
-              className="min-w-0 flex-1 bg-white px-4 text-[16px] outline-none placeholder:text-ink/35"
-            />
-          </div>
+          <PhoneField
+            id="su-phone"
+            code={form.phoneCode}
+            onCodeChange={(code) => setForm((f) => ({ ...f, phoneCode: code }))}
+            value={form.phone}
+            onChange={(v) => {
+              setForm((f) => ({ ...f, phone: v }))
+              setErrors((er) => ({ ...er, phone: undefined }))
+            }}
+            invalid={!!errors.phone}
+            describedBy={errors.phone ? 'su-phone-error' : undefined}
+            placeholder={form.phoneCode === DEFAULT_CODE ? '81 000 0000' : undefined}
+            className={`h-14 ${errors.phone ? 'border-celio' : 'border-[#cfc9bd]'}`}
+            inputClassName="text-[16px]"
+          />
         </Field>
 
         <Field id="su-email" label={t('Adresse e-mail')} error={errors.email}>

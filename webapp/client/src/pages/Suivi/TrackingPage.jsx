@@ -8,6 +8,8 @@ import { api } from '../../lib/api.js'
 import { getAccessToken } from '../../lib/supabase.js'
 import { phoneFor, rememberOrder } from '../../lib/orderMemory.js'
 import { ease, fadeUp, underline } from '../Compte/accountUi.jsx'
+import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+import { formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
 
 const TRIP_SECONDS = 20 * 60 // durée de référence d'une course, pour la barre de progression
 const REFRESH_MS = 30000
@@ -243,8 +245,9 @@ function Countdown({ minutes, since, rider }) {
 /** Téléphone de la commande, demandé quand il n'est pas connu sur cet appareil (ou ne correspond pas) */
 function PhoneForm({ number, initial, notFound, onSubmit }) {
   const t = useT()
-  const [value, setValue] = useState(initial ?? '')
-  const [invalid, setInvalid] = useState(false)
+  const [code, setCode] = useState(() => splitPhone(initial).code)
+  const [value, setValue] = useState(() => splitPhone(initial).number)
+  const [invalid, setInvalid] = useState(null) // message d'erreur
   return (
     <section className="grid min-h-[calc(100svh-4rem)] place-items-center bg-white px-gutter py-20 text-ink">
       <m.form
@@ -254,9 +257,9 @@ function PhoneForm({ number, initial, notFound, onSubmit }) {
         transition={{ duration: 0.7, ease }}
         onSubmit={(e) => {
           e.preventDefault()
-          const p = value.replace(/[^\d+ ]/g, '').trim()
-          if (p.replace(/\D/g, '').length < 8) return setInvalid(true)
-          onSubmit(p)
+          const problem = phoneError(code, value)
+          if (problem) return setInvalid(problem)
+          onSubmit(formatPhone(code, value))
         }}
       >
         <p className="caps text-[#86671f]">{t('Suivi de commande')}</p>
@@ -269,19 +272,21 @@ function PhoneForm({ number, initial, notFound, onSubmit }) {
             : t('Pour voir votre commande, saisissez le téléphone utilisé lors de la commande.')}
         </p>
         <label htmlFor="track-phone" className="mt-8 block text-[13px]">{t('Téléphone')}</label>
-        <input
+        <PhoneField
           id="track-phone"
-          type="tel"
-          autoComplete="tel"
+          code={code}
+          onCodeChange={setCode}
           value={value}
-          onChange={(e) => {
-            setValue(e.target.value)
-            setInvalid(false)
+          onChange={(v) => {
+            setValue(v)
+            setInvalid(null)
           }}
-          placeholder="+243 …"
-          className={`mt-2 h-12 w-full border bg-white px-4 text-[15px] outline-none focus:border-ink ${invalid ? 'border-celio' : 'border-ink/25'}`}
+          invalid={!!invalid}
+          describedBy={invalid ? 'track-phone-error' : undefined}
+          className={`mt-2 h-12 ${invalid ? 'border-celio' : 'border-ink/25'}`}
+          inputClassName="text-[15px]"
         />
-        {invalid && <p className="mt-1 text-[12px] text-celio">{t('Numéro invalide')}</p>}
+        {invalid && <p id="track-phone-error" className="mt-1 text-[12px] text-celio">{t(invalid)}</p>}
         <button type="submit" className="caps mt-5 h-14 w-full bg-ink text-[11px] text-white">{t('Voir ma commande')}</button>
         <a href={whatsappFor(t('Bonjour, je souhaite suivre ma commande kclick {n}.', { n: number }))} target="_blank" rel="noreferrer" className={`mt-6 inline-block text-[14px] ${underline}`}>
           {t('Écrire à la conciergerie')}

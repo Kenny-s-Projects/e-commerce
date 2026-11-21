@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, LayoutGroup, m } from 'framer-motion'
 import BagIcon from '../icons/BagIcon.jsx'
 import SearchIcon from '../icons/SearchIcon.jsx'
+import UserIcon from '../icons/UserIcon.jsx'
+import useAccount from './useAccount.js'
 import MenuPanel from './MenuPanel.jsx'
 import SearchBar from './SearchBar.jsx'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
@@ -30,6 +32,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
   const t = useT()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const account = useAccount() // { connected, href } : connexion, profil client ou espace de l'équipe
   // Rebond du compteur quand la vignette d'un produit arrive dans le panier (voir FlyToCart)
   const [bump, setBump] = useState(0)
   useEffect(() => {
@@ -103,7 +106,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                 onClick={openMenu}
                 aria-expanded={menuOpen}
                 aria-controls="menu-panel"
-                className={`${pill} justify-between gap-10 px-4 ${scrolled ? 'w-[min(280px,52vw)]' : 'w-[min(400px,46vw)] max-sm:w-[44vw]'}`}
+                className={`${pill} justify-between gap-10 px-4 ${scrolled ? 'w-[min(280px,52vw)] max-sm:w-[38vw]' : 'w-[min(400px,46vw)] max-sm:w-[36vw]'}`}
                 transition={{ duration: 0.5, ease }}
               >
                 <m.span layout="position" className="text-[14px]">{t('Menu')}</m.span>
@@ -128,6 +131,21 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
                   >
                     <SearchIcon />
                   </m.button>
+                )}
+                {scrolled && (
+                  <m.a
+                    key="account-pill"
+                    href={account.href}
+                    aria-label={t('Mon compte')}
+                    className={`${pill} relative w-10 justify-center`}
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.6 }}
+                    transition={{ duration: 0.35, delay: 0.03, ease }}
+                  >
+                    <UserIcon className="size-[18px]" />
+                    <AccountDot on={account.connected} className="right-2 top-2" />
+                  </m.a>
                 )}
                 {scrolled && (
                   <m.button
@@ -161,28 +179,32 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
               </AnimatePresence>
             </m.div>
 
-            {/* Droite : Recherche + Panier, en haut de page */}
+            {/* Droite : langue, Recherche, compte et Panier, en haut de page (icônes sous 1180 px) */}
             <AnimatePresence initial={false}>
               {!scrolled && (
                 <m.nav
                   key="right"
-                  className="pointer-events-auto flex items-center gap-[clamp(18px,2.4vw,36px)]"
+                  className="pointer-events-auto flex items-center gap-[clamp(18px,2.4vw,36px)] max-sm:gap-3.5"
                   initial={{ opacity: 0, x: 12 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 12 }}
                   transition={{ duration: 0.4, ease }}
                 >
-                  <LangSwitch className="caps max-sm:hidden" />
-                  <LangSwitch compact className="sm:hidden" />
-                  <button type="button" className={`${linkClass} max-sm:hidden`} onClick={openSearch}>{t('Recherche')}</button>
-                  <button type="button" data-cart-target className={`${linkClass} max-sm:hidden`} onClick={onCart}>
+                  <LangSwitch className="caps max-[1180px]:hidden" />
+                  <LangSwitch compact className="min-[1180px]:hidden" />
+                  <button type="button" className={`${linkClass} max-[1180px]:hidden`} onClick={openSearch}>{t('Recherche')}</button>
+                  <a href={account.href} aria-label={t('Mon compte')} className="relative -m-2 p-2 transition-opacity hover:opacity-70">
+                    <UserIcon className="size-[22px] min-[1180px]:size-[20px]" />
+                    <AccountDot on={account.connected} className="right-1.5 top-1.5" />
+                  </a>
+                  <button type="button" data-cart-target className={`${linkClass} max-[1180px]:hidden`} onClick={onCart}>
                     {t('Panier')} (<CartCount count={cartCount} bump={bump} />)
                   </button>
-                  {/* Mobile : icône sac + pastille */}
+                  {/* Téléphone et tablette : icône sac + pastille (les liens texte ne tiennent pas à côté de « Menu ») */}
                   <button
                     type="button"
                     data-cart-target
-                    className="relative -m-2 p-2 sm:hidden"
+                    className="relative -m-2 p-2 min-[1180px]:hidden"
                     onClick={onCart}
                     aria-label={t('Panier, {n} article(s)', { n: cartCount })}
                   >
@@ -208,6 +230,12 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
       <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   )
+}
+
+// Petit point doré : le client est connecté
+function AccountDot({ on, className = '' }) {
+  if (!on) return null
+  return <span aria-hidden className={`absolute size-[7px] rounded-full bg-gold ring-2 ring-white ${className}`} />
 }
 
 // Le nombre d'articles « rebondit » quand un produit arrive dans le panier (bump change)

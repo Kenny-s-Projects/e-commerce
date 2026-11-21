@@ -4,10 +4,10 @@ const PATCHI_Offert = '/img/products/patchi/Filled Chocolate Box 1025 g/MoinsFif
 // La Sélection : ids de produits pris dans houses.js, avec le fond de chaque carte
 export const selection = [
   { id: 'hermes-twilly-eau-ginger', tone: 'bg-[#f1f0ed]' },
-  { id: 'ggf0005', tone: 'bg-green' },
+  { id: 'ggf0016', tone: 'bg-green' },
   { id: 'tomford-black-orchid', tone: 'bg-beige' },
   { id: 'versace-dylan-blue', tone: 'bg-[#f1f0ed]' },
-  { id: 'gbr0002', tone: 'bg-green' },
+  { id: 'gsb0013', tone: 'bg-green' },
   { id: 'chanel-chance-eau-tendre', tone: 'bg-beige' },
 ]
 

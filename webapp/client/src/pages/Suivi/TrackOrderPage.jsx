@@ -4,6 +4,8 @@ import { useT } from '../../i18n/lang.js'
 import { whatsappFor } from '../../data/products.js'
 import { rememberOrder } from '../../lib/orderMemory.js'
 import { ease, underline } from '../Compte/accountUi.jsx'
+import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+import { DEFAULT_CODE, formatPhone, phoneError } from '../../components/PhoneField/phone.js'
 
 /**
  * « Suivre ma commande » (#suivi) : pour un visiteur sans compte, ou depuis un autre appareil.
@@ -21,15 +23,18 @@ export default function TrackOrderPage() {
   const t = useT()
   const [number, setNumber] = useState('')
   const [phone, setPhone] = useState('')
+  const [code, setCode] = useState(DEFAULT_CODE)
   const [errors, setErrors] = useState({})
 
   const submit = (e) => {
     e.preventDefault()
     const n = normalizeNumber(number)
-    const p = phone.replace(/[^\d+ ]/g, '').trim()
+    // Le serveur compare les 9 derniers chiffres : « +243 812345678 » comme à la commande
+    const p = formatPhone(code, phone)
     const errs = {}
     if (!n) errs.number = t('Saisissez le numéro de commande, par exemple KC-00012.')
-    if (p.replace(/\D/g, '').length < 9) errs.phone = t('Saisissez le téléphone utilisé lors de la commande.')
+    if (!phone.trim()) errs.phone = t('Saisissez le téléphone utilisé lors de la commande.')
+    else if (phoneError(code, phone)) errs.phone = t(phoneError(code, phone))
     setErrors(errs)
     const first = Object.keys(errs)[0]
     if (first) {
@@ -82,17 +87,26 @@ export default function TrackOrderPage() {
         })}
 
         <label htmlFor="track-phone" className="mt-5 block text-[13px]">{t('Téléphone')}</label>
-        {input('phone', {
-          type: 'tel',
-          autoComplete: 'tel',
-          inputMode: 'tel',
-          placeholder: '+243 …',
-          value: phone,
-          onChange: (e) => {
-            setPhone(e.target.value)
+        <PhoneField
+          id="track-phone"
+          code={code}
+          onCodeChange={setCode}
+          value={phone}
+          onChange={(v) => {
+            setPhone(v)
             setErrors((er) => ({ ...er, phone: undefined }))
-          },
-        })}
+          }}
+          autoComplete="tel-national"
+          invalid={!!errors.phone}
+          describedBy={errors.phone ? 'track-phone-error' : undefined}
+          className={`mt-2 h-12 ${errors.phone ? 'border-celio' : 'border-ink/25'}`}
+          inputClassName="text-[15px]"
+        />
+        {errors.phone && (
+          <p id="track-phone-error" className="mt-1 text-[12px] text-celio">
+            {errors.phone}
+          </p>
+        )}
 
         <button type="submit" className="caps mt-6 h-14 w-full bg-ink text-[11px] text-white">{t('Voir ma commande')}</button>
         <a href={whatsappFor(t('Bonjour, je souhaite suivre ma commande kclick.'))} target="_blank" rel="noreferrer" className={`mt-6 inline-block text-[14px] ${underline}`}>

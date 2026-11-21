@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import ProductMedia from '../ProductMedia/ProductMedia.jsx'
 import { formatPrice, productImages } from '../../data/houses.js'
 import { getProduct, productHref } from '../../data/products.js'
-import { cartLine, defaultVariant, isPurchasable, useLive } from '../../data/live.js'
+import { cartLine, defaultVariant, isLiveBrand, isPurchasable, useLive } from '../../data/live.js'
 import { useQuickView } from '../../context/quickView.js'
 import { useT } from '../../i18n/lang.js'
 import { flyToCart } from '../FlyToCart/flyToCart.js'
@@ -17,10 +17,12 @@ import { flyToCart } from '../FlyToCart/flyToCart.js'
  * Les couleurs suivent la section : fond de carte = var(--card), texte = var(--fg).
  * Un clic sur l'image ouvre la fiche produit (#produit/<id>) ; « Aperçu » ouvre la popup d'aperçu rapide.
  *  href : lien de repli pour les produits sans fiche (produits fictifs de l'accueil)
+ *  product.maison : produit d'une Maison du catalogue réel (accueil) → squelette du prix pendant le chargement
+ *  product.variant : poids proposé par défaut (« 250 g ») : son prix est affiché et c'est lui qui est ajouté
  */
 export default function ProductSingle({ product, onAdd, href = '#' }) {
   const t = useT()
-  useLive() // se met à jour quand le catalogue réel arrive ou qu'une Maison s'ouvre
+  const { status } = useLive() // se met à jour quand le catalogue réel arrive ou qu'une Maison s'ouvre
   const [added, setAdded] = useState(false)
   const openQuickView = useQuickView()
   // Version complète du produit (Maison, vraies photos Patchi) quand il a une fiche
@@ -28,7 +30,12 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
   const item = full ?? product
   // Seuls les produits du catalogue réel d'une Maison ouverte sont achetables ; les autres : « Bientôt disponible »
   const available = isPurchasable(item)
-  const variant = available ? defaultVariant(item) : null
+  // Variante demandée (« 250 g ») si elle est disponible, sinon la première disponible
+  const preferred = product.variant ? item.variants?.find((v) => v.label === product.variant) : null
+  const variant = available ? (preferred?.available ? preferred : defaultVariant(item)) : null
+  const shown = variant ?? preferred // variante dont on affiche le prix
+  // Catalogue réel encore en chargement : prix et bouton en squelette (même hauteur, pas de saut)
+  const pending = !item.live && isLiveBrand(product.maison) && (status === 'idle' || status === 'loading')
   const images = full?.images ?? productImages(product)
   const fit = full?.live ? (full.hasPhoto ? 'bleed' : 'boxed') : full?.images ? 'bleed' : product.boxed ? 'boxed' : 'contain'
 
@@ -54,7 +61,7 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
         <ProductMedia
           images={images}
           fit={fit}
-          alt={product.name}
+          alt={t(item.name)}
           href={productHref(product.id) ?? href}
           className="aspect-[4/5] bg-(--card)"
         />
@@ -71,13 +78,19 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
       </div>
 
       {/* Store + Name */}
-      <p className="caps text-[9px] opacity-60">{t(product.store)}</p>
-      <h3 className="mt-1.5 text-sm font-normal">{t(product.name)}</h3>
+      <p className="caps text-[9px] opacity-60">{t(item.store || product.store)}</p>
+      <h3 className="mt-1.5 text-sm font-normal">{t(item.name)}</h3>
 
       {/* Price + CTA */}
       <div className="mt-[18px] flex items-center justify-between gap-3">
         <span className="text-sm">
-          {item.live && item.price != null
+          {pending ? (
+            <span aria-hidden className="sk inline-block h-3.5 w-20 rounded-full align-middle" />
+          ) : item.live && shown?.price != null && product.variant ? (
+            <>
+              {formatPrice(shown.price)} <span className="opacity-60">· {shown.label}</span>
+            </>
+          ) : item.live && item.price != null
             ? `${item.byWeight ? `${t('dès')} ` : ''}${formatPrice(item.price)}`
             : item.live
               ? t('Prix à venir')
@@ -87,14 +100,15 @@ export default function ProductSingle({ product, onAdd, href = '#' }) {
           type="button"
           onClick={handleAdd}
           disabled={!available}
-          aria-label={available ? t('Ajouter {p} au panier', { p: t(product.name) }) : undefined}
+          aria-busy={pending || undefined}
+          aria-label={available ? t('Ajouter {p} au panier', { p: t(item.name) + (product.variant && variant ? ` · ${variant.label}` : '') }) : undefined}
           className={`caps relative z-0 shrink-0 overflow-hidden border px-4 py-2.5 text-[9px] transition-colors duration-400 ease-lux
             before:absolute before:inset-0 before:-z-10 before:bg-(--fg) before:transition-transform before:duration-[450ms] before:ease-lux
             hover:border-current hover:text-(--card) hover:before:translate-y-0
             ${added ? 'border-current text-(--card) before:translate-y-0' : 'border-current/35 before:translate-y-[101%]'}
             disabled:pointer-events-none disabled:opacity-50`}
         >
-          <span className="relative">{t(!available ? (item.live && !item.comingSoon ? 'Épuisé' : 'Bientôt') : added ? 'Ajouté' : 'Ajouter')}</span>
+          <span className="relative">{t(pending ? 'Ajouter' : !available ? (item.live && !item.comingSoon ? 'Épuisé' : 'Bientôt') : added ? 'Ajouté' : 'Ajouter')}</span>
         </button>
       </div>
     </article>

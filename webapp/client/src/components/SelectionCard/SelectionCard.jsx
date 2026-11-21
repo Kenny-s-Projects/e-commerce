@@ -22,7 +22,7 @@ export default function SelectionCard({ product, tone = 'bg-cream' }) {
   return (
     <article className="group">
       <ProductMedia
-        images={productImages(product)}
+        images={live?.hasPhoto ? live.images : productImages(product)}
         fit={product.boxed ? 'bleed' : 'contain'}
         alt={product.name}
         href={productHref(product.id) ?? maisonHref(house.id)}
@@ -32,7 +32,7 @@ export default function SelectionCard({ product, tone = 'bg-cream' }) {
 
       <p className="caps text-[9px] text-gold">{origin}</p>
       <div className="mt-1.5 flex items-baseline justify-between gap-4 text-sm">
-        <h3 className="font-normal">{t(product.name)}</h3>
+        <h3 className="font-normal">{t(live?.live ? live.name : product.name)}</h3>
         <span className="shrink-0">{price}</span>
       </div>
     </article>

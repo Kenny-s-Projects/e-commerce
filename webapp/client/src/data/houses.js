@@ -1,11 +1,10 @@
 // Données fantômes : les 4 Maisons de la home.
-// Produits Kyra repris de l'existant (app.js), Patchi de brands.js (ERP, oct. 2026).
+// Produits Kyra repris de l'existant (app.js) ; Patchi : vrais produits de l'API (refs ERP).
 // Images dans public/img.
 
-const PATCHI_Product1 = '/img/products/patchi/Chocolate Bar 100 g Noblesse/Product1.webp' // visuel provisoire
-const PATCHI_Product2 = '/img/products/patchi/Chocolate Milk Filled with Praline/Product2.webp' // visuel provisoire
-const PATCHI_Product3 = '/img/products/patchi/Dragée Diet Almond Milk/Product3.webp' // visuel provisoire
-const PATCHI_Product4 = '/img/products/patchi/Filled Chocolate Box 1025 g/Product4.avif' // visuel provisoire
+// Produits Patchi de la home : vrais produits du catalogue (API). Prix, stock et photos viennent de l'API ;
+// en attendant une photo officielle, le visuel neutre Patchi (jamais la photo d'un autre produit).
+const PATCHI_PLACEHOLDER = '/img/logos/patchi-placeholder.png'
 
 const PATCHI_IMG_SECTION = '/img/logos/patchi-heroSection.webp' // visuel provisoire
 const KYRA_IMG_SECTION = '/img/logos/kyra-heroSection.webp' // visuel provisoire
@@ -39,12 +38,15 @@ export const houses = [
     accent: 'l’art d’offrir.',
     accentInline: true, // titre sur une seule ligne, comme la maquette
     subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
-    hero: { img: PATCHI_IMG_SECTION, name: 'Filled Chocolate Box 1025 g', price: 163, boxed: true },
+    // Produit vedette du hero : prix réel lu dans l'API (slug), visuel de la Maison tant qu'il n'a pas de photo
+    hero: { slug: 'ggf0017', img: PATCHI_IMG_SECTION, name: 'Coffret brique garni, 470 g', price: null, boxed: true },
+    // maison : produits du catalogue réel (squelette du prix pendant le chargement)
+    // variant : poids proposé par défaut pour les produits au poids (prix et ajout au panier de cette variante)
     products: [
-      { id: 'ccd01', ref: 'CCD01', store: 'Deluxe', name: 'Chocolate Milk Filled with Praline', price: 96, unit: 'kg', img: PATCHI_Product1, boxed: true },
-      { id: 'ggf0005', ref: 'GGF0005', store: 'Coffrets', name: 'Filled Chocolate Box 1025 g', price: 163, img: PATCHI_Product2, boxed: true },
-      { id: 'gns0013', ref: 'GNS0013', store: 'My Treat', name: 'Dragée Diet Almond Milk, 250 g', price: 45, img: PATCHI_Product3, boxed: true },
-      { id: 'gbr0002', ref: 'GBR0002', store: 'Tablettes', name: 'Chocolate Bar 100 g Noblesse 70%', price: 15, img: PATCHI_Product4, boxed: true },
+      { id: 'ggf0016', ref: 'GGF0016', maison: 'patchi', store: 'Coffrets', name: 'Coffret orange garni, 465 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
+      { id: 'gsb0013', ref: 'GSB0013', maison: 'patchi', store: 'Petites boîtes', name: 'Boîte verte garnie, 200 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
+      { id: 'ccd03', ref: 'CCD03', maison: 'patchi', store: 'Deluxe', name: 'Capricio', variant: '250 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
+      { id: 'ccn02', ref: 'CCN02', maison: 'patchi', store: 'Classiques', name: 'Noblesse', variant: '250 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
     ],
   },
   {
