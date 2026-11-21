@@ -4,19 +4,7 @@ import { useStore } from '../store/store.jsx'
 import { api } from '../../lib/api.js'
 import { sendCode, verifyCode } from '../../lib/supabase.js'
 
-/*
- * Connexion de l'équipe (super admin, employés, livreurs) : e-mail, puis code à 6 chiffres reçu par e-mail.
- * 1. POST /auth/staff/check : l'adresse appartient-elle à l'équipe (compte ou invitation) ?
- * 2. Supabase Auth envoie le code (une personne invitée n'a pas encore de compte : il est créé, le rôle vient de l'invitation)
- * 3. Code vérifié → GET /auth/me → page d'arrivée selon le rôle
- */
 
-// Comptes du serveur de développement (npm run dev:memory), proposés seulement en développement
-const DEV_EMAILS = [
-  { email: 'ecommerce@kennysinternational.com', label: 'Super admin' },
-  { email: 'employe.patchi@exemple.com', label: 'Employé · Patchi' },
-  { email: 'livreur@exemple.com', label: 'Livreur' },
-]
 
 const KEY = 'kclick-staff-email'
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -187,29 +175,7 @@ function EmailStep({ email, setEmail }) {
         </button>
       </form>
 
-      {import.meta.env.DEV && (
-      <div className="mt-10 rounded-[12px] border border-dashed border-d-border p-4">
-        <p className="text-xs text-d-muted">Développement : comptes du serveur en mémoire (npm run dev:memory).</p>
-        <ul className="mt-3 flex flex-col gap-2">
-          {DEV_EMAILS.map((u) => (
-            <li key={u.email}>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail(u.email)
-                  setError('')
-                  inputRef.current?.focus()
-                }}
-                className="flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-left text-[13px] hover:text-d-ink"
-              >
-                <span className="min-w-0 break-all font-mono text-[12.5px] underline decoration-d-border underline-offset-4">{u.email}</span>
-                <span className="text-xs text-d-muted">{u.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      )}
+    
     </>
   )
 }

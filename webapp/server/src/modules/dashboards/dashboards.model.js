@@ -1,8 +1,7 @@
 import { query } from '../../config/db.js'
 
-// Vue d'ensemble du super-admin : accès aux données (SQL uniquement).
 
-/** Ventes par Maison sur la période (hors parts refusées / annulées) */
+
 export async function salesByBrand(since) {
   const { rows } = await query(
     `select b.slug as brand, b.name, b.color, b.is_open, coalesce(sum(p.amount_due), 0) as amount, count(p.id)::int as parts
