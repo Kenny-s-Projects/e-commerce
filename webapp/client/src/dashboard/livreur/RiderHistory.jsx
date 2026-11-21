@@ -1,6 +1,7 @@
 import { hour, money, orderTotal } from '../lib/format.js'
 import { Card, Mono } from '../ui/ui.jsx'
 import { brandsOf, useRider } from './rider.js'
+import { tr } from '../lib/i18n.js'
 
 /** Livreur · Historique des courses livrées aujourd'hui */
 export default function RiderHistory() {
@@ -10,14 +11,14 @@ export default function RiderHistory() {
   return (
     <>
       <header className="bg-d-ink px-5 pb-5 pt-[calc(22px+env(safe-area-inset-top))] text-[#f2efe8]">
-        <p className="text-xs text-[#b9b3a7]">Aujourd’hui</p>
+        <p className="text-xs text-[#b9b3a7]">{tr('Aujourd’hui')}</p>
         <h1 className="mt-1 text-[26px] font-light">
-          Mon <span className="font-serif italic">historique</span>
+          {tr('Mon')} <span className="font-serif italic">{tr('historique')}</span>
         </h1>
       </header>
       <div className="flex flex-col gap-3 px-4 pb-3 pt-[18px]">
         {delivered.length === 0 ? (
-          <Card className="px-5 py-8 text-center text-sm text-d-muted">Aucune course livrée aujourd’hui.</Card>
+          <Card className="px-5 py-8 text-center text-sm text-d-muted">{tr('Aucune course livrée aujourd’hui.')}</Card>
         ) : (
           <Card as="ul" className="px-4 py-1.5">
             {delivered.map((o) => (
@@ -38,13 +39,13 @@ export default function RiderHistory() {
         )}
         <Card className="flex items-center justify-between px-4 py-3 text-sm">
           <span>
-            {delivered.length} course{delivered.length > 1 ? 's' : ''} livrée{delivered.length > 1 ? 's' : ''}
+            {tr(delivered.length > 1 ? '{n} courses livrées' : '{n} course livrée', { n: delivered.length })}
           </span>
           <span className="text-d-muted">
-            Commandes : <Mono className="text-d-ink">{money(total)}</Mono>
+            {tr('Commandes :')} <Mono className="text-d-ink">{money(total)}</Mono>
           </span>
         </Card>
-        <p className="mx-1 text-[13px] text-[#1f4a2c]">Toutes payées en ligne, rien à remettre.</p>
+        <p className="mx-1 text-[13px] text-[#1f4a2c]">{tr('Toutes payées en ligne, rien à remettre.')}</p>
       </div>
     </>
   )

@@ -3,6 +3,8 @@ import { useStore } from '../store/store.jsx'
 import Icon from '../ui/Icon.jsx'
 import { AvailabilitySwitch } from './Courses.jsx'
 import { useRider } from './rider.js'
+import { tr } from '../lib/i18n.js'
+import LangSwitch from '../ui/LangSwitch.jsx'
 
 const AIDE = 'https://wa.me/243856486993?text=' + encodeURIComponent('Bonjour, je suis livreur kclick et j’ai une question.')
 
@@ -20,9 +22,10 @@ export default function RiderProfile() {
           <div>
             <h1 className="text-[22px] font-light">{rider.name}</h1>
             <p className="text-[13px] text-[#b9b3a7]">
-              {rider.vehicle} · zone {rider.zone}
+              {rider.vehicle} · {tr('zone')} {rider.zone}
             </p>
           </div>
+          <LangSwitch className="ml-auto self-start" />
         </div>
         <AvailabilitySwitch
           rider={rider}
@@ -34,37 +37,37 @@ export default function RiderProfile() {
       <div className="flex flex-col gap-3 px-4 pb-3 pt-[18px]">
         <Card className="px-4 py-1.5">
           <div className="flex items-center justify-between gap-3 border-b border-d-soft py-3 text-sm">
-            <span className="text-d-muted">Téléphone</span>
+            <span className="text-d-muted">{tr('Téléphone')}</span>
             {rider.phone ? (
               <a href={telHref(rider.phone)}>
                 <Mono>{rider.phone}</Mono>
               </a>
             ) : (
-              <span className="text-d-muted">Non renseigné</span>
+              <span className="text-d-muted">{tr('Non renseigné')}</span>
             )}
           </div>
           <div className="flex items-center justify-between gap-3 border-b border-d-soft py-3 text-sm">
-            <span className="text-d-muted">Véhicule</span>
+            <span className="text-d-muted">{tr('Véhicule')}</span>
             <span>{rider.vehicle}</span>
           </div>
           <div className="flex items-center justify-between gap-3 py-3 text-sm">
-            <span className="text-d-muted">Zone</span>
+            <span className="text-d-muted">{tr('Zone')}</span>
             <span>{rider.zone}</span>
           </div>
         </Card>
 
-        <Card as="nav" aria-label="Liens" className="px-4 py-1">
+        <Card as="nav" aria-label={tr('Liens')} className="px-4 py-1">
           <a href={AIDE} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 border-b border-d-soft py-3.5 text-sm">
             <span className="flex items-center gap-3">
               <Icon name="whatsapp" className="size-[18px]" />
-              Aide : écrire à la conciergerie
+              {tr('Aide : écrire à la conciergerie')}
             </span>
             <Icon name="back" className="size-4 rotate-180 text-d-muted" />
           </a>
           <button type="button" onClick={logout} className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-sm">
             <span className="flex items-center gap-3">
               <Icon name="logout" className="size-[18px]" />
-              Se déconnecter
+              {tr('Se déconnecter')}
             </span>
             <Icon name="back" className="size-4 rotate-180 text-d-muted" />
           </button>

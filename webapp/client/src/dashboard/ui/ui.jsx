@@ -3,6 +3,7 @@
 import { BRANDS } from '../data/demo.js'
 import { ORDER_STATUS, PART_STATUS, RIDER_STATUS } from '../lib/status.js'
 import { initials } from '../lib/format.js'
+import { tr } from '../lib/i18n.js'
 
 /** Pastille de statut : point + libellé sur fond coloré */
 export function Pill({ tone, children, className = '' }) {
@@ -109,7 +110,7 @@ export function PageTitle({ eyebrow, before, accent, after, live, className = ''
             <span className="inline-flex items-center gap-1.5 text-[#2f6b40]">
               {eyebrow && <span className="text-d-muted">·</span>}
               <span className="size-2 animate-[livepulse_2s_ease-in-out_infinite] rounded-full bg-[#5e9468]" aria-hidden />
-              {live === true ? 'En direct' : live}
+              {live === true ? tr('En direct') : live}
             </span>
           )}
         </p>
@@ -125,8 +126,8 @@ export function PageTitle({ eyebrow, before, accent, after, live, className = ''
 
 export const Mono = ({ className = '', children }) => <span className={`font-mono tabular-nums ${className}`}>{children}</span>
 
-export const DemoNote = ({ children = 'Données de démonstration.', className = '' }) => (
-  <p className={`text-xs text-d-muted ${className}`}>{children}</p>
+export const DemoNote = ({ children, className = '' }) => (
+  <p className={`text-xs text-d-muted ${className}`}>{children ?? tr('Données de démonstration.')}</p>
 )
 
 /** Lien « tel: » et « WhatsApp » vers le client */

@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../lib/api.js'
 import { BRANDS } from '../data/demo.js'
-import { money } from '../lib/format.js'
+import { dateLocale, money } from '../lib/format.js'
 import { Card, Mono, PageTitle, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 const IN = { bg: '#e1eee2', fg: '#2f5a37' }
 const OUT = { bg: '#f7deda', fg: '#8e2118' }
 
 // Stock lisible : pièces, ou kilos pour les produits vendus au poids
-const stockText = (p) => (p.unit === 'kg' ? `${Number(p.stock_kg ?? 0).toLocaleString('fr-FR')} kg` : `${p.stock} pièce(s)`)
+const stockText = (p) => (p.unit === 'kg' ? `${Number(p.stock_kg ?? 0).toLocaleString(dateLocale())} kg` : tr('{n} pièce(s)', { n: p.stock }))
 
 /*
  * Disponibilités : stock réel des produits de la Maison (GET /catalog/products?brand=…).
@@ -44,27 +45,27 @@ export default function Availability({ brand }) {
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow={`${b.name} · Gombe`} before="Disponi" accent="bilités" />
+        <PageTitle eyebrow={`${b.name} · Gombe`} before={tr('Disponi')} accent={tr('bilités')} />
         {products && (
           <p className="text-sm text-d-muted">
-            <Mono>{products.length - out}</Mono> en stock · <Mono>{out}</Mono> en rupture
+            <Mono>{products.length - out}</Mono> {tr('en stock')} · <Mono>{out}</Mono> {tr('en rupture')}
           </p>
         )}
       </header>
 
       <label className="mb-4 flex h-11 max-w-md items-center gap-3 rounded-lg border border-d-line bg-white px-3.5 focus-within:border-d-ink">
         <Icon name="search" className="size-4 text-d-muted" />
-        <span className="sr-only">Rechercher un produit</span>
+        <span className="sr-only">{tr('Rechercher un produit')}</span>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un produit, une référence…"
+          placeholder={tr('Rechercher un produit, une référence…')}
           className="h-full flex-1 bg-transparent text-sm outline-none"
         />
       </label>
 
       <Card as="ul" className="divide-y divide-d-soft">
-        {!products && <li className="px-4 py-8 text-center text-sm text-d-muted">{error || 'Chargement des produits…'}</li>}
+        {!products && <li className="px-4 py-8 text-center text-sm text-d-muted">{tr(error) || tr('Chargement des produits…')}</li>}
         {list.map((p) => {
           const ok = inStock(p)
           return (
@@ -77,21 +78,21 @@ export default function Availability({ brand }) {
                     <>
                       {' · '}
                       <Mono>{money(p.price_from)}</Mono>
-                      {p.unit === 'kg' && ' les 250 g'}
+                      {p.unit === 'kg' && ` ${tr('les 250 g')}`}
                     </>
                   )}
                   {' · '}
                   {stockText(p)}
                 </p>
               </div>
-              <Pill tone={ok ? IN : OUT}>{ok ? 'En stock' : 'Rupture'}</Pill>
+              <Pill tone={ok ? IN : OUT}>{ok ? tr('En stock') : tr('Rupture')}</Pill>
             </li>
           )
         })}
-        {products && !list.length && <li className="px-4 py-8 text-center text-sm text-d-muted">Aucun produit ne correspond.</li>}
+        {products && !list.length && <li className="px-4 py-8 text-center text-sm text-d-muted">{tr('Aucun produit ne correspond.')}</li>}
       </Card>
 
-      <p className="mt-6 text-xs text-d-muted">Le stock se met à jour avec les commandes et, bientôt, avec l’ERP. Une rupture sur une commande se signale depuis la file des commandes.</p>
+      <p className="mt-6 text-xs text-d-muted">{tr('Le stock se met à jour avec les commandes et, bientôt, avec l’ERP. Une rupture sur une commande se signale depuis la file des commandes.')}</p>
     </>
   )
 }

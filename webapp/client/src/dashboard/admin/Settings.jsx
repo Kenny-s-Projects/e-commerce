@@ -4,6 +4,7 @@ import { useStore } from '../store/store.jsx'
 import { api } from '../../lib/api.js'
 import { Brand, Button, Card, PageTitle, Toggle } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 const SECTIONS = [
   { id: 'general', label: 'Général', text: 'Plateforme, contact, langue' },
@@ -15,12 +16,12 @@ const SECTIONS = [
 ]
 
 const OPERATORS = { mpesa: 'M-Pesa', orange: 'Orange Money', airtel: 'Airtel Money' }
-const WEEKDAYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam']
+const WEEKDAYS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'] // traduits à l'affichage
 
 // Horaires enregistrés d'une Maison, en une ligne (« lun–sam · 09:00–20:00 »)
 function hoursText(hours = []) {
-  if (!hours.length) return 'Horaires à renseigner'
-  const days = hours.map((h) => WEEKDAYS[h.weekday])
+  if (!hours.length) return tr('Horaires à renseigner')
+  const days = hours.map((h) => tr(WEEKDAYS[h.weekday]))
   const h = hours[0]
   return `${days[0]}${days.length > 1 ? `–${days.at(-1)}` : ''} · ${h.opens_at ?? '?'}–${h.closes_at ?? '?'}`
 }
@@ -57,7 +58,7 @@ function fromApi(settings, brands) {
     },
     recipients: n.teamRecipients ?? [],
     sound: n.newOrderSound ?? true,
-    hours: Object.fromEntries(brands.map((b) => [b.slug, hoursText(b.hours)])),
+    hours: Object.fromEntries(brands.map((b) => [b.slug, b.hours ?? []])),
     codeValidity: String(sec.codeValidityMinutes ?? 10),
     idle: String(sec.idleLogoutMinutes ?? 60),
   }
@@ -109,7 +110,7 @@ function Switch({ title, text, checked, onChange, disabled }) {
         {text && <p className="mt-0.5 text-xs text-d-muted">{text}</p>}
       </div>
       {disabled ? (
-        <span className="relative h-6 w-11 shrink-0 rounded-full bg-[#cfc9bd]" aria-label={`${title} : désactivé`}>
+        <span className="relative h-6 w-11 shrink-0 rounded-full bg-[#cfc9bd]" aria-label={tr('{title} : désactivé', { title })}>
           <span className="absolute left-0.5 top-0.5 size-5 rounded-full bg-white" />
         </span>
       ) : (
@@ -145,8 +146,8 @@ export default function Settings() {
   if (!loaded)
     return (
       <>
-        <PageTitle eyebrow="Super admin" before="Para" accent="mètres" />
-        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{error || 'Chargement des paramètres…'}</Card>
+        <PageTitle eyebrow={tr('Super admin')} before={tr('Para')} accent={tr('mètres')} />
+        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{tr(error) || tr('Chargement des paramètres…')}</Card>
       </>
     )
   return <SettingsForm initial={loaded} />
@@ -182,7 +183,7 @@ function SettingsForm({ initial }) {
       setSaved(s)
       setDone(true)
     } catch (err) {
-      setSaveError(err.details?.length ? `${err.message} : ${err.details.map((d) => d.message).join(', ')}` : err.message)
+      setSaveError(err.details?.length ? `${tr(err.message)} : ${err.details.map((d) => d.message).join(', ')}` : tr(err.message))
     } finally {
       setSaving(false)
     }
@@ -191,16 +192,16 @@ function SettingsForm({ initial }) {
   return (
     <>
       <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow="Super admin" before="Para" accent="mètres" />
+        <PageTitle eyebrow={tr('Super admin')} before={tr('Para')} accent={tr('mètres')} />
         <div className="flex items-center gap-3 max-sm:w-full">
           {done && !dirty && (
             <span role="status" className="inline-flex items-center gap-1.5 text-[13px] text-[#2f6b40]">
-              <Icon name="check" className="size-4" /> Modifications enregistrées
+              <Icon name="check" className="size-4" /> {tr('Modifications enregistrées')}
             </span>
           )}
-          {dirty && <span className="text-[13px] text-d-gold-ink max-sm:hidden">Modifications non enregistrées</span>}
+          {dirty && <span className="text-[13px] text-d-gold-ink max-sm:hidden">{tr('Modifications non enregistrées')}</span>}
           <Button onClick={save} disabled={!dirty || saving} className="max-sm:hidden">
-            {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+            {saving ? tr('Enregistrement…') : tr('Enregistrer les modifications')}
           </Button>
         </div>
         {saveError && (
@@ -211,7 +212,7 @@ function SettingsForm({ initial }) {
       </header>
 
       <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-6 max-lg:grid-cols-1">
-        <nav aria-label="Rubriques des paramètres" className="max-lg:-mx-1 max-lg:overflow-x-auto max-lg:px-1 max-lg:pb-1">
+        <nav aria-label={tr('Rubriques des paramètres')} className="max-lg:-mx-1 max-lg:overflow-x-auto max-lg:px-1 max-lg:pb-1">
           <ul className="flex flex-col gap-1 max-lg:flex-row max-lg:gap-1.5">
             {SECTIONS.map((x) => {
               const active = section === x.id
@@ -227,8 +228,8 @@ function SettingsForm({ initial }) {
                         : 'lg:hover:bg-white/60 max-lg:border-d-line max-lg:bg-white'
                     }`}
                   >
-                    <span className="block text-[14.5px] max-lg:text-[13.5px]">{x.label}</span>
-                    <span className="block text-xs text-d-muted max-lg:hidden">{x.text}</span>
+                    <span className="block text-[14.5px] max-lg:text-[13.5px]">{tr(x.label)}</span>
+                    <span className="block text-xs text-d-muted max-lg:hidden">{tr(x.text)}</span>
                   </button>
                 </li>
               )
@@ -238,27 +239,27 @@ function SettingsForm({ initial }) {
 
         <div className="flex min-w-0 flex-col gap-5">
           {section === 'general' && (
-            <Section title="Général" text="Informations affichées aux clients sur le site et dans les e-mails.">
+            <Section title={tr('Général')} text={tr('Informations affichées aux clients sur le site et dans les e-mails.')}>
               <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                <Field id="set-platform" label="Nom de la plateforme">
+                <Field id="set-platform" label={tr('Nom de la plateforme')}>
                   <input id="set-platform" className={input} value={s.platform} onChange={(e) => set({ platform: e.target.value })} />
                 </Field>
-                <Field id="set-company" label="Société">
+                <Field id="set-company" label={tr('Société')}>
                   <input id="set-company" className={input} value={s.company} onChange={(e) => set({ company: e.target.value })} />
                 </Field>
-                <Field id="set-email" label="E-mail du service client">
+                <Field id="set-email" label={tr('E-mail du service client')}>
                   <input id="set-email" type="email" className={input} value={s.supportEmail} onChange={(e) => set({ supportEmail: e.target.value })} />
                 </Field>
-                <Field id="set-wa" label="WhatsApp de la conciergerie">
+                <Field id="set-wa" label={tr('WhatsApp de la conciergerie')}>
                   <input id="set-wa" type="tel" className={`${input} font-mono`} value={s.whatsapp} onChange={(e) => set({ whatsapp: e.target.value })} />
                 </Field>
-                <Field id="set-address" label="Adresse" className="sm:col-span-2">
+                <Field id="set-address" label={tr('Adresse')} className="sm:col-span-2">
                   <input id="set-address" className={input} value={s.address} onChange={(e) => set({ address: e.target.value })} />
                 </Field>
-                <Field id="set-lang" label="Langue par défaut du site">
+                <Field id="set-lang" label={tr('Langue par défaut du site')}>
                   <select id="set-lang" className={input} value={s.lang} onChange={(e) => set({ lang: e.target.value })}>
-                    <option value="fr">Français</option>
-                    <option value="en">English</option>
+                    <option value="fr">{tr('Français')}</option>
+                    <option value="en">{tr('English')}</option>
                   </select>
                 </Field>
               </div>
@@ -267,23 +268,23 @@ function SettingsForm({ initial }) {
 
           {section === 'livraison' && (
             <>
-              <Section title="Zones de livraison" text="Communes livrées, frais et délai annoncés au client.">
+              <Section title={tr('Zones de livraison')} text={tr('Communes livrées, frais et délai annoncés au client.')}>
                 <ul className="flex flex-col gap-3">
                   {s.zones.map((z, i) => (
                     <li key={z.id} className="grid grid-cols-[minmax(0,1.3fr)_100px_minmax(0,1.2fr)_150px] items-end gap-3 rounded-[10px] border border-d-line p-3.5 max-md:grid-cols-2">
-                      <Field id={`zone-c-${z.id}`} label="Commune">
+                      <Field id={`zone-c-${z.id}`} label={tr('Commune')}>
                         <input id={`zone-c-${z.id}`} className={input} value={z.commune} onChange={(e) => setZone(z.id, { commune: e.target.value })} />
                       </Field>
-                      <Field id={`zone-f-${z.id}`} label="Frais ($)">
+                      <Field id={`zone-f-${z.id}`} label={tr('Frais ($)')}>
                         <input id={`zone-f-${z.id}`} type="number" min="0" className={`${input} font-mono`} value={z.fee} onChange={(e) => setZone(z.id, { fee: Number(e.target.value) })} />
                       </Field>
-                      <Field id={`zone-d-${z.id}`} label="Délai">
+                      <Field id={`zone-d-${z.id}`} label={tr('Délai')}>
                         <input id={`zone-d-${z.id}`} className={input} value={z.delay} onChange={(e) => setZone(z.id, { delay: e.target.value })} />
                       </Field>
                       <div className="flex h-11 items-center gap-3">
-                        <Toggle checked={z.active} onChange={(v) => setZone(z.id, { active: v })} label={<span className="text-[13px]">{z.active ? 'Active' : 'Inactive'}</span>} />
+                        <Toggle checked={z.active} onChange={(v) => setZone(z.id, { active: v })} label={<span className="text-[13px]">{z.active ? tr('Active') : tr('Inactive')}</span>} />
                         {i > 0 && (
-                          <button type="button" onClick={() => set({ zones: s.zones.filter((x) => x.id !== z.id) })} aria-label={`Supprimer la zone ${z.commune}`} className="grid size-9 place-items-center rounded-lg text-d-muted hover:bg-d-soft hover:text-d-danger">
+                          <button type="button" onClick={() => set({ zones: s.zones.filter((x) => x.id !== z.id) })} aria-label={tr('Supprimer la zone {name}', { name: z.commune })} className="grid size-9 place-items-center rounded-lg text-d-muted hover:bg-d-soft hover:text-d-danger">
                             <Icon name="close" className="size-4" />
                           </button>
                         )}
@@ -292,22 +293,22 @@ function SettingsForm({ initial }) {
                   ))}
                 </ul>
                 <Button variant="soft" size="sm" className="mt-4" onClick={() => set({ zones: [...s.zones, { id: `z${Date.now()}`, commune: '', fee: 5, delay: 'Le lendemain', active: false }] })}>
-                  <Icon name="plus" className="size-4" /> Ajouter une zone
+                  <Icon name="plus" className="size-4" /> {tr('Ajouter une zone')}
                 </Button>
               </Section>
-              <Section title="Horaires et retrait">
+              <Section title={tr('Horaires et retrait')}>
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                  <Field id="set-cutoff" label="Heure limite pour la livraison du jour" hint="Après cette heure, la commande est livrée le lendemain.">
+                  <Field id="set-cutoff" label={tr('Heure limite pour la livraison du jour')} hint={tr('Après cette heure, la commande est livrée le lendemain.')}>
                     <input id="set-cutoff" type="time" className={`${input} font-mono`} value={s.cutoff} onChange={(e) => set({ cutoff: e.target.value })} />
                   </Field>
-                  <Field id="set-cancel" label="Délai d’annulation par le client" hint="Tant que la commande n’est pas en préparation.">
+                  <Field id="set-cancel" label={tr('Délai d’annulation par le client')} hint={tr('Tant que la commande n’est pas en préparation.')}>
                     <select id="set-cancel" className={input} value={s.cancelDelay} onChange={(e) => set({ cancelDelay: e.target.value })}>
-                      <option value="5">5 minutes</option>
-                      <option value="15">15 minutes</option>
-                      <option value="30">30 minutes</option>
+                      <option value="5">{tr('5 minutes')}</option>
+                      <option value="15">{tr('15 minutes')}</option>
+                      <option value="30">{tr('30 minutes')}</option>
                     </select>
                   </Field>
-                  <Field id="set-pickup" label={`Point de retrait${s.pickupBrand ? ` · ${BRANDS[s.pickupBrand]?.name ?? s.pickupBrand}` : ''}`} className="sm:col-span-2">
+                  <Field id="set-pickup" label={`${tr('Point de retrait')}${s.pickupBrand ? ` · ${BRANDS[s.pickupBrand]?.name ?? s.pickupBrand}` : ''}`} className="sm:col-span-2">
                     <input id="set-pickup" className={input} value={s.pickup} disabled={!s.pickupBrand} onChange={(e) => set({ pickup: e.target.value })} />
                   </Field>
                 </div>
@@ -316,9 +317,9 @@ function SettingsForm({ initial }) {
           )}
 
           {section === 'paiements' && (
-            <Section title="Moyens de paiement" text="Tous les paiements se font en ligne, au moment de la commande.">
+            <Section title={tr('Moyens de paiement')} text={tr('Tous les paiements se font en ligne, au moment de la commande.')}>
               <div className="divide-y divide-d-line">
-                <Switch title="Mobile money" text="Le client valide le paiement sur son téléphone." checked={s.mobileMoney} onChange={(v) => set({ mobileMoney: v })} />
+                <Switch title={tr('Mobile money')} text={tr('Le client valide le paiement sur son téléphone.')} checked={s.mobileMoney} onChange={(v) => set({ mobileMoney: v })} />
                 {s.mobileMoney && (
                   <div className="flex flex-wrap gap-2 py-3.5">
                     {Object.entries(s.operators).map(([op, on]) => (
@@ -335,18 +336,18 @@ function SettingsForm({ initial }) {
                     ))}
                   </div>
                 )}
-                <Switch title="Carte bancaire" text="Visa, Mastercard. La carte est saisie chez le prestataire, jamais sur kclick." checked={s.card} onChange={(v) => set({ card: v })} />
-                <Switch title="Paiement à la livraison" text="Désactivé : tous les paiements se font en ligne." disabled />
+                <Switch title={tr('Carte bancaire')} text={tr('Visa, Mastercard. La carte est saisie chez le prestataire, jamais sur kclick.')} checked={s.card} onChange={(v) => set({ card: v })} />
+                <Switch title={tr('Paiement à la livraison')} text={tr('Désactivé : tous les paiements se font en ligne.')} disabled />
               </div>
-              <Field id="set-provider" label="Prestataire de paiement" hint="À choisir : il confirmera automatiquement les paiements." className="mt-5 max-w-md">
-                <input id="set-provider" className={input} value={s.provider} placeholder="[à choisir]" onChange={(e) => set({ provider: e.target.value })} />
+              <Field id="set-provider" label={tr('Prestataire de paiement')} hint={tr('À choisir : il confirmera automatiquement les paiements.')} className="mt-5 max-w-md">
+                <input id="set-provider" className={input} value={s.provider} placeholder={tr('[à choisir]')} onChange={(e) => set({ provider: e.target.value })} />
               </Field>
             </Section>
           )}
 
           {section === 'notifications' && (
             <>
-              <Section title="E-mails au client" text="Envoyés à l’adresse saisie au moment de la commande.">
+              <Section title={tr('E-mails au client')} text={tr('Envoyés à l’adresse saisie au moment de la commande.')}>
                 <div className="divide-y divide-d-line">
                   {[
                     ['confirmation', 'Confirmation de commande', 'Numéro, articles, total.'],
@@ -354,19 +355,19 @@ function SettingsForm({ initial }) {
                     ['route', 'Commande en route', 'Avec le nom du livreur et l’heure d’arrivée.'],
                     ['livree', 'Commande livrée', 'Avec un lien pour recommander.'],
                   ].map(([key, title, text]) => (
-                    <Switch key={key} title={title} text={text} checked={s.clientMails[key]} onChange={(v) => set({ clientMails: { ...s.clientMails, [key]: v } })} />
+                    <Switch key={key} title={tr(title)} text={tr(text)} checked={s.clientMails[key]} onChange={(v) => set({ clientMails: { ...s.clientMails, [key]: v } })} />
                   ))}
                 </div>
               </Section>
-              <Section title="E-mails à l’équipe">
-                <p className="text-sm">Une alerte à chaque nouvelle commande</p>
-                <p className="mt-0.5 text-xs text-d-muted">Détail de la commande et des Maisons concernées (au moins un destinataire).</p>
-                <p className="mb-2 mt-4 text-[13px] text-d-muted">Destinataires</p>
+              <Section title={tr('E-mails à l’équipe')}>
+                <p className="text-sm">{tr('Une alerte à chaque nouvelle commande')}</p>
+                <p className="mt-0.5 text-xs text-d-muted">{tr('Détail de la commande et des Maisons concernées (au moins un destinataire).')}</p>
+                <p className="mb-2 mt-4 text-[13px] text-d-muted">{tr('Destinataires')}</p>
                 <ul className="flex flex-wrap gap-2">
                   {s.recipients.map((r) => (
                     <li key={r} className="inline-flex h-9 max-w-full items-center gap-2 rounded-full border border-d-line bg-white pl-4 pr-1.5 text-[13.5px]">
                       <span className="truncate">{r}</span>
-                      <button type="button" onClick={() => set({ recipients: s.recipients.filter((x) => x !== r) })} aria-label={`Retirer ${r}`} className="grid size-7 place-items-center rounded-full text-d-muted hover:bg-d-soft hover:text-d-danger">
+                      <button type="button" onClick={() => set({ recipients: s.recipients.filter((x) => x !== r) })} aria-label={tr('Retirer {email}', { email: r })} className="grid size-7 place-items-center rounded-full text-d-muted hover:bg-d-soft hover:text-d-danger">
                         <Icon name="close" className="size-3.5" />
                       </button>
                     </li>
@@ -383,59 +384,59 @@ function SettingsForm({ initial }) {
                     }
                   }}
                 >
-                  <label htmlFor="set-recipient" className="sr-only">Ajouter un destinataire</label>
+                  <label htmlFor="set-recipient" className="sr-only">{tr('Ajouter un destinataire')}</label>
                   <input id="set-recipient" type="email" className={input} placeholder="prenom@kennysinternational.com" value={newRecipient} onChange={(e) => setNewRecipient(e.target.value)} />
-                  <Button type="submit" variant="soft" className="shrink-0">Ajouter</Button>
+                  <Button type="submit" variant="soft" className="shrink-0">{tr('Ajouter')}</Button>
                 </form>
               </Section>
-              <Section title="Dans les boutiques">
-                <Switch title="Son à chaque nouvelle commande" text="Joué sur l’écran « File des commandes » des employés." checked={s.sound} onChange={(v) => set({ sound: v })} />
+              <Section title={tr('Dans les boutiques')}>
+                <Switch title={tr('Son à chaque nouvelle commande')} text={tr('Joué sur l’écran « File des commandes » des employés.')} checked={s.sound} onChange={(v) => set({ sound: v })} />
               </Section>
             </>
           )}
 
           {section === 'maisons' && (
-            <Section title="Maisons" text="Une Maison fermée ne reçoit plus de commandes : ses produits restent visibles mais ne peuvent pas être commandés.">
+            <Section title={tr('Maisons')} text={tr('Une Maison fermée ne reçoit plus de commandes : ses produits restent visibles mais ne peuvent pas être commandés.')}>
               <ul className="divide-y divide-d-line">
                 {Object.values(BRANDS).map((b) => (
                   <li key={b.id} className="grid grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 py-4 max-sm:grid-cols-[minmax(0,1fr)_auto]">
                     <Brand id={b.id} className="text-[15px]" />
-                    <p className="text-[13.5px] text-d-muted max-sm:order-3 max-sm:col-span-2">{s.hours[b.id] ?? 'Horaires à renseigner'}</p>
+                    <p className="text-[13.5px] text-d-muted max-sm:order-3 max-sm:col-span-2">{hoursText(s.hours[b.id])}</p>
                     <Toggle
                       checked={!!shopsOpen[b.id]}
                       onChange={() => dispatch({ type: 'shop/toggle', brand: b.id })}
-                      label={<span className="w-[62px] text-[13px]">{shopsOpen[b.id] ? 'Ouverte' : 'Fermée'}</span>}
+                      label={<span className="w-[62px] text-[13px]">{shopsOpen[b.id] ? tr('Ouverte') : tr('Fermée')}</span>}
                     />
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-d-muted">L’ouverture est appliquée tout de suite sur le site. Les horaires se règlent depuis l’espace de chaque Maison.</p>
+              <p className="mt-3 text-xs text-d-muted">{tr('L’ouverture est appliquée tout de suite sur le site. Les horaires se règlent depuis l’espace de chaque Maison.')}</p>
             </Section>
           )}
 
           {section === 'securite' && (
             <>
-              <Section title="Connexion" text="L’équipe et les clients se connectent avec un code à 6 chiffres reçu par e-mail : aucun mot de passe à retenir ni à voler.">
+              <Section title={tr('Connexion')} text={tr('L’équipe et les clients se connectent avec un code à 6 chiffres reçu par e-mail : aucun mot de passe à retenir ni à voler.')}>
                 <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                  <Field id="set-code" label="Durée de validité du code">
+                  <Field id="set-code" label={tr('Durée de validité du code')}>
                     <select id="set-code" className={input} value={s.codeValidity} onChange={(e) => set({ codeValidity: e.target.value })}>
-                      <option value="5">5 minutes</option>
-                      <option value="10">10 minutes</option>
-                      <option value="15">15 minutes</option>
+                      <option value="5">{tr('5 minutes')}</option>
+                      <option value="10">{tr('10 minutes')}</option>
+                      <option value="15">{tr('15 minutes')}</option>
                     </select>
                   </Field>
-                  <Field id="set-idle" label="Déconnexion automatique de l’équipe">
+                  <Field id="set-idle" label={tr('Déconnexion automatique de l’équipe')}>
                     <select id="set-idle" className={input} value={s.idle} onChange={(e) => set({ idle: e.target.value })}>
-                      <option value="30">Après 30 min d’inactivité</option>
-                      <option value="60">Après 1 h d’inactivité</option>
-                      <option value="480">Après 8 h (une journée)</option>
-                      <option value="1440">Après 24 h</option>
+                      <option value="30">{tr('Après 30 min d’inactivité')}</option>
+                      <option value="60">{tr('Après 1 h d’inactivité')}</option>
+                      <option value="480">{tr('Après 8 h (une journée)')}</option>
+                      <option value="1440">{tr('Après 24 h')}</option>
                     </select>
                   </Field>
                 </div>
               </Section>
-              <Section title="Sessions ouvertes" text="Pour retirer l’accès à une personne (téléphone perdu, départ), désactivez son compte dans Utilisateurs et rôles : elle ne peut plus se connecter.">
-                <a href="#admin/utilisateurs" className="text-[13px] underline decoration-d-border underline-offset-4">Ouvrir Utilisateurs et rôles</a>
+              <Section title={tr('Sessions ouvertes')} text={tr('Pour retirer l’accès à une personne (téléphone perdu, départ), désactivez son compte dans Utilisateurs et rôles : elle ne peut plus se connecter.')}>
+                <a href="#admin/utilisateurs" className="text-[13px] underline decoration-d-border underline-offset-4">{tr('Ouvrir Utilisateurs et rôles')}</a>
               </Section>
             </>
           )}
@@ -446,7 +447,7 @@ function SettingsForm({ initial }) {
       {/* Téléphone : bouton d'enregistrement toujours visible en bas */}
       {dirty && (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-d-line bg-white/95 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:hidden">
-          <Button onClick={save} disabled={saving} className="w-full">{saving ? 'Enregistrement…' : 'Enregistrer les modifications'}</Button>
+          <Button onClick={save} disabled={saving} className="w-full">{saving ? tr('Enregistrement…') : tr('Enregistrer les modifications')}</Button>
         </div>
       )}
     </>

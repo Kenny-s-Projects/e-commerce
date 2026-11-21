@@ -2,6 +2,7 @@
 // Mêmes cadres que les écrans réels (cartes blanches, bord d-line), formes en d-soft.
 import { Block, Kpi, Lines, RideCard, SkeletonGroup, Table } from '../../components/Skeleton/Skeleton.jsx'
 import { Button, Card } from './ui.jsx'
+import { tr } from '../lib/i18n.js'
 
 const TONE = '[--sk:var(--color-d-soft)]'
 
@@ -9,11 +10,11 @@ const TONE = '[--sk:var(--color-d-soft)]'
 export function LoadError({ error, onRetry, className = '' }) {
   return (
     <Card className={`flex flex-col items-center gap-3 px-6 py-12 text-center ${className}`} role="alert">
-      <p className="text-[17px]">Les données ne répondent pas pour le moment.</p>
-      {error?.message && <p className="max-w-md text-sm text-d-muted">{error.message}</p>}
+      <p className="text-[17px]">{tr('Les données ne répondent pas pour le moment.')}</p>
+      {error?.message && <p className="max-w-md text-sm text-d-muted">{tr(error.message)}</p>}
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry} className="mt-2">
-          Réessayer
+          {tr('Réessayer')}
         </Button>
       )}
     </Card>
@@ -23,7 +24,7 @@ export function LoadError({ error, onRetry, className = '' }) {
 /** Vue d'ensemble : 4 chiffres clés, statuts + alertes, tableau + cartes latérales */
 export function OverviewSkeleton() {
   return (
-    <SkeletonGroup label="Chargement de la vue d’ensemble…" className={TONE}>
+    <SkeletonGroup label={tr('Chargement de la vue d’ensemble…')} className={TONE}>
       <div className="mb-[18px] grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => <Kpi key={i} />)}
       </div>
@@ -70,7 +71,7 @@ export function OverviewSkeleton() {
 /** Liste des commandes : tableau (ordinateur) ou cartes (téléphone) */
 export function OrdersSkeleton({ rows = 8 }) {
   return (
-    <SkeletonGroup label="Chargement des commandes…" className={TONE}>
+    <SkeletonGroup label={tr('Chargement des commandes…')} className={TONE}>
       <Card className="overflow-hidden max-sm:hidden">
         <Table rows={rows} cols={6} />
       </Card>
@@ -82,9 +83,9 @@ export function OrdersSkeleton({ rows = 8 }) {
 }
 
 /** Colonnes de cartes (dispatch, file des commandes) */
-export function ColumnsSkeleton({ columns = 3, cards = [2, 2, 1], label = 'Chargement…', columnClass = '' }) {
+export function ColumnsSkeleton({ columns = 3, cards = [2, 2, 1], label, columnClass = '' }) {
   return (
-    <SkeletonGroup label={label} className={`grid gap-4 lg:grid-cols-3 ${TONE}`}>
+    <SkeletonGroup label={label ?? tr('Chargement…')} className={`grid gap-4 lg:grid-cols-3 ${TONE}`}>
       {Array.from({ length: columns }, (_, c) => (
         <div key={c} className={`flex flex-col gap-3 ${columnClass}`}>
           <Block className="h-4 w-32 rounded-full" />
@@ -98,7 +99,7 @@ export function ColumnsSkeleton({ columns = 3, cards = [2, 2, 1], label = 'Charg
 /** Courses du livreur : cartes de course */
 export function RidesSkeleton({ count = 2 }) {
   return (
-    <SkeletonGroup label="Chargement de vos courses…" className={`flex flex-col gap-3 ${TONE}`}>
+    <SkeletonGroup label={tr('Chargement de vos courses…')} className={`flex flex-col gap-3 ${TONE}`}>
       {Array.from({ length: count }, (_, i) => <RideCard key={i} />)}
     </SkeletonGroup>
   )

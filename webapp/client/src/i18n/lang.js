@@ -59,6 +59,15 @@ export function readLang() {
   return 'fr'
 }
 
+/** Le visiteur a-t-il déjà choisi une langue ? (sinon le dashboard prend celle du profil) */
+export function hasSavedLang() {
+  try {
+    return LANGS.includes(localStorage.getItem(STORAGE_KEY))
+  } catch {
+    return false
+  }
+}
+
 export function saveLang(lang) {
   try {
     localStorage.setItem(STORAGE_KEY, lang)

@@ -5,6 +5,8 @@ import { hour, today } from '../lib/format.js'
 import { Card, Mono, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
 import { brandsOf, courseState, PART_TEXT, pickupParts, shortStreet, useRider } from './rider.js'
+import { tr } from '../lib/i18n.js'
+import LangSwitch from '../ui/LangSwitch.jsx'
 
 /** Bouton « Disponible pour une course » (vert quand disponible) */
 export function AvailabilitySwitch({ rider, busy, onChange }) {
@@ -18,8 +20,8 @@ export function AvailabilitySwitch({ rider, busy, onChange }) {
       className={`flex h-[52px] w-full items-center justify-between rounded-xl border border-[#3a3631] px-4 text-[15px] text-white transition-colors duration-300 ${on ? 'bg-[#2f6b40]' : 'bg-[#2a2622]'}`}
     >
       <span className="text-left leading-tight">
-        {on ? 'Disponible pour une course' : 'Indisponible'}
-        {busy && <span className="block text-xs text-white/70">Course en cours : vous restez visible du dispatch</span>}
+        {on ? tr('Disponible pour une course') : tr('Indisponible')}
+        {busy && <span className="block text-xs text-white/70">{tr('Course en cours : vous restez visible du dispatch')}</span>}
       </span>
       <span className="relative inline-block h-[26px] w-11 shrink-0 rounded-full bg-white/25" aria-hidden>
         <span className={`absolute top-[3px] size-5 rounded-full bg-white transition-[left] duration-300 ${on ? 'left-[21px]' : 'left-[3px]'}`} />
@@ -55,8 +57,8 @@ function CourseCard({ order }) {
         ))}
       </span>
       <span className="mt-3.5 flex items-center justify-between gap-3 text-sm">
-        <span className="text-d-muted">Paiement</span>
-        <span className="text-right text-[#1f4a2c]">Paiement en ligne · rien à encaisser</span>
+        <span className="text-d-muted">{tr('Paiement')}</span>
+        <span className="text-right text-[#1f4a2c]">{tr('Paiement en ligne · rien à encaisser')}</span>
       </span>
     </a>
   )
@@ -67,10 +69,10 @@ function DoneRow({ order }) {
     <div className="rounded-[14px] border border-d-line bg-white p-4 opacity-85">
       <div className="mb-2 flex items-center justify-between gap-3">
         <Mono className="text-[15px]">{order.number}</Mono>
-        <Pill tone={{ bg: '#d7e9dc', fg: '#1f4a2c' }}>Livrée à {hour(order.deliveredAt)}</Pill>
+        <Pill tone={{ bg: '#d7e9dc', fg: '#1f4a2c' }}>{tr('Livrée à {time}', { time: hour(order.deliveredAt) })}</Pill>
       </div>
       <p className="text-sm text-d-muted">
-        {order.customer.name} · {brandsOf(order)} · paiement en ligne
+        {order.customer.name} · {brandsOf(order)} · {tr('paiement en ligne')}
       </p>
     </div>
   )
@@ -113,17 +115,20 @@ export default function Courses() {
       </div>
     )
   }
-  if (!rider) return <p className="px-5 py-16 text-center text-sm text-d-muted">Profil livreur introuvable.</p>
+  if (!rider) return <p className="px-5 py-16 text-center text-sm text-d-muted">{tr('Profil livreur introuvable.')}</p>
 
   return (
     <>
       <header className="bg-d-ink px-5 pb-5 pt-[calc(22px+env(safe-area-inset-top))] text-[#f2efe8]">
         <div className="mb-[18px] flex items-center justify-between">
           <span className="text-lg tracking-[0.04em]">kclick</span>
-          <span className="text-xs text-[#b9b3a7]">{today()}</span>
+          <span className="flex items-center gap-3">
+            <span className="text-xs text-[#b9b3a7]">{today()}</span>
+            <LangSwitch />
+          </span>
         </div>
         <p className="mb-3.5 text-[26px] font-light">
-          Bonjour <span className="font-serif italic">{rider.firstName}</span>
+          {tr('Bonjour')} <span className="font-serif italic">{rider.firstName}</span>
         </p>
         <AvailabilitySwitch
           rider={rider}
@@ -133,7 +138,7 @@ export default function Courses() {
       </header>
 
       <div className="flex flex-col gap-3 px-4 pb-3 pt-[18px]">
-        <h1 className="mx-1 mt-1 text-[15px] font-medium">Courses du jour</h1>
+        <h1 className="mx-1 mt-1 text-[15px] font-medium">{tr('Courses du jour')}</h1>
 
         {current.map((o) => (
           <CourseCard key={o.number} order={o} />
@@ -144,9 +149,9 @@ export default function Courses() {
             <span className="grid size-11 place-items-center rounded-full bg-d-soft">
               <Icon name="bike" className="size-5" />
             </span>
-            <p className="text-[15px]">Aucune course pour l’instant</p>
+            <p className="text-[15px]">{tr('Aucune course pour l’instant')}</p>
             <p className="max-w-[280px] text-[13px] leading-relaxed text-d-muted">
-              Le dispatch vous attribue les courses. Vous recevrez une notification.
+              {tr('Le dispatch vous attribue les courses. Vous recevrez une notification.')}
             </p>
           </Card>
         )}
@@ -155,16 +160,16 @@ export default function Courses() {
           <DoneRow key={o.number} order={o} />
         ))}
 
-        <h2 className="mx-1 mt-2.5 text-[15px] font-medium">Ma journée</h2>
+        <h2 className="mx-1 mt-2.5 text-[15px] font-medium">{tr('Ma journée')}</h2>
         <Card className="px-4 py-1.5">
-          <Row label="Courses livrées">
+          <Row label={tr('Courses livrées')}>
             <Mono>{delivered.length}</Mono>
           </Row>
-          <Row label="Courses en cours">
+          <Row label={tr('Courses en cours')}>
             <Mono>{current.length}</Mono>
           </Row>
-          <Row label="Paiements" muted>
-            <span className="text-right text-[#1f4a2c]">Tous en ligne, rien à remettre</span>
+          <Row label={tr('Paiements')} muted>
+            <span className="text-right text-[#1f4a2c]">{tr('Tous en ligne, rien à remettre')}</span>
           </Row>
         </Card>
       </div>

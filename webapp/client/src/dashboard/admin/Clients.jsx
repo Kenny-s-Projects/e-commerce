@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api.js'
-import { money } from '../lib/format.js'
+import { dateLocale, money } from '../lib/format.js'
 import { Avatar, Brand, Card, PageTitle } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 const FILTERS = [
   { id: 'tous', label: 'Tous', test: () => true },
@@ -11,10 +12,10 @@ const FILTERS = [
 ]
 
 const shortDate = (date) =>
-  date ? new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '') : '—'
+  date ? new Date(date).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' }).replace('.', '') : '—'
 
 const href = (c) => `#admin/clients/${c.id}`
-const fullName = (c) => c.name || 'Client'
+const fullName = (c) => c.name || tr('Client')
 
 // Client renvoyé par GET /clients → forme utilisée par l'écran
 const toRow = (c) => ({
@@ -67,8 +68,8 @@ export default function Clients() {
   if (!rows)
     return (
       <>
-        <PageTitle eyebrow="Comptes et commandes sans compte" before="Cli" accent="ents" />
-        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{error || 'Chargement des clients…'}</Card>
+        <PageTitle eyebrow={tr('Comptes et commandes sans compte')} before={tr('Cli')} accent={tr('ents')} />
+        <Card className="mt-6 px-5 py-12 text-center text-sm text-d-muted">{tr(error) || tr('Chargement des clients…')}</Card>
       </>
     )
 
@@ -87,16 +88,16 @@ export default function Clients() {
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow="Comptes et commandes sans compte" before="Cli" accent="ents" />
+        <PageTitle eyebrow={tr('Comptes et commandes sans compte')} before={tr('Cli')} accent={tr('ents')} />
         <form role="search" onSubmit={(e) => e.preventDefault()} className="w-full sm:w-[320px]">
           <label className="flex h-11 items-center gap-3 rounded-[10px] border border-d-line bg-white px-4 focus-within:border-d-ink">
             <Icon name="search" className="size-4 shrink-0 text-d-muted" />
-            <span className="sr-only">Rechercher un client</span>
+            <span className="sr-only">{tr('Rechercher un client')}</span>
             <input
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Nom, téléphone, e-mail…"
+              placeholder={tr('Nom, téléphone, e-mail…')}
               className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-d-muted"
             />
           </label>
@@ -104,13 +105,13 @@ export default function Clients() {
       </header>
 
       <div className="mb-6 grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-sm:gap-3">
-        <Kpi label="Clients" value={rows.length} note="Avec au moins une commande ou un compte" />
-        <Kpi label="Avec compte" value={withAccount} note={rows.length ? `${Math.round((withAccount / rows.length) * 100)} % des clients` : '—'} />
-        <Kpi label="Nouveaux ce mois" value={newThisMonth} note="Premier achat ou inscription" />
-        <Kpi label="Panier moyen" value={money(Math.round(basket))} note="Toutes commandes, hors annulées" />
+        <Kpi label={tr('Clients')} value={rows.length} note={tr('Avec au moins une commande ou un compte')} />
+        <Kpi label={tr('Avec compte')} value={withAccount} note={rows.length ? tr('{n} % des clients', { n: Math.round((withAccount / rows.length) * 100) }) : '—'} />
+        <Kpi label={tr('Nouveaux ce mois')} value={newThisMonth} note={tr('Premier achat ou inscription')} />
+        <Kpi label={tr('Panier moyen')} value={money(Math.round(basket))} note={tr('Toutes commandes, hors annulées')} />
       </div>
 
-      <div role="tablist" aria-label="Filtrer les clients" className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div role="tablist" aria-label={tr('Filtrer les clients')} className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {FILTERS.map((f) => (
           <button
             key={f.id}
@@ -122,7 +123,7 @@ export default function Clients() {
               filter === f.id ? 'border-d-ink bg-d-ink text-white' : 'border-d-line bg-white hover:border-d-border'
             }`}
           >
-            {f.label}
+            {tr(f.label)}
             <span className={`font-mono text-xs ${filter === f.id ? 'text-white/70' : 'text-d-muted'}`}>{counts[f.id]}</span>
           </button>
         ))}
@@ -130,19 +131,19 @@ export default function Clients() {
 
       <Card className="overflow-hidden">
         {!visible.length ? (
-          <p className="px-5 py-12 text-center text-sm text-d-muted">{rows.length ? 'Aucun client ne correspond à cette recherche.' : 'Aucun client pour l’instant : ils apparaîtront avec les premières commandes.'}</p>
+          <p className="px-5 py-12 text-center text-sm text-d-muted">{rows.length ? tr('Aucun client ne correspond à cette recherche.') : tr('Aucun client pour l’instant : ils apparaîtront avec les premières commandes.')}</p>
         ) : (
           <>
             <div className="overflow-x-auto max-sm:hidden">
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-d-line text-[12.5px] text-d-muted">
-                    <th scope="col" className="py-3 pl-5 pr-3 font-normal">Client</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Téléphone</th>
-                    <th scope="col" className="px-3 py-3 text-right font-normal">Commandes</th>
-                    <th scope="col" className="px-3 py-3 text-right font-normal">Total dépensé</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Dernière commande</th>
-                    <th scope="col" className="py-3 pl-3 pr-5 font-normal">Maison préférée</th>
+                    <th scope="col" className="py-3 pl-5 pr-3 font-normal">{tr('Client')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Téléphone')}</th>
+                    <th scope="col" className="px-3 py-3 text-right font-normal">{tr('Commandes')}</th>
+                    <th scope="col" className="px-3 py-3 text-right font-normal">{tr('Total dépensé')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Dernière commande')}</th>
+                    <th scope="col" className="py-3 pl-3 pr-5 font-normal">{tr('Maison préférée')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -158,7 +159,7 @@ export default function Clients() {
                           <span className="min-w-0">
                             <span className="flex items-center gap-2">
                               {fullName(c)}
-                              {!c.hasAccount && <span className="rounded-full bg-d-soft px-2 py-0.5 text-[11px] text-d-muted">Sans compte</span>}
+                              {!c.hasAccount && <span className="rounded-full bg-d-soft px-2 py-0.5 text-[11px] text-d-muted">{tr('Sans compte')}</span>}
                             </span>
                             <span className="block truncate text-xs text-d-muted">{c.email}</span>
                           </span>
@@ -191,8 +192,8 @@ export default function Clients() {
                     </span>
                     <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-d-muted">
                       <span>
-                        {c.stats.count} commande{c.stats.count > 1 ? 's' : ''} · {shortDate(c.stats.lastAt)}
-                        {!c.hasAccount && ' · sans compte'}
+                        {tr(c.stats.count > 1 ? '{n} commandes' : '{n} commande', { n: c.stats.count })} · {shortDate(c.stats.lastAt)}
+                        {!c.hasAccount && ` · ${tr('sans compte')}`}
                       </span>
                       {c.stats.favourite && <Brand id={c.stats.favourite} className="text-d-ink" />}
                     </span>

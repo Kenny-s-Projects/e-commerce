@@ -6,6 +6,7 @@ import { ORDER_STATUS, ORDER_STATUS_KEYS, canDispatch, isActivePart, isOpen, ord
 import { minutesSince, money, orderTotal, partTotal, today } from '../lib/format.js'
 import { Avatar, Card, CardTitle, PageTitle, RiderPill } from '../ui/ui.jsx'
 import { OrdersTable, SearchField, detailHref, matches } from './Orders.jsx'
+import { tr } from '../lib/i18n.js'
 
 const LATE_AFTER = 20 // minutes avant qu'une commande pas encore prête devienne une alerte
 
@@ -25,7 +26,7 @@ function StatusBreakdown({ orders }) {
   const counts = ORDER_STATUS_KEYS.map((k) => [k, orders.filter((o) => orderStatus(o) === k).length]).filter(([, n]) => n > 0)
   return (
     <Card className="px-5 py-[18px] lg:col-span-2">
-      <h2 className="mb-4 text-base font-medium">Commandes du jour par statut</h2>
+      <h2 className="mb-4 text-base font-medium">{tr('Commandes du jour par statut')}</h2>
       <div className="flex h-3 gap-[3px] overflow-hidden rounded-full" role="img" aria-label={counts.map(([k, n]) => `${ORDER_STATUS[k].label} ${n}`).join(', ')}>
         {counts.map(([k, n]) => (
           <span key={k} className="block transition-[flex-grow] duration-500" style={{ flexGrow: n, background: ORDER_STATUS[k].bar }} />
@@ -54,11 +55,11 @@ function Alerts({ orders, now, stock = [] }) {
       alerts.push({
         key: `late-${o.number}`,
         href: detailHref(o),
-        title: `${o.number} en préparation depuis ${m} min`,
+        title: tr('{n} en préparation depuis {m} min', { n: o.number, m }),
         text:
           waiting.length > 1
-            ? `Les parts ${waiting.map((p) => (BRANDS[p.brand]?.name ?? p.brandName)).join(' et ')} ne sont pas encore prêtes.`
-            : `La part ${(BRANDS[waiting[0].brand]?.name ?? waiting[0].brandName)} n’est pas encore prête.`,
+            ? tr('Les parts {brands} ne sont pas encore prêtes.', { brands: waiting.map((p) => BRANDS[p.brand]?.name ?? p.brandName).join(` ${tr('et')} `) })
+            : tr('La part {brand} n’est pas encore prête.', { brand: BRANDS[waiting[0].brand]?.name ?? waiting[0].brandName }),
         level: 'warn',
       })
     }
@@ -68,18 +69,25 @@ function Alerts({ orders, now, stock = [] }) {
       alerts.push({
         key: `refused-${o.number}-${p.brand}`,
         href: detailHref(o),
-        title: `Rupture sur ${o.number}`,
-        text: `${(BRANDS[p.brand]?.name ?? p.brandName)}${p.refusal ? ` : ${p.refusal}` : ''}. ${o.cancelled ? 'Commande annulée.' : 'La commande continue sans cette part.'}`,
+        title: tr('Rupture sur {n}', { n: o.number }),
+        text: `${(BRANDS[p.brand]?.name ?? p.brandName)}${p.refusal ? `${tr(' : ')}${p.refusal}` : ''}. ${o.cancelled ? tr('Commande annulée.') : tr('La commande continue sans cette part.')}`,
         level: 'danger',
       })
     }
   }
   // Ruptures de stock calculées par l'API (pièces à 0, moins de 250 g pour les produits au poids)
-  for (const a of stock) alerts.push({ key: `stock-${a.ref ?? a.title}`, title: a.title, text: a.text, level: 'danger' })
+  // (titre et texte écrits en français par l'API : refaits ici pour suivre la langue du dashboard)
+  for (const a of stock)
+    alerts.push({
+      key: `stock-${a.ref ?? a.title}`,
+      title: a.brand ? tr('Rupture chez {brand}', { brand: BRANDS[a.brand]?.name ?? a.brand }) : a.title,
+      text: String(a.text ?? '').replace('stock à 0', tr('stock à 0')),
+      level: 'danger',
+    })
 
   return (
     <Card className="px-5 py-[18px]">
-      <h2 className="mb-3 text-base font-medium">Alertes</h2>
+      <h2 className="mb-3 text-base font-medium">{tr('Alertes')}</h2>
       {alerts.length ? (
         <ul className="flex flex-col gap-3.5">
           {alerts.map((a) => {
@@ -113,7 +121,7 @@ function Alerts({ orders, now, stock = [] }) {
           })}
         </ul>
       ) : (
-        <p className="text-sm text-d-muted">Rien à signaler.</p>
+        <p className="text-sm text-d-muted">{tr('Rien à signaler.')}</p>
       )}
     </Card>
   )
@@ -127,7 +135,7 @@ function SalesByBrand({ orders }) {
   const max = Math.max(1, ...sales.map(([, v]) => v))
   return (
     <Card className="px-5 py-[18px]">
-      <h2 className="mb-4 text-base font-medium">Ventes par Maison</h2>
+      <h2 className="mb-4 text-base font-medium">{tr('Ventes par Maison')}</h2>
       <ul className="flex flex-col gap-4">
         {sales.map(([b, v]) => (
           <li key={b}>
@@ -155,27 +163,27 @@ function Riders({ riders, orders }) {
         className="mb-2"
         action={
           <a href="#admin/dispatch" className="text-[13px] underline decoration-d-border underline-offset-4 hover:decoration-d-ink">
-            Dispatch
+            {tr('Dispatch')}
           </a>
         }
       >
-        <span className="text-base">Livreurs</span>
+        <span className="text-base">{tr('Livreurs')}</span>
       </CardTitle>
-      {!riders.length && <p className="py-3 text-sm text-d-muted">Aucun livreur pour l’instant. Invitez-en un dans Utilisateurs et rôles.</p>}
+      {!riders.length && <p className="py-3 text-sm text-d-muted">{tr('Aucun livreur pour l’instant. Invitez-en un dans Utilisateurs et rôles.')}</p>}
       <ul className="divide-y divide-d-line">
         {riders.map((r) => {
           const { status, order } = riderState(r, orders)
-          let line = `Zone ${r.zone}`
-          if (order?.pickedUpAt) line = `${order.number} · arrivée dans ${order.eta ?? '…'} min`
+          let line = `${tr('Zone')} ${r.zone}`
+          if (order?.pickedUpAt) line = tr('{n} · arrivée dans {m} min', { n: order.number, m: order.eta ?? '…' })
           else if (order) {
             const next = order.parts.find((p) => p.status !== 'collectee' && isActivePart(p))
-            line = next ? `${order.number} · récupère chez ${(BRANDS[next.brand]?.name ?? next.brandName)}` : `${order.number} · en route`
+            line = next ? tr('{n} · récupère chez {brand}', { n: order.number, brand: BRANDS[next.brand]?.name ?? next.brandName }) : tr('{n} · en route', { n: order.number })
           }
           return (
             <li key={r.id} className="flex items-center gap-3 py-3">
-              <Avatar name={r.name || 'Livreur'} />
+              <Avatar name={r.name || tr('Livreur')} />
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px]">{r.name || 'Livreur'}</span>
+                <span className="block text-[15px]">{r.name || tr('Livreur')}</span>
                 <span className="block truncate text-xs text-d-muted">{line}</span>
               </span>
               <RiderPill status={status} />
@@ -210,7 +218,7 @@ export default function Overview() {
   return (
     <>
       <header className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-        <PageTitle eyebrow={today()} live before="Vue d’" accent="ensemble" />
+        <PageTitle eyebrow={today()} live before={tr('Vue d’')} accent={tr('ensemble')} />
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <div className="relative min-w-0 flex-1 sm:w-[310px] sm:flex-none">
             <SearchField
@@ -241,16 +249,16 @@ export default function Overview() {
         <LoadError error={loadError} onRetry={retryLoad} />
       ) : (
       <>
-      <section aria-label="Indicateurs du jour" className="mb-[18px] grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="Commandes aujourd’hui" value={todays.length} note="Depuis minuit" />
-        <Kpi label="Chiffre d’affaires" value={money(revenue)} note="Hors commandes annulées" />
+      <section aria-label={tr('Indicateurs du jour')} className="mb-[18px] grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Kpi label={tr('Commandes aujourd’hui')} value={todays.length} note={tr('Depuis minuit')} />
+        <Kpi label={tr('Chiffre d’affaires')} value={money(revenue)} note={tr('Hors commandes annulées')} />
         <Kpi
-          label="En cours"
+          label={tr('En cours')}
           value={open.length}
-          note={toAssign ? `${toAssign} à assigner à un livreur` : 'Aucune commande à assigner'}
+          note={toAssign ? tr('{n} à assigner à un livreur', { n: toAssign }) : tr('Aucune commande à assigner')}
           tone={toAssign ? 'text-d-gold-ink' : 'text-d-muted'}
         />
-        <Kpi label="Délai moyen de livraison" value={avgDelay == null ? '—' : `${avgDelay} min`} note="De la commande à la remise" />
+        <Kpi label={tr('Délai moyen de livraison')} value={avgDelay == null ? '—' : `${avgDelay} min`} note={tr('De la commande à la remise')} />
       </section>
 
       <section className="mb-[18px] grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(300px,0.95fr)]">
@@ -261,15 +269,15 @@ export default function Overview() {
       <section className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,0.95fr)]">
         <Card className="min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-4 px-5 pb-3 pt-[18px]">
-            <h2 className="text-base font-medium">Commandes du jour</h2>
+            <h2 className="text-base font-medium">{tr('Commandes du jour')}</h2>
             <a href="#admin/commandes" className="text-[13px] underline decoration-d-border underline-offset-4 hover:decoration-d-ink">
-              Tout voir
+              {tr('Tout voir')}
             </a>
           </div>
           {todays.length ? (
             <OrdersTable orders={todays.slice(0, 8)} highlight={lastNewOrder} />
           ) : (
-            <p className="px-5 pb-6 text-sm text-d-muted">Aucune commande aujourd’hui pour l’instant.</p>
+            <p className="px-5 pb-6 text-sm text-d-muted">{tr('Aucune commande aujourd’hui pour l’instant.')}</p>
           )}
         </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:flex lg:flex-col">

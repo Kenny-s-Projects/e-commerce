@@ -5,12 +5,13 @@ import { api } from '../../lib/api.js'
 import { ago } from '../lib/format.js'
 import { Avatar, Brand, Button, Card, PageTitle, Pill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 // Statut d'un compte de l'équipe
 const USER_STATUS = {
-  actif: { label: 'Actif', bg: '#e1eee2', fg: '#2f5a37' },
-  invite: { label: 'Invitation envoyée', bg: '#fbefd5', fg: '#7a5200' },
-  desactive: { label: 'Désactivé', bg: '#efebe3', fg: '#5e5b55' },
+  actif: { get label() { return tr('Actif') }, bg: '#e1eee2', fg: '#2f5a37' },
+  invite: { get label() { return tr('Invitation envoyée') }, bg: '#fbefd5', fg: '#7a5200' },
+  desactive: { get label() { return tr('Désactivé') }, bg: '#efebe3', fg: '#5e5b55' },
 }
 const ROLE_TONE = { bg: '#efebe3', fg: '#141414' }
 
@@ -40,12 +41,12 @@ function matches(u, q) {
 /** Maison (employé), zone (livreur) ou « Toutes les Maisons » (super admin) */
 function Scope({ user }) {
   if (user.role === 'employe' && BRANDS[user.brand]) return <Brand id={user.brand} className="text-[13.5px]" />
-  if (user.role === 'livreur') return <span className="text-d-muted">{user.vehicle ?? 'Moto'} · zone {user.zone ?? 'Gombe'}</span>
-  return <span className="text-d-muted">Toutes les Maisons</span>
+  if (user.role === 'livreur') return <span className="text-d-muted">{user.vehicle ?? 'Moto'} · {tr('zone')} {user.zone ?? 'Gombe'}</span>
+  return <span className="text-d-muted">{tr('Toutes les Maisons')}</span>
 }
 
 const LastSeen = ({ user, now }) =>
-  user.lastSeenAt ? <span>{ago(user.lastSeenAt, now)}</span> : <span className="text-d-muted">Jamais</span>
+  user.lastSeenAt ? <span>{ago(user.lastSeenAt, now)}</span> : <span className="text-d-muted">{tr('Jamais')}</span>
 
 /** Bouton « Renvoyer l’invitation » avec confirmation passagère */
 function Resend({ user, sent, onSend, className = '' }) {
@@ -53,7 +54,7 @@ function Resend({ user, sent, onSend, className = '' }) {
   return sent ? (
     <span role="status" className={`inline-flex items-center gap-1.5 text-[13px] text-[#2f5a37] ${className}`}>
       <Icon name="check" className="size-4" />
-      Invitation renvoyée
+      {tr('Invitation renvoyée')}
     </span>
   ) : (
     <button
@@ -65,7 +66,7 @@ function Resend({ user, sent, onSend, className = '' }) {
       }}
       className={`text-[13px] underline decoration-d-border underline-offset-4 hover:decoration-d-ink ${className}`}
     >
-      Renvoyer l’invitation
+      {tr('Renvoyer l’invitation')}
     </button>
   )
 }
@@ -75,7 +76,7 @@ function Resend({ user, sent, onSend, className = '' }) {
 const REASONS = {
   'RESEND_API_KEY manquante': 'Le service d’e-mail n’est pas configuré sur le serveur (clé RESEND_API_KEY manquante).',
 }
-const readable = (e) => REASONS[e] ?? e ?? 'Raison inconnue'
+const readable = (e) => tr(REASONS[e] ?? e ?? 'Raison inconnue')
 
 function EmailStatus({ notify }) {
   const [emails, setEmails] = useState([])
@@ -115,15 +116,15 @@ function EmailStatus({ notify }) {
     await new Promise((r) => setTimeout(r, 12000))
     await load()
     setBusy(false)
-    notify(errors ? `${errors} e-mail(s) n’ont pas pu être relancés.` : 'E-mails relancés. Ceux qui restent affichés ne sont toujours pas partis.', errors ? undefined : 'ok')
+    notify(errors ? tr('{n} e-mail(s) n’ont pas pu être relancés.', { n: errors }) : tr('E-mails relancés. Ceux qui restent affichés ne sont toujours pas partis.'), errors ? undefined : 'ok')
   }
 
   return (
     <Card className="mb-7 flex flex-wrap items-center justify-between gap-4 border-[#e9c46a] bg-[#fdf7e6] p-5" role="status">
       <div className="min-w-0">
         <p className="text-[15px]">
-          {emails.length} e-mail{emails.length > 1 ? 's' : ''} non envoyé{emails.length > 1 ? 's' : ''}
-          {invitations ? ` (dont ${invitations} invitation${invitations > 1 ? 's' : ''})` : ''}
+          {tr(emails.length > 1 ? '{n} e-mails non envoyés' : '{n} e-mail non envoyé', { n: emails.length })}
+          {invitations ? ` (${tr(invitations > 1 ? 'dont {n} invitations' : 'dont {n} invitation', { n: invitations })})` : ''}
         </p>
         <ul className="mt-1.5 text-[13px] leading-relaxed text-d-muted">
           {reasons.map((r) => (
@@ -132,7 +133,7 @@ function EmailStatus({ notify }) {
         </ul>
       </div>
       <Button variant="outline" onClick={retryAll} disabled={busy} className="max-sm:w-full">
-        {busy ? 'Envoi en cours…' : 'Renvoyer les e-mails'}
+        {busy ? tr('Envoi en cours…') : tr('Renvoyer les e-mails')}
       </Button>
     </Card>
   )
@@ -144,10 +145,10 @@ export default function Users() {
   const resend = async (userId) => {
     try {
       const r = await api.post(`/users/invitations/${userId}/resend`)
-      if (r?.sent === false) notify(`Invitation enregistrée, mais l’e-mail n’est pas parti : ${r.reason ?? 'service d’e-mail non configuré'}.`)
+      if (r?.sent === false) notify(tr('Invitation enregistrée, mais l’e-mail n’est pas parti : {reason}.', { reason: tr(r.reason ?? 'service d’e-mail non configuré') }))
       setResent(userId)
     } catch (err) {
-      notify(err.message)
+      notify(tr(err.message))
     }
   }
   const [filter, setFilter] = useState('tous')
@@ -178,10 +179,10 @@ export default function Users() {
   return (
     <>
       <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow="Équipe kclick" before="Utilisateurs et " accent="rôles" />
+        <PageTitle eyebrow={tr('Équipe kclick')} before={tr('Utilisateurs et ')} accent={tr('rôles')} />
         <Button onClick={() => (window.location.hash = 'admin/utilisateurs/nouveau')} className="max-sm:w-full">
           <Icon name="plus" className="size-4" />
-          Ajouter un utilisateur
+          {tr('Ajouter un utilisateur')}
         </Button>
       </header>
 
@@ -196,10 +197,10 @@ export default function Users() {
             </span>
             <div className="min-w-0">
               <p className="flex items-baseline gap-2.5">
-                <span className="text-[15px]">{r.label}</span>
+                <span className="text-[15px]">{tr(r.label)}</span>
                 <span className="font-mono text-[22px] leading-none">{r.count}</span>
               </p>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-d-muted">{ROLES[r.id].text}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-d-muted">{tr(ROLES[r.id].text)}</p>
             </div>
           </Card>
         ))}
@@ -207,7 +208,7 @@ export default function Users() {
 
       {/* Filtres et recherche */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Filtrer les utilisateurs" className="-mx-1 flex max-w-full gap-1.5 overflow-x-auto px-1 pb-1">
+        <div role="tablist" aria-label={tr('Filtrer les utilisateurs')} className="-mx-1 flex max-w-full gap-1.5 overflow-x-auto px-1 pb-1">
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -219,7 +220,7 @@ export default function Users() {
                 filter === f.id ? 'border-d-ink bg-d-ink text-white' : 'border-d-line bg-white hover:border-d-border'
               }`}
             >
-              {f.label}
+              {tr(f.label)}
               <span className={`font-mono text-xs ${filter === f.id ? 'text-white/70' : 'text-d-muted'}`}>{counts[f.id]}</span>
             </button>
           ))}
@@ -227,12 +228,12 @@ export default function Users() {
         <form role="search" onSubmit={(e) => e.preventDefault()} className="w-full sm:w-[300px]">
           <label className="flex h-11 items-center gap-3 rounded-[10px] border border-d-line bg-white px-4 focus-within:border-d-ink">
             <Icon name="search" className="size-4 shrink-0 text-d-muted" />
-            <span className="sr-only">Rechercher un utilisateur</span>
+            <span className="sr-only">{tr('Rechercher un utilisateur')}</span>
             <input
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Nom, e-mail, Maison…"
+              placeholder={tr('Nom, e-mail, Maison…')}
               className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-d-muted"
             />
           </label>
@@ -241,7 +242,7 @@ export default function Users() {
 
       <Card className="overflow-hidden">
         {!visible.length ? (
-          <p className="px-5 py-10 text-center text-sm text-d-muted">Aucun utilisateur ne correspond.</p>
+          <p className="px-5 py-10 text-center text-sm text-d-muted">{tr('Aucun utilisateur ne correspond.')}</p>
         ) : (
           <>
             {/* Tablette et ordinateur */}
@@ -249,12 +250,12 @@ export default function Users() {
               <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-d-line text-[12.5px] text-d-muted">
-                    <th scope="col" className="py-3 pl-5 pr-3 font-normal">Utilisateur</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Rôle</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Maison</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Statut</th>
-                    <th scope="col" className="px-3 py-3 font-normal">Dernière connexion</th>
-                    <th scope="col" className="py-3 pl-3 pr-5 font-normal"><span className="sr-only">Actions</span></th>
+                    <th scope="col" className="py-3 pl-5 pr-3 font-normal">{tr('Utilisateur')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Rôle')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Maison')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Statut')}</th>
+                    <th scope="col" className="px-3 py-3 font-normal">{tr('Dernière connexion')}</th>
+                    <th scope="col" className="py-3 pl-3 pr-5 font-normal"><span className="sr-only">{tr('Actions')}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -270,7 +271,7 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="px-3 py-3.5 align-middle">
-                        <Pill tone={ROLE_TONE}>{ROLES[u.role].label}</Pill>
+                        <Pill tone={ROLE_TONE}>{tr(ROLES[u.role].label)}</Pill>
                       </td>
                       <td className="px-3 py-3.5 align-middle">
                         <Scope user={u} />
@@ -284,8 +285,8 @@ export default function Users() {
                       <td className="py-3.5 pl-3 pr-5 text-right align-middle">
                         <span className="flex items-center justify-end gap-4">
                           <Resend user={u} sent={resent === u.id} onSend={resend} />
-                          <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 text-[13px] hover:border-d-ink" aria-label={`Modifier ${fullName(u)}`}>
-                            Modifier
+                          <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 text-[13px] hover:border-d-ink" aria-label={tr('Modifier {name}', { name: fullName(u) })}>
+                            {tr('Modifier')}
                           </a>
                         </span>
                       </td>
@@ -311,17 +312,17 @@ export default function Users() {
                       <Pill tone={USER_STATUS[u.status]} />
                     </span>
                     <span className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]">
-                      <Pill tone={ROLE_TONE}>{ROLES[u.role].label}</Pill>
+                      <Pill tone={ROLE_TONE}>{tr(ROLES[u.role].label)}</Pill>
                       <Scope user={u} />
                     </span>
                     <span className="flex flex-wrap items-center justify-between gap-3 text-[13px]">
                       <span className="text-d-muted">
-                        Dernière connexion : <LastSeen user={u} now={now} />
+                        {tr('Dernière connexion :')} <LastSeen user={u} now={now} />
                       </span>
                       <span className="flex items-center gap-4">
                         <Resend user={u} sent={resent === u.id} onSend={resend} />
-                        <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 hover:border-d-ink" aria-label={`Modifier ${fullName(u)}`}>
-                          Modifier
+                        <a href={editHref(u)} className="inline-flex h-9 items-center rounded-lg border border-d-line px-3.5 hover:border-d-ink" aria-label={tr('Modifier {name}', { name: fullName(u) })}>
+                          {tr('Modifier')}
                         </a>
                       </span>
                     </span>
@@ -336,7 +337,7 @@ export default function Users() {
       <div className="mt-5 flex gap-3 rounded-[14px] border border-d-line bg-d-soft/60 px-5 py-4 text-[13px] leading-relaxed text-d-muted">
         <Icon name="bell" className="mt-0.5 size-4 shrink-0 text-d-ink" />
         <p>
-          Chaque personne se connecte avec un code à 6 chiffres reçu par e-mail, sans mot de passe. Seul le super admin peut ajouter un utilisateur, changer un rôle ou désactiver un compte.
+          {tr('Chaque personne se connecte avec un code à 6 chiffres reçu par e-mail, sans mot de passe. Seul le super admin peut ajouter un utilisateur, changer un rôle ou désactiver un compte.')}
         </p>
       </div>
     </>

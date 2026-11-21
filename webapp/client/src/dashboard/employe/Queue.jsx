@@ -6,6 +6,7 @@ import { useStore } from '../store/store.jsx'
 import { ago, money, since } from '../lib/format.js'
 import { PART_STATUS } from '../lib/status.js'
 import { Button, Mono, PageTitle } from '../ui/ui.jsx'
+import { tr } from '../lib/i18n.js'
 
 /*
  * File des commandes d'une Maison : seule sa part de chaque commande s'affiche.
@@ -71,11 +72,11 @@ function RefuseForm({ onCancel, onConfirm }) {
       }}
     >
       <fieldset className="flex flex-col gap-2 text-[13px]">
-        <legend className="mb-1 font-medium text-d-danger">Motif de la rupture</legend>
+        <legend className="mb-1 font-medium text-d-danger">{tr('Motif de la rupture')}</legend>
         {['Rupture de stock', 'Article abîmé', 'autre'].map((r) => (
           <label key={r} className="flex items-center gap-2">
             <input type="radio" name="reason" value={r} checked={reason === r} onChange={() => setReason(r)} className="accent-d-danger" />
-            {r === 'autre' ? 'Autre motif' : r}
+            {r === 'autre' ? tr('Autre motif') : tr(r)}
           </label>
         ))}
         {reason === 'autre' && (
@@ -83,19 +84,19 @@ function RefuseForm({ onCancel, onConfirm }) {
             autoFocus
             value={other}
             onChange={(e) => setOther(e.target.value)}
-            placeholder="Précisez…"
-            aria-label="Autre motif"
+            placeholder={tr('Précisez…')}
+            aria-label={tr('Autre motif')}
             className="h-10 rounded-lg border border-d-line bg-white px-3 text-sm outline-none focus:border-d-ink"
           />
         )}
       </fieldset>
-      <p className="text-xs text-d-muted">Le client est prévenu ; le reste de sa commande continue.</p>
+      <p className="text-xs text-d-muted">{tr('Le client est prévenu ; le reste de sa commande continue.')}</p>
       <div className="flex gap-2">
         <Button variant="soft" size="sm" onClick={onCancel} className="flex-1">
-          Annuler
+          {tr('Annuler')}
         </Button>
         <Button type="submit" size="sm" disabled={!final} className="flex-1 bg-d-danger hover:bg-[#6f1a13]">
-          Confirmer la rupture
+          {tr('Confirmer la rupture')}
         </Button>
       </div>
     </form>
@@ -113,15 +114,15 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
 
   let time
   if (part.status === 'nouvelle') time = <span className="text-d-muted">{ago(order.createdAt, now)}</span>
-  else if (part.status === 'en_preparation') time = <span className="text-d-gold-ink">depuis {since(part.startedAt ?? order.createdAt, now)}</span>
-  else time = <span className="text-d-muted">prête depuis {since(part.readyAt ?? order.createdAt, now)}</span>
+  else if (part.status === 'en_preparation') time = <span className="text-d-gold-ink">{tr('depuis {time}', { time: since(part.startedAt ?? order.createdAt, now) })}</span>
+  else time = <span className="text-d-muted">{tr('prête depuis {time}', { time: since(part.readyAt ?? order.createdAt, now) })}</span>
 
   let readyNote = null
   if (part.status === 'prete') {
-    if (order.mode === 'retrait') readyNote = 'Le client vient la chercher en boutique.'
-    else if (rider) readyNote = `Livreur assigné : ${rider.name}.`
-    else if (others.length) readyNote = `En attente du livreur, qui passera aussi chez ${others.join(' et ')}.`
-    else readyNote = 'En attente du livreur.'
+    if (order.mode === 'retrait') readyNote = tr('Le client vient la chercher en boutique.')
+    else if (rider) readyNote = tr('Livreur assigné : {name}.', { name: rider.name })
+    else if (others.length) readyNote = tr('En attente du livreur, qui passera aussi chez {brands}.', { brands: others.join(` ${tr('et')} `) })
+    else readyNote = tr('En attente du livreur.')
   }
 
   return (
@@ -133,8 +134,8 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
         <span className="text-xs">{time}</span>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Chip>{order.mode === 'retrait' ? 'Retrait en boutique' : 'Livraison'}</Chip>
-        {others.length > 0 && <Chip green>Commande avec {others.join(' et ')}</Chip>}
+        <Chip>{order.mode === 'retrait' ? tr('Retrait en boutique') : tr('Livraison')}</Chip>
+        {others.length > 0 && <Chip green>{tr('Commande avec {brands}', { brands: others.join(` ${tr('et')} `) })}</Chip>}
       </div>
       <ul className="flex flex-col gap-2.5">
         {part.items.map((it, i) => (
@@ -146,14 +147,14 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
               <Mono className="text-sm">{money(it.price * it.qty)}</Mono>
             </p>
             {it.detail && <p className="mt-0.5 text-[13px] text-d-muted">{it.detail}</p>}
-            {it.gift && <p className="mt-2 rounded-md bg-d-soft px-3 py-2 text-[13px]">Mot cadeau : « {it.gift} »</p>}
+            {it.gift && <p className="mt-2 rounded-md bg-d-soft px-3 py-2 text-[13px]">{tr('Mot cadeau :')} « {it.gift} »</p>}
           </li>
         ))}
       </ul>
 
       {part.status === 'nouvelle' && (
         <Button className="w-full" onClick={() => act('part/start')}>
-          Commencer la préparation
+          {tr('Commencer la préparation')}
         </Button>
       )}
       {part.status === 'en_preparation' &&
@@ -162,10 +163,10 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
         ) : (
           <div className="flex flex-col gap-2">
             <Button className="w-full" onClick={() => act('part/ready')}>
-              Marquer prête
+              {tr('Marquer prête')}
             </Button>
             <Button variant="danger" size="sm" className="w-full" onClick={() => setRefusing(true)}>
-              Signaler une rupture
+              {tr('Signaler une rupture')}
             </Button>
           </div>
         ))}
@@ -174,7 +175,7 @@ function PartCard({ order, part, brand, now, fresh, dispatch }) {
           <p className="text-[13px] text-d-muted">{readyNote}</p>
           {order.mode === 'retrait' && (
             <Button variant="outline" className="w-full" onClick={() => dispatch({ type: 'order/pickedByCustomer', number: order.number })}>
-              Remise au client
+              {tr('Remise au client')}
             </Button>
           )}
         </>
@@ -229,8 +230,8 @@ export default function Queue({ brand }) {
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle live="En direct · un son retentit à chaque nouvelle commande" before="File des " accent="commandes" />
-        <p className="text-sm text-d-muted">Seule la part {b.name} de chaque commande s’affiche ici.</p>
+        <PageTitle live={tr('En direct · un son retentit à chaque nouvelle commande')} before={tr('File des ')} accent={tr('commandes')} />
+        <p className="text-sm text-d-muted">{tr('Seule la part {brand} de chaque commande s’affiche ici.', { brand: b.name })}</p>
       </header>
 
       {loadError && <LoadError error={loadError} onRetry={retryLoad} className="mb-4" />}
@@ -245,12 +246,12 @@ export default function Queue({ brand }) {
           >
             <h2 id={`col-${col.id}`} className="flex items-center gap-2.5 px-1 py-1 text-[15px] font-medium">
               <span className="size-2.5 rounded-[3px]" style={{ background: PART_STATUS[col.id].bar }} aria-hidden />
-              {col.title}
+              {tr(col.title)}
               <span className="font-mono text-[13px] font-normal text-d-muted">{loading ? '…' : col.items.length}</span>
             </h2>
             {loading ? (
               // Premier chargement : cartes squelettes dans les vraies colonnes
-              <SkeletonGroup label="Chargement des commandes…" className="flex flex-col gap-3 [--sk:var(--color-d-soft)]">
+              <SkeletonGroup label={tr('Chargement des commandes…')} className="flex flex-col gap-3 [--sk:var(--color-d-soft)]">
                 {Array.from({ length: col.id === COLUMNS[0].id ? 2 : 1 }, (_, i) => <RideCard key={i} />)}
               </SkeletonGroup>
             ) : col.items.length ? (
@@ -258,7 +259,7 @@ export default function Queue({ brand }) {
                 <PartCard key={order.number} order={order} part={part} brand={brand} now={now} fresh={fresh.includes(order.number)} dispatch={dispatch} />
               ))
             ) : (
-              <p className="px-1 py-6 text-center text-[13px] text-d-muted">Rien pour l’instant.</p>
+              <p className="px-1 py-6 text-center text-[13px] text-d-muted">{tr('Rien pour l’instant.')}</p>
             )}
           </section>
         ))}

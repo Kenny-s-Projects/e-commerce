@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
 import { getAccessToken, onSessionChange, signOut } from '../../lib/supabase.js'
+import { tr } from '../lib/i18n.js'
 
 /*
  * État partagé des dashboards, branché sur l'API Express.
@@ -96,7 +97,7 @@ export function DashboardStore({ space, brand, children }) {
       return me
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
-        if (err.code === 'ACCOUNT_DISABLED') notify(err.message)
+        if (err.code === 'ACCOUNT_DISABLED') notify(tr(err.message))
         await signOut()
         setAuth({ status: 'anon', me: null })
       } else {
@@ -141,7 +142,7 @@ export function DashboardStore({ space, brand, children }) {
       setNow(Date.now())
       setLoadError(null)
     } catch (err) {
-      notify(err.message)
+      notify(tr(err.message))
       // Premier chargement raté : pas de squelette sans fin, on affiche l'erreur (les actualisations suivantes gardent les données)
       if (!known.current) setLoadError(err)
     } finally {
@@ -200,11 +201,11 @@ export function DashboardStore({ space, brand, children }) {
             break
           case 'part/refuse':
             await api.patch(`/parts/${partOf(order, action.brand).id}/status`, { status: 'refusee', reason: action.reason })
-            notify('Rupture signalée.', 'ok')
+            notify(tr('Rupture signalée.'), 'ok')
             break
           case 'order/assign':
             await api.post('/deliveries', { orderId: order.id, riderId: action.riderId, etaMinutes: action.eta ?? undefined })
-            notify(`${action.number} assignée.`, 'ok')
+            notify(tr('{n} assignée.', { n: action.number }), 'ok')
             break
           case 'rider/collect':
             await api.post(`/deliveries/${order.id}/collect`, { brand: action.brand })
@@ -218,17 +219,17 @@ export function DashboardStore({ space, brand, children }) {
             break
           case 'order/cancel':
             await api.post(`/orders/${order.id}/cancel`, { reason: action.reason })
-            notify(`${action.number} annulée.`, 'ok')
+            notify(tr('{n} annulée.', { n: action.number }), 'ok')
             break
           case 'order/pickedByCustomer':
             await api.post(`/orders/${order.id}/handover`)
-            notify(`${action.number} remise au client.`, 'ok')
+            notify(tr('{n} remise au client.', { n: action.number }), 'ok')
             break
           case 'shop/toggle': {
             const open = !data.shopsOpen[action.brand]
             setData((d) => ({ ...d, shopsOpen: { ...d.shopsOpen, [action.brand]: open } }))
             await api.patch(`/brands/${action.brand}`, { isOpen: open })
-            notify(open ? 'Maison ouverte à la vente.' : 'Maison fermée : produits « bientôt disponibles ».', 'ok')
+            notify(open ? tr('Maison ouverte à la vente.') : tr('Maison fermée : produits « bientôt disponibles ».'), 'ok')
             break
           }
           case 'user/invite': {
@@ -251,7 +252,7 @@ export function DashboardStore({ space, brand, children }) {
         }
       } catch (err) {
         // L'erreur est affichée dans le bandeau ; l'écran peut aussi la lire dans le résultat
-        notify(err.message)
+        notify(tr(err.message))
         await reload()
         return { error: err }
       }

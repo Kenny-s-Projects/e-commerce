@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api.js'
-import { hour, money } from '../lib/format.js'
+import { dateLocale, hour, money } from '../lib/format.js'
 import { Avatar, Brand, Card, CardTitle, Pill, StatusPill, telHref, waHref } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
-const longDate = (date) => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-const shortDate = (date) => new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '')
+const longDate = (date) => new Date(date).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
+const shortDate = (date) => new Date(date).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' }).replace('.', '')
 const isToday = (date) => new Date(date).toDateString() === new Date().toDateString()
 
 const ACCOUNT = { bg: '#e1eee2', fg: '#2f5a37' }
@@ -52,20 +53,20 @@ export default function ClientDetail({ id }) {
   if (error || !client) {
     return (
       <Card className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-        <p className="text-[17px]">{error ? (error.status === 404 ? 'Ce client est introuvable.' : error.message) : 'Chargement du client…'}</p>
-        {error && <a href="#admin/clients" className="text-[13px] underline decoration-d-border underline-offset-4">Retour aux clients</a>}
+        <p className="text-[17px]">{error ? (error.status === 404 ? tr('Ce client est introuvable.') : tr(error.message)) : tr('Chargement du client…')}</p>
+        {error && <a href="#admin/clients" className="text-[13px] underline decoration-d-border underline-offset-4">{tr('Retour aux clients')}</a>}
       </Card>
     )
   }
 
-  const name = client.name || 'Client'
+  const name = client.name || tr('Client')
   const kept = client.orders.filter((o) => !['annulee', 'refusee'].includes(o.status))
   const average = kept.length ? client.totalSpent / kept.length : 0
 
   return (
     <>
-      <nav aria-label="Fil d’Ariane" className="mb-4 text-[13px] text-d-muted">
-        <a href="#admin/clients" className="underline decoration-d-border underline-offset-4 hover:text-d-ink">Clients</a>
+      <nav aria-label={tr('Fil d’Ariane')} className="mb-4 text-[13px] text-d-muted">
+        <a href="#admin/clients" className="underline decoration-d-border underline-offset-4 hover:text-d-ink">{tr('Clients')}</a>
         <span className="mx-1.5">/</span>
         <span className="text-d-ink">{name}</span>
       </nav>
@@ -75,13 +76,13 @@ export default function ClientDetail({ id }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-[clamp(26px,3vw,34px)] font-light leading-tight">{name}</h1>
-              <Pill tone={client.hasAccount ? ACCOUNT : GUEST}>{client.hasAccount ? 'Compte' : 'Sans compte'}</Pill>
+              <Pill tone={client.hasAccount ? ACCOUNT : GUEST}>{client.hasAccount ? tr('Compte') : tr('Sans compte')}</Pill>
             </div>
             <p className="mt-1 text-[13px] text-d-muted">
-              Client depuis le {longDate(client.createdAt)}
+              {tr('Client depuis le {date}', { date: longDate(client.createdAt) })}
               {client.favoriteBrand && (
                 <>
-                  {' · '}préfère <Brand id={client.favoriteBrand} className="text-d-ink" />
+                  {' · '}{tr('préfère')} <Brand id={client.favoriteBrand} className="text-d-ink" />
                 </>
               )}
             </p>
@@ -90,7 +91,7 @@ export default function ClientDetail({ id }) {
         {client.phone && (
           <div className="flex gap-2.5 max-sm:w-full">
             <a href={telHref(client.phone)} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-d-ink bg-white px-5 text-sm hover:bg-d-soft max-sm:flex-1">
-              <Icon name="phone" className="size-4" /> Appeler
+              <Icon name="phone" className="size-4" /> {tr('Appeler')}
             </a>
             <a href={waHref(client.phone)} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-d-ink bg-white px-5 text-sm hover:bg-d-soft max-sm:flex-1">
               <Icon name="whatsapp" className="size-4" /> WhatsApp
@@ -102,14 +103,14 @@ export default function ClientDetail({ id }) {
       <div className="grid grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-5 max-lg:grid-cols-1">
         <div className="flex min-w-0 flex-col gap-5">
           <div className="grid grid-cols-4 gap-3 max-sm:grid-cols-2">
-            <Stat label="Commandes" value={client.ordersCount} />
-            <Stat label="Total dépensé" value={money(client.totalSpent)} />
-            <Stat label="Panier moyen" value={money(Math.round(average))} />
-            <Stat label="Dernière" value={client.lastOrderAt ? shortDate(client.lastOrderAt) : '—'} />
+            <Stat label={tr('Commandes')} value={client.ordersCount} />
+            <Stat label={tr('Total dépensé')} value={money(client.totalSpent)} />
+            <Stat label={tr('Panier moyen')} value={money(Math.round(average))} />
+            <Stat label={tr('Dernière')} value={client.lastOrderAt ? shortDate(client.lastOrderAt) : '—'} />
           </div>
 
           <Card className="overflow-hidden">
-            <CardTitle className="px-5 pb-3 pt-5">Commandes</CardTitle>
+            <CardTitle className="px-5 pb-3 pt-5">{tr('Commandes')}</CardTitle>
             {client.orders.length ? (
               <ul className="divide-y divide-d-line border-t border-d-line">
                 {client.orders.map((o) => (
@@ -118,7 +119,7 @@ export default function ClientDetail({ id }) {
                       <span className="min-w-0">
                         <span className="font-mono text-[13.5px] underline decoration-d-border underline-offset-4">{o.number}</span>
                         <span className="mt-1 block text-xs text-d-muted">
-                          {isToday(o.createdAt) ? `Aujourd’hui, ${hour(o.createdAt)}` : shortDate(o.createdAt)} · {o.mode === 'livraison' ? 'Livraison' : 'Retrait'}
+                          {isToday(o.createdAt) ? tr('Aujourd’hui, {time}', { time: hour(o.createdAt) }) : shortDate(o.createdAt)} · {o.mode === 'livraison' ? tr('Livraison') : tr('Retrait')}
                         </span>
                       </span>
                       <span className="flex gap-3 text-[13px]">
@@ -135,31 +136,31 @@ export default function ClientDetail({ id }) {
                 ))}
               </ul>
             ) : (
-              <p className="border-t border-d-line px-5 py-6 text-sm text-d-muted">Aucune commande pour l’instant.</p>
+              <p className="border-t border-d-line px-5 py-6 text-sm text-d-muted">{tr('Aucune commande pour l’instant.')}</p>
             )}
           </Card>
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
           <Card className="px-5 py-5">
-            <CardTitle>Coordonnées</CardTitle>
+            <CardTitle>{tr('Coordonnées')}</CardTitle>
             <dl className="mt-2 divide-y divide-d-line">
-              <Row label="E-mail">
+              <Row label={tr('E-mail')}>
                 {client.email ? (
                   <a href={`mailto:${client.email}`} className="underline decoration-d-border underline-offset-4">{client.email}</a>
                 ) : (
-                  <span className="text-d-muted">Non renseigné</span>
+                  <span className="text-d-muted">{tr('Non renseigné')}</span>
                 )}
               </Row>
-              <Row label="Téléphone">
+              <Row label={tr('Téléphone')}>
                 <span className="font-mono text-[13px]">{client.phone || '—'}</span>
               </Row>
-              <Row label="Langue">{LANGS[client.lang] ?? '—'}</Row>
+              <Row label={tr('Langue')}>{LANGS[client.lang] ?? '—'}</Row>
             </dl>
           </Card>
 
           <Card className="px-5 py-5">
-            <CardTitle>Adresses enregistrées</CardTitle>
+            <CardTitle>{tr('Adresses enregistrées')}</CardTitle>
             {client.addresses.length ? (
               <ul className="mt-3 flex flex-col gap-3">
                 {client.addresses.map((a) => (
@@ -169,14 +170,14 @@ export default function ClientDetail({ id }) {
                       {a.label && <span className="block text-xs text-d-muted">{a.label}</span>}
                       {a.commune}
                       {a.street ? `, ${a.street}` : ''}
-                      {a.landmark && <span className="block text-d-muted">Repère : {a.landmark}</span>}
+                      {a.landmark && <span className="block text-d-muted">{tr('Repère :')} {a.landmark}</span>}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="mt-3 text-sm text-d-muted">
-                {client.hasAccount ? 'Aucune adresse enregistrée.' : 'Commande sans compte : l’adresse est gardée sur chaque commande.'}
+                {client.hasAccount ? tr('Aucune adresse enregistrée.') : tr('Commande sans compte : l’adresse est gardée sur chaque commande.')}
               </p>
             )}
           </Card>

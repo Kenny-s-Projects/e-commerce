@@ -5,6 +5,8 @@ import Icon from '../ui/Icon.jsx'
 import { Avatar } from '../ui/ui.jsx'
 import { useStore } from '../store/store.jsx'
 import { canDispatch, isOpen } from '../lib/status.js'
+import { tr } from '../lib/i18n.js'
+import LangSwitch from '../ui/LangSwitch.jsx'
 
 export const ADMIN_MENU = [
   { id: 'vue', label: 'Vue d’ensemble', icon: 'home', href: '#admin' },
@@ -36,7 +38,7 @@ function Nav({ current, onNavigate }) {
     dispatch: orders.filter(canDispatch).length,
   }
   return (
-    <nav aria-label="Menu du dashboard" className="flex flex-col gap-1">
+    <nav aria-label={tr('Menu du dashboard')} className="flex flex-col gap-1">
       {ADMIN_MENU.map((item) => {
         const active = current === item.id
         const count = item.badge ? badges[item.badge] : 0
@@ -51,7 +53,7 @@ function Nav({ current, onNavigate }) {
             }`}
           >
             <Icon name={item.icon} className="size-[17px] opacity-90" />
-            <span className="flex-1">{item.label}</span>
+            <span className="flex-1">{tr(item.label)}</span>
             {count > 0 && (
               <span className="grid h-[19px] min-w-[34px] place-items-center rounded-full bg-d-gold px-2 font-mono text-[11px] font-medium text-d-ink">
                 {count}
@@ -68,15 +70,18 @@ function Me() {
   const { me, logout } = useStore()
   const name = me?.fullName || me?.email || 'Super admin'
   return (
-    <div className="flex items-center gap-3 border-t border-white/10 pt-4">
+    <div className="flex flex-col gap-3 border-t border-white/10 pt-3">
+    <LangSwitch className="-ml-1" />
+    <div className="flex items-center gap-3">
       <Avatar name={name} className="size-9 text-[12px]" tone="bg-d-gold text-d-ink" />
       <div className="min-w-0 flex-1 leading-tight">
         <p className="truncate text-[14.5px] text-white">{name}</p>
-        <p className="text-xs text-white/60">Super admin</p>
+        <p className="text-xs text-white/60">{tr('Super admin')}</p>
       </div>
-      <button type="button" onClick={logout} aria-label="Se déconnecter" title="Se déconnecter" className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
+      <button type="button" onClick={logout} aria-label={tr('Se déconnecter')} title={tr('Se déconnecter')} className="grid size-9 place-items-center rounded-lg text-white/70 hover:bg-white/5 hover:text-white">
         <Icon name="logout" className="size-[18px]" />
       </button>
+    </div>
     </div>
   )
 }
@@ -110,16 +115,19 @@ export default function AdminLayout({ current, children }) {
       {/* Tablette et téléphone */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-d-ink px-4 lg:hidden">
         <Logo />
-        <button type="button" onClick={() => setOpen(true)} aria-label="Ouvrir le menu" className="grid size-10 place-items-center text-white">
-          <Icon name="menu" className="size-6" />
-        </button>
+        <div className="flex items-center gap-2">
+          <LangSwitch />
+          <button type="button" onClick={() => setOpen(true)} aria-label={tr('Ouvrir le menu')} className="grid size-10 place-items-center text-white">
+            <Icon name="menu" className="size-6" />
+          </button>
+        </div>
       </header>
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+          <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={tr('Menu')}>
             <m.button
               type="button"
-              aria-label="Fermer le menu"
+              aria-label={tr('Fermer le menu')}
               className="absolute inset-0 bg-black/50"
               onClick={() => setOpen(false)}
               initial={{ opacity: 0 }}
@@ -136,7 +144,7 @@ export default function AdminLayout({ current, children }) {
               <div className="flex flex-col gap-6">
                 <div className="flex items-center justify-between px-2.5">
                   <Logo />
-                  <button type="button" onClick={() => setOpen(false)} aria-label="Fermer le menu" className="grid size-10 place-items-center text-white">
+                  <button type="button" onClick={() => setOpen(false)} aria-label={tr('Fermer le menu')} className="grid size-10 place-items-center text-white">
                     <Icon name="close" className="size-5" />
                   </button>
                 </div>

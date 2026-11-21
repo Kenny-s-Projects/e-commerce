@@ -6,6 +6,7 @@ import { orderStatus } from '../lib/status.js'
 import { ago, hour, money, orderTotal, partTotal } from '../lib/format.js'
 import { Brand, Card, PageTitle, StatusPill } from '../ui/ui.jsx'
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 // Onglets de la liste des commandes (les 4 onglets des dashboards + Toutes)
 export const TABS = [
@@ -37,8 +38,8 @@ export const detailHref = (o) => `#admin/commandes/${o.number}`
 /** Colonne « Livreur » : nom + arrivée, à assigner, retrait en boutique, motif d'annulation */
 function RiderCell({ order, status }) {
   const rider = order.riderName ? { name: order.riderName } : null
-  if (status === 'annulee') return <span className="text-d-danger">{order.cancelled?.reason ?? 'Annulée'}</span>
-  if (order.mode === 'retrait') return <span className="text-d-muted">Retrait en boutique</span>
+  if (status === 'annulee') return <span className="text-d-danger">{order.cancelled?.reason ?? tr('Annulée')}</span>
+  if (order.mode === 'retrait') return <span className="text-d-muted">{tr('Retrait en boutique')}</span>
   if (rider) {
     return (
       <span>
@@ -47,7 +48,7 @@ function RiderCell({ order, status }) {
       </span>
     )
   }
-  return <span className="text-d-gold-ink">À assigner</span>
+  return <span className="text-d-gold-ink">{tr('À assigner')}</span>
 }
 
 function Brands({ order, className = '' }) {
@@ -66,7 +67,7 @@ function Brands({ order, className = '' }) {
  */
 export function OrdersTable({ orders, highlight }) {
   const { now } = useStore()
-  if (!orders.length) return <p className="px-5 py-10 text-center text-sm text-d-muted">Aucune commande.</p>
+  if (!orders.length) return <p className="px-5 py-10 text-center text-sm text-d-muted">{tr('Aucune commande.')}</p>
 
   return (
     <>
@@ -75,13 +76,13 @@ export function OrdersTable({ orders, highlight }) {
         <table className="w-full min-w-[760px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-d-line text-[12.5px] text-d-muted">
-              <th scope="col" className="py-3 pl-5 pr-3 font-normal">Commande</th>
-              <th scope="col" className="px-3 py-3 font-normal">Client</th>
-              <th scope="col" className="px-3 py-3 font-normal">Maisons</th>
-              <th scope="col" className="px-3 py-3 font-normal">Mode</th>
-              <th scope="col" className="px-3 py-3 text-right font-normal">Total</th>
-              <th scope="col" className="px-3 py-3 font-normal">Statut</th>
-              <th scope="col" className="py-3 pl-3 pr-5 font-normal">Livreur</th>
+              <th scope="col" className="py-3 pl-5 pr-3 font-normal">{tr('Commande')}</th>
+              <th scope="col" className="px-3 py-3 font-normal">{tr('Client')}</th>
+              <th scope="col" className="px-3 py-3 font-normal">{tr('Maisons')}</th>
+              <th scope="col" className="px-3 py-3 font-normal">{tr('Mode')}</th>
+              <th scope="col" className="px-3 py-3 text-right font-normal">{tr('Total')}</th>
+              <th scope="col" className="px-3 py-3 font-normal">{tr('Statut')}</th>
+              <th scope="col" className="py-3 pl-3 pr-5 font-normal">{tr('Livreur')}</th>
             </tr>
           </thead>
           <tbody>
@@ -108,7 +109,7 @@ export function OrdersTable({ orders, highlight }) {
                   <td className="px-3 py-3.5 align-middle">
                     <Brands order={o} />
                   </td>
-                  <td className="px-3 py-3.5 align-middle text-d-muted">{o.mode === 'livraison' ? 'Livraison' : 'Retrait'}</td>
+                  <td className="px-3 py-3.5 align-middle text-d-muted">{o.mode === 'livraison' ? tr('Livraison') : tr('Retrait')}</td>
                   <td className="px-3 py-3.5 text-right align-middle font-mono">{money(displayTotal(o))}</td>
                   <td className="px-3 py-3.5 align-middle">
                     <StatusPill status={status} />
@@ -138,7 +139,7 @@ export function OrdersTable({ orders, highlight }) {
                   <span className="min-w-0">
                     <span className="block truncate text-[15px]">{o.customer.name}</span>
                     <span className="mt-0.5 block text-xs text-d-muted">
-                      {hour(o.createdAt)} · {o.mode === 'livraison' ? 'Livraison' : 'Retrait'}
+                      {hour(o.createdAt)} · {o.mode === 'livraison' ? tr('Livraison') : tr('Retrait')}
                     </span>
                   </span>
                   <span className="font-mono text-[15px]">{money(displayTotal(o))}</span>
@@ -173,12 +174,12 @@ export function SearchField({ value, onChange, onSubmit, className = '' }) {
     >
       <label className="flex h-11 items-center gap-3 rounded-[10px] border border-d-line bg-white px-4 focus-within:border-d-ink">
         <Icon name="search" className="size-4 shrink-0 text-d-muted" />
-        <span className="sr-only">Rechercher une commande</span>
+        <span className="sr-only">{tr('Rechercher une commande')}</span>
         <input
           type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="N° de commande, téléphone…"
+          placeholder={tr('N° de commande, téléphone…')}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-d-muted"
         />
       </label>
@@ -200,7 +201,7 @@ export default function Orders() {
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow="Aujourd’hui" live before="Com" accent="mandes" />
+        <PageTitle eyebrow={tr('Aujourd’hui')} live before={tr('Com')} accent={tr('mandes')} />
         <SearchField
           value={q}
           onChange={setQ}
@@ -209,7 +210,7 @@ export default function Orders() {
         />
       </header>
 
-      <div role="tablist" aria-label="Filtrer les commandes" className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <div role="tablist" aria-label={tr('Filtrer les commandes')} className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -221,7 +222,7 @@ export default function Orders() {
               tab === t.id ? 'border-d-ink bg-d-ink text-white' : 'border-d-line bg-white hover:border-d-border'
             }`}
           >
-            {t.label}
+            {tr(t.label)}
             <span className={`font-mono text-xs ${tab === t.id ? 'text-white/70' : 'text-d-muted'}`}>{counts[t.id]}</span>
           </button>
         ))}

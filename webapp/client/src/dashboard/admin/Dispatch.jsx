@@ -5,6 +5,7 @@ import { riderState, useStore } from '../store/store.jsx'
 import { canDispatch, isActivePart, orderStatus } from '../lib/status.js'
 import { hour, minutesSince, money, orderTotal } from '../lib/format.js'
 import { Avatar, Brand, Button, Card, Mono, PageTitle, PartPill, RiderPill, StatusPill } from '../ui/ui.jsx'
+import { tr } from '../lib/i18n.js'
 
 /*
  * Dispatch : choisir une commande à livrer, puis le livreur qui la prend.
@@ -28,13 +29,13 @@ const Empty = ({ children }) => (
 
 // Où en est le livreur : livre, récupère, ou libre
 function riderJob(order) {
-  if (!order) return 'Aucune course en cours.'
+  if (!order) return tr('Aucune course en cours.')
   if (order.pickedUpAt) {
     const left = order.eta != null ? Math.max(1, order.eta - minutesSince(order.pickedUpAt)) : null
-    return `Livre ${order.number}${left ? `, arrivée prévue dans ${left} min` : ''}.`
+    return left ? tr('Livre {n}, arrivée prévue dans {m} min.', { n: order.number, m: left }) : tr('Livre {n}.', { n: order.number })
   }
   const next = order.parts.find((p) => isActivePart(p) && p.status !== 'collectee')
-  return next ? `Récupère ${order.number} chez ${BRANDS[next.brand].name}.` : `Récupère ${order.number}.`
+  return next ? tr('Récupère {n} chez {brand}.', { n: order.number, brand: BRANDS[next.brand].name }) : tr('Récupère {n}.', { n: order.number })
 }
 
 function OrderCard({ order, selected, onSelect }) {
@@ -66,7 +67,7 @@ function OrderCard({ order, selected, onSelect }) {
           </span>
         ))}
       </span>
-      {!ready && <span className="text-xs text-d-muted">Aucune part prête : elle pourra partir dès qu’une Maison aura fini.</span>}
+      {!ready && <span className="text-xs text-d-muted">{tr('Aucune part prête : elle pourra partir dès qu’une Maison aura fini.')}</span>}
     </button>
   )
 }
@@ -79,7 +80,7 @@ function RiderCard({ rider, state, target, onAssign }) {
         <div className="min-w-0 flex-1">
           <p className="text-[15px]">{rider.name}</p>
           <p className="text-xs text-d-muted">
-            {rider.vehicle} · zone {rider.zone}
+            {rider.vehicle} · {tr('zone')} {rider.zone}
           </p>
         </div>
         <RiderPill status={state.status} />
@@ -91,7 +92,7 @@ function RiderCard({ rider, state, target, onAssign }) {
         onClick={() => onAssign(rider.id)}
         className="w-full"
       >
-        {target ? `Assigner ${target}` : 'Choisir une commande'}
+        {target ? tr('Assigner {n}', { n: target }) : tr('Choisir une commande')}
       </Button>
     </Card>
   )
@@ -103,11 +104,11 @@ function RunCard({ order, rider }) {
   const pending = order.parts.find((p) => isActivePart(p) && p.status !== 'collectee')
   let detail
   if (order.pickedUpAt) {
-    const where = collected.map((p) => BRANDS[p.brand].name).join(' et ')
-    detail = `Récupérée chez ${where} à ${hour(order.pickedUpAt)}.`
+    const where = collected.map((p) => BRANDS[p.brand].name).join(` ${tr('et')} `)
+    detail = tr('Récupérée chez {where} à {time}.', { where, time: hour(order.pickedUpAt) })
   } else if (pending) {
-    detail = `En chemin vers ${BRANDS[pending.brand].name} pour la récupérer.`
-  } else detail = 'En préparation du départ.'
+    detail = tr('En chemin vers {brand} pour la récupérer.', { brand: BRANDS[pending.brand].name })
+  } else detail = tr('En préparation du départ.')
   const left = order.pickedUpAt && order.eta != null ? Math.max(1, order.eta - minutesSince(order.pickedUpAt)) : null
 
   return (
@@ -149,43 +150,42 @@ export default function Dispatch() {
   return (
     <>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <PageTitle eyebrow="Livraisons à Gombe · le jour même" before="Dis" accent="patch" />
+        <PageTitle eyebrow={tr('Livraisons à Gombe · le jour même')} before={tr('Dis')} accent={tr('patch')} />
         <p className="max-w-[420px] text-sm leading-[1.55] text-d-muted">
-          Choisissez une commande à gauche, puis le livreur qui la prend. Une commande peut partir dès qu’une de ses parts est prête : le livreur
-          passe d’abord chez cette Maison.
+          {tr('Choisissez une commande à gauche, puis le livreur qui la prend. Une commande peut partir dès qu’une de ses parts est prête : le livreur passe d’abord chez cette Maison.')}
         </p>
       </header>
 
       {loading ? (
-        <ColumnsSkeleton cards={[2, 3, 1]} label="Chargement du dispatch…" />
+        <ColumnsSkeleton cards={[2, 3, 1]} label={tr('Chargement du dispatch…')} />
       ) : loadError ? (
         <LoadError error={loadError} onRetry={retryLoad} />
       ) : (
       <div className="grid items-start gap-[18px] lg:grid-cols-2 xl:grid-cols-3">
         <section aria-labelledby="h-todo" className="flex flex-col gap-3">
           <ColumnTitle id="h-todo" count={toAssign.length}>
-            À assigner
+            {tr('À assigner')}
           </ColumnTitle>
           {toAssign.length ? (
             toAssign.map((o) => <OrderCard key={o.number} order={o} selected={selected?.number === o.number} onSelect={setPicked} />)
           ) : (
-            <Empty>Aucune commande à assigner.</Empty>
+            <Empty>{tr('Aucune commande à assigner.')}</Empty>
           )}
         </section>
 
         <section aria-labelledby="h-riders" className="flex flex-col gap-3">
-          <ColumnTitle id="h-riders">Livreurs</ColumnTitle>
+          <ColumnTitle id="h-riders">{tr('Livreurs')}</ColumnTitle>
           {riders.map((r) => (
             <RiderCard key={r.id} rider={r} state={riderState(r, orders)} target={selected?.number} onAssign={assign} />
           ))}
         </section>
 
         <section aria-labelledby="h-runs" className="flex flex-col gap-3 lg:col-span-2 xl:col-span-1">
-          <ColumnTitle id="h-runs">Courses en cours</ColumnTitle>
+          <ColumnTitle id="h-runs">{tr('Courses en cours')}</ColumnTitle>
           {runs.length ? (
             runs.map((o) => <RunCard key={o.number} order={o} rider={riders.find((r) => r.id === o.riderId)} />)
           ) : (
-            <Empty>Aucune course en cours.</Empty>
+            <Empty>{tr('Aucune course en cours.')}</Empty>
           )}
         </section>
       </div>

@@ -1,4 +1,5 @@
 import Icon from '../ui/Icon.jsx'
+import { tr } from '../lib/i18n.js'
 
 const TABS = [
   { id: 'courses', label: 'Courses', icon: 'bike', href: '#livreur' },
@@ -18,7 +19,7 @@ export default function LivreurLayout({ current, tabs = true, children }) {
         <div className={`flex-1 ${tabs ? 'pb-24' : ''}`}>{children}</div>
         {tabs && (
           <nav
-            aria-label="Espace livreur"
+            aria-label={tr('Espace livreur')}
             className="fixed inset-x-0 bottom-0 z-30 mx-auto grid max-w-[480px] grid-cols-3 border-t border-d-line bg-white pb-[env(safe-area-inset-bottom)] md:absolute"
           >
             {TABS.map((t) => {
@@ -31,7 +32,7 @@ export default function LivreurLayout({ current, tabs = true, children }) {
                   className={`flex h-16 flex-col items-center justify-center gap-1 text-[12px] ${active ? 'text-d-ink' : 'text-d-muted'}`}
                 >
                   <Icon name={t.icon} className="size-[21px]" strokeWidth={active ? 1.8 : 1.5} />
-                  {t.label}
+                  {tr(t.label)}
                 </a>
               )
             })}

@@ -3,8 +3,8 @@ import { BRANDS } from '../data/demo.js'
 import { useStore } from '../store/store.jsx'
 import { api } from '../../lib/api.js'
 import { sendCode, verifyCode } from '../../lib/supabase.js'
-
-
+import { tr } from '../lib/i18n.js'
+import LangSwitch from '../ui/LangSwitch.jsx'
 
 const KEY = 'kclick-staff-email'
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -65,16 +65,19 @@ export default function StaffLogin({ step }) {
     <div className="flex min-h-svh flex-col bg-d-bg font-sans text-d-ink antialiased lg:flex-row">
       {/* Panneau de marque */}
       <aside className="relative flex flex-col justify-between gap-8 overflow-hidden bg-d-ink px-[clamp(20px,5vw,64px)] py-7 text-white lg:min-h-svh lg:w-[46%] lg:py-12">
-        <a href="#connexion" aria-label="kclick dashboard, connexion">
-          <Logo />
-        </a>
+        <div className="flex items-center justify-between gap-4">
+          <a href="#connexion" aria-label={tr('kclick dashboard, connexion')}>
+            <Logo />
+          </a>
+          <LangSwitch className="-mr-1" />
+        </div>
         <div className="max-lg:hidden">
           <p className="caps text-d-gold">Kenny’s International</p>
           <h1 className="mt-4 text-[clamp(40px,4.6vw,64px)] font-light leading-[1.05] tracking-[-0.015em]">
-            L’espace <span className="font-serif italic">équipe</span>
+            {tr('L’espace')} <span className="font-serif italic">{tr('équipe')}</span>
           </h1>
           <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-white/70">
-            Commandes, préparation en boutique et livraisons à Gombe : chacun retrouve ici ce qui le concerne, selon son rôle.
+            {tr('Commandes, préparation en boutique et livraisons à Gombe : chacun retrouve ici ce qui le concerne, selon son rôle.')}
           </p>
         </div>
         <div className="max-lg:hidden">
@@ -93,7 +96,7 @@ export default function StaffLogin({ step }) {
         <div className="w-full max-w-[420px]">
           {showCode ? <CodeStep email={email.trim().toLowerCase()} /> : <EmailStep email={email} setEmail={setEmail} />}
           <a href="#" className="mt-10 inline-block text-[13px] text-d-muted underline decoration-d-border underline-offset-4 hover:text-d-ink">
-            Retour au site
+            {tr('Retour au site')}
           </a>
         </div>
       </main>
@@ -110,7 +113,7 @@ function EmailStep({ email, setEmail }) {
     e.preventDefault()
     const value = email.trim().toLowerCase()
     if (!EMAIL.test(value)) {
-      setError('Saisissez une adresse e-mail valide.')
+      setError(tr('Saisissez une adresse e-mail valide.'))
       inputRef.current?.focus()
       return
     }
@@ -124,10 +127,10 @@ function EmailStep({ email, setEmail }) {
     } catch (err) {
       setError(
         err.code === 'NOT_STAFF'
-          ? 'Aucun compte d’équipe avec cette adresse. Demandez une invitation à l’administrateur.'
+          ? tr('Aucun compte d’équipe avec cette adresse. Demandez une invitation à l’administrateur.')
           : err.code === 'ACCOUNT_DISABLED'
-            ? 'Ce compte est désactivé. Contactez l’administrateur.'
-            : err.message || 'Le code n’a pas pu être envoyé. Réessayez dans un instant.',
+            ? tr('Ce compte est désactivé. Contactez l’administrateur.')
+            : tr(err.message || 'Le code n’a pas pu être envoyé. Réessayez dans un instant.'),
       )
       inputRef.current?.focus()
     } finally {
@@ -137,16 +140,16 @@ function EmailStep({ email, setEmail }) {
 
   return (
     <>
-      <p className="caps text-d-gold-ink">Connexion</p>
+      <p className="caps text-d-gold-ink">{tr('Connexion')}</p>
       <h2 className="mt-3 text-[clamp(32px,3.6vw,42px)] font-light leading-[1.1]">
-        Bon <span className="font-serif italic">retour.</span>
+        {tr('Bon')} <span className="font-serif italic">{tr('retour.')}</span>
       </h2>
-      <p className="mt-3 text-[15px] leading-relaxed text-d-muted">Pas de mot de passe : un code à 6 chiffres vous est envoyé par e-mail.</p>
+      <p className="mt-3 text-[15px] leading-relaxed text-d-muted">{tr('Pas de mot de passe : un code à 6 chiffres vous est envoyé par e-mail.')}</p>
 
       <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="staff-email" className="text-[13px]">
-            Adresse e-mail professionnelle
+            {tr('Adresse e-mail professionnelle')}
           </label>
           <input
             ref={inputRef}
@@ -171,7 +174,7 @@ function EmailStep({ email, setEmail }) {
           )}
         </div>
         <button type="submit" disabled={sending} className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black disabled:opacity-60">
-          {sending ? 'Envoi du code…' : 'Recevoir mon code'}
+          {sending ? tr('Envoi du code…') : tr('Recevoir mon code')}
         </button>
       </form>
 
@@ -229,7 +232,7 @@ function CodeStep({ email }) {
     e.preventDefault()
     if (inFlight.current) return
     if (!complete) {
-      setError('Saisissez les 6 chiffres du code.')
+      setError(tr('Saisissez les 6 chiffres du code.'))
       return
     }
     inFlight.current = true
@@ -238,18 +241,18 @@ function CodeStep({ email }) {
       try {
         await verifyCode(email, code)
       } catch (err) {
-        setError(/expired|invalid/i.test(err.message ?? '') ? 'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.' : err.message)
+        setError(/expired|invalid/i.test(err.message ?? '') ? tr('Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.') : tr(err.message))
         return
       }
       // Le code est bon et déjà consommé : on ne le renverra plus jamais à Supabase
       setDigits(['', '', '', '', '', ''])
       const me = await refreshMe()
       if (!me) {
-        setError('Votre code est bon, mais votre compte n’est pas encore prêt côté kclick. Contactez l’administrateur, puis demandez un nouveau code.')
+        setError(tr('Votre code est bon, mais votre compte n’est pas encore prêt côté kclick. Contactez l’administrateur, puis demandez un nouveau code.'))
         return
       }
       if (me.home === '#compte/profil') {
-        setError('Ce compte n’a pas d’accès équipe. Demandez une invitation à l’administrateur.')
+        setError(tr('Ce compte n’a pas d’accès équipe. Demandez une invitation à l’administrateur.'))
         return
       }
       window.location.hash = me.home.replace(/^#/, '')
@@ -265,23 +268,23 @@ function CodeStep({ email }) {
       await sendCode(email, { createUser: true })
       setResent(true)
     } catch (err) {
-      setError(err.message)
+      setError(tr(err.message))
     }
   }
 
   return (
     <>
-      <p className="caps text-d-gold-ink">Connexion</p>
+      <p className="caps text-d-gold-ink">{tr('Connexion')}</p>
       <h2 className="mt-3 text-[clamp(32px,3.6vw,42px)] font-light leading-[1.1]">
-        Vérifiez vos <span className="font-serif italic">e-mails.</span>
+        {tr('Vérifiez vos')} <span className="font-serif italic">{tr('e-mails.')}</span>
       </h2>
       <p className="mt-3 text-[15px] leading-relaxed text-d-muted">
-        Nous avons envoyé un code à 6 chiffres à <span className="break-all font-mono text-[14px] text-d-ink">{email}</span>. Il est valable 10 minutes.
+        {tr('Nous avons envoyé un code à 6 chiffres à')} <span className="break-all font-mono text-[14px] text-d-ink">{email}</span>. {tr('Il est valable 10 minutes.')}
       </p>
 
       <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5">
         <fieldset>
-          <legend className="mb-2 text-[13px]">Code de connexion</legend>
+          <legend className="mb-2 text-[13px]">{tr('Code de connexion')}</legend>
           <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
             {digits.map((d, i) => (
               <input
@@ -292,7 +295,7 @@ function CodeStep({ email }) {
                 autoComplete={i === 0 ? 'one-time-code' : 'off'}
                 maxLength={6}
                 value={d}
-                aria-label={`Chiffre ${i + 1} sur 6`}
+                aria-label={tr('Chiffre {n} sur 6', { n: i + 1 })}
                 aria-invalid={!!error}
                 onChange={(e) => {
                   const v = e.target.value.replace(/\D/g, '')
@@ -322,14 +325,14 @@ function CodeStep({ email }) {
         </fieldset>
 
         <button type="submit" disabled={!complete || checking} className="h-12 rounded-lg bg-d-ink text-[15px] text-white transition-colors hover:bg-black disabled:opacity-40">
-          {checking ? 'Vérification…' : 'Valider'}
+          {checking ? tr('Vérification…') : tr('Valider')}
         </button>
       </form>
 
       <div className="mt-6 flex flex-col items-start gap-3 text-[13px]">
         {wait > 0 ? (
           <p className="text-d-muted">
-            Renvoyer le code dans <span className="font-mono">0:{String(wait).padStart(2, '0')}</span>
+            {tr('Renvoyer le code dans')} <span className="font-mono">0:{String(wait).padStart(2, '0')}</span>
           </p>
         ) : (
           <button
@@ -337,21 +340,21 @@ function CodeStep({ email }) {
             onClick={resend}
             className="underline decoration-d-border underline-offset-4 hover:decoration-d-ink"
           >
-            Renvoyer le code
+            {tr('Renvoyer le code')}
           </button>
         )}
         {resent && wait > 0 && (
           <p role="status" className="text-[#2f5a37]">
-            Un nouveau code vient d’être envoyé.
+            {tr('Un nouveau code vient d’être envoyé.')}
           </p>
         )}
         <a href="#connexion" className="underline decoration-d-border underline-offset-4 hover:decoration-d-ink">
-          Modifier l’adresse e-mail
+          {tr('Modifier l’adresse e-mail')}
         </a>
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-d-muted">
-        Rien reçu ? Regardez dans les courriers indésirables, puis demandez un nouveau code.
+        {tr('Rien reçu ? Regardez dans les courriers indésirables, puis demandez un nouveau code.')}
       </p>
     </>
   )
