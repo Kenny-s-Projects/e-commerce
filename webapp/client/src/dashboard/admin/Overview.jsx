@@ -4,7 +4,7 @@ import { BRANDS } from '../data/demo.js'
 import { riderState, useStore } from '../store/store.jsx'
 import { ORDER_STATUS, ORDER_STATUS_KEYS, canDispatch, isActivePart, isOpen, orderStatus } from '../lib/status.js'
 import { minutesSince, money, orderTotal, partTotal, today } from '../lib/format.js'
-import { Avatar, Button, Card, CardTitle, PageTitle, RiderPill } from '../ui/ui.jsx'
+import { Avatar, Card, CardTitle, PageTitle, RiderPill } from '../ui/ui.jsx'
 import { OrdersTable, SearchField, detailHref, matches } from './Orders.jsx'
 
 const LATE_AFTER = 20 // minutes avant qu'une commande pas encore prête devienne une alerte
@@ -189,7 +189,7 @@ function Riders({ riders, orders }) {
 
 /** Super admin · Vue d'ensemble */
 export default function Overview() {
-  const { orders, riders, now, lastNewOrder, dispatch, dashboard, loading, loadError, retryLoad } = useStore()
+  const { orders, riders, now, lastNewOrder, dashboard, loading, loadError, retryLoad } = useStore()
   const [q, setQ] = useState('')
 
   // Commandes du jour (l'API renvoie aussi les plus anciennes, utiles à la recherche)

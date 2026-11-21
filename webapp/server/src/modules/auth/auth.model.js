@@ -30,3 +30,9 @@ export async function brandSlugs(ids) {
   const { rows } = await query('select id, slug from public.brands where id = any($1::uuid[])', [ids])
   return rows
 }
+
+/** Un compte (Supabase Auth) existe-t-il déjà avec cet e-mail ? */
+export async function accountExists(email) {
+  const { rows } = await query('select 1 from auth.users where lower(email) = $1 limit 1', [email])
+  return rows.length > 0
+}

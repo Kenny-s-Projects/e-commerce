@@ -118,19 +118,6 @@ export const ORDERS = [
 // Ruptures signalées (alertes de la vue d'ensemble)
 export const STOCK_ALERTS = [{ brand: 'kyra', product: 'Black Orchid, 150 ml', stock: 0 }]
 
-// Produits utilisés par « Simuler une commande »
-export const SIMULATION_ITEMS = [
-  { brand: 'kyra', ...item('N°5 The Deodorant', 'Déodorant vaporisateur, 100 ml', 93, 1, { house: 'Chanel' }) },
-  { brand: 'kyra', ...item('Miss Dior Parfum', 'Roller-perle 20 ml', 78, 1, { house: 'Dior' }) },
-  { brand: 'patchi', ...item('Chocolate Milk Filled with Praline', '250 g', 24, 1, { ref: 'CCD01' }) },
-  { brand: 'patchi', ...item('Chocolate Bar 100 g Audace', 'Tablette, 100 g', 15, 1, { ref: 'GBR0003' }) },
-]
-export const SIMULATION_CUSTOMERS = [
-  { name: 'Prisca Lumbu', phone: '+243 81 404 12 77', street: 'avenue Lukusa', landmark: 'près de l’hôtel Memling' },
-  { name: 'Cédric Ngoy', phone: '+243 99 512 63 20', street: 'avenue Wagenia', landmark: 'immeuble Crown, 5e' },
-  { name: 'Esther Mbala', phone: '+243 82 330 47 15', street: 'boulevard du 30 Juin', landmark: 'galerie Sajir' },
-]
-
 // Comptes de l'équipe (utilisateurs du dashboard). Les clients du site sont dans data/clients.js.
 //  role : super_admin · employe (avec brand) · livreur (avec riderId)
 //  status : actif · invite (invitation envoyée, pas encore connecté) · desactive

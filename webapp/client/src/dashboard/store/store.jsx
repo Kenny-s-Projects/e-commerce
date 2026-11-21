@@ -246,20 +246,6 @@ export function DashboardStore({ space, brand, children }) {
             if (status === 'actif') await api.post(`/users/${action.id}/reactivate`)
             break
           }
-          case 'order/simulate': {
-            // Développement uniquement : une commande Patchi de test
-            const { items } = await api.get('/catalog/products', { brand: 'patchi', inStock: 'true', limit: 2 })
-            await api.post('/orders', {
-              customer: { name: 'Client test', phone: '+243810000000' },
-              mode: 'livraison',
-              address: { commune: 'Gombe', street: 'Avenue de test', landmark: 'Démonstration' },
-              paymentMethod: 'mobile_money',
-              provider: 'M-Pesa',
-              payerPhone: '+243810000000',
-              items: items.map((p) => ({ variantId: (p.variants.find((v) => v.available) ?? p.variants[0]).id, quantity: 1 })),
-            })
-            break
-          }
           default:
             return { ok: false }
         }

@@ -51,6 +51,7 @@ export async function confirmCode(email, code) {
 export function authMessage(err) {
   const text = `${err?.code ?? ''} ${err?.message ?? ''}`.toLowerCase()
   if (err?.accountNotReady) return err.message
+  if (err?.code === 'TOO_MANY_ATTEMPTS') return err.message // limite de l'inscription : 30 minutes
   if (!isConfigured) return 'La connexion n’est pas encore configurée sur ce site (VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY).'
   if (text.includes('signups not allowed') || text.includes('otp_disabled') || text.includes('user not found'))
     return 'Aucun compte avec cette adresse. Créez un compte pour continuer.'

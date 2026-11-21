@@ -3,6 +3,7 @@ import { m } from 'framer-motion'
 import { useLang, useT } from '../../i18n/lang.js'
 import { AuthShell, EMAIL_KEY, Field, PrimaryButton, fadeUp, inputClass, underline, writeSession } from './accountUi.jsx'
 import { authMessage, requestCode, savePending } from './auth.js'
+import { api } from '../../lib/api.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -14,11 +15,13 @@ export default function SignupPage() {
   const [errors, setErrors] = useState({})
   const [sending, setSending] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [existing, setExisting] = useState(false) // un compte existe déjà avec cet e-mail
 
   const set = (k) => (e) => {
     const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm((f) => ({ ...f, [k]: v }))
     setErrors((er) => ({ ...er, [k]: undefined }))
+    if (k === 'email') setExisting(false)
   }
 
   const submit = async (e) => {
@@ -41,6 +44,14 @@ export default function SignupPage() {
     setSending(true)
     setServerError('')
     try {
+      // Une adresse ne peut avoir qu'un compte : si elle est déjà utilisée, on propose de se connecter
+      const { exists } = await api.post('/auth/email/check', { email: form.email.trim() }, { auth: false })
+      if (exists) {
+        setExisting(true)
+        setErrors((er) => ({ ...er, email: t('Un compte existe déjà avec cet e-mail.') }))
+        document.getElementById('su-email')?.focus()
+        return
+      }
       await requestCode({ email: form.email.trim(), mode: 'signup', fullName, phone })
       writeSession(EMAIL_KEY, form.email.trim())
       savePending({ mode: 'signup', fullName, phone, lang })
@@ -149,6 +160,17 @@ export default function SignupPage() {
           </label>
         </div>
 
+        {existing && (
+          <p className="text-[13px]">
+            <a
+              href="#compte"
+              onClick={() => writeSession(EMAIL_KEY, form.email.trim())}
+              className="underline decoration-ink/30 underline-offset-4 hover:decoration-ink"
+            >
+              {t('Se connecter avec cet e-mail')}
+            </a>
+          </p>
+        )}
         {serverError && <p role="alert" className="text-[13px] text-celio">{serverError}</p>}
         <PrimaryButton type="submit" className="mt-2" disabled={sending}>
           {sending ? t('Envoi du code…') : t('Créer mon compte')}

@@ -44,3 +44,8 @@ export async function me(user) {
     home: await home(user),
   }
 }
+
+/** Inscription : l'adresse a-t-elle déjà un compte ? (le front propose alors de se connecter) */
+export async function checkEmail(email) {
+  return { exists: await model.accountExists(email) }
+}
