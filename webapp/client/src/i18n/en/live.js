@@ -85,6 +85,8 @@ export default {
   'Aucun compte avec cette adresse. Créez un compte pour continuer.': 'No account with this address. Create an account to continue.',
   'Code incorrect ou expiré. Vérifiez les 6 chiffres ou demandez un nouveau code.': 'Wrong or expired code. Check the 6 digits or ask for a new code.',
   'Un compte existe déjà avec cet e-mail.': 'An account already exists with this e-mail.',
+  'Découvrir les chocolats': 'Discover the chocolates',
+  'Pralines au poids, en 250 g, 500 g ou 1 kg, et boîtes garnies prêtes à offrir.': 'Pralines by weight, in 250 g, 500 g or 1 kg, and filled boxes ready to give.',
   'Se connecter avec cet e-mail': 'Sign in with this e-mail',
   'Trop de tentatives. Réessayez dans 30 minutes.': 'Too many attempts. Try again in 30 minutes.',
   'Votre code est bon, mais votre compte n’est pas encore prêt. Réessayez dans un instant ou contactez la conciergerie.': 'Your code is correct, but your account is not ready yet. Try again in a moment or contact the concierge.',

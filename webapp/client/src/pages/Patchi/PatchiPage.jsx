@@ -27,6 +27,10 @@ const COLLECTION_NOTES = {
   sansucre: 'Au poids, sans sucre ajouté',
 }
 
+// Coffret sur mesure : masqué tant que la commande d'un coffret composé n'est pas gérée par l'API
+// (remettre à true pour réafficher la section ; le composant BoxComposer est conservé)
+const SHOW_BOX_COMPOSER = false
+
 export default function PatchiPage({ onAdd }) {
   const [filter, setFilter] = useState({})
   const composerRef = useRef(null)
@@ -62,10 +66,13 @@ export default function PatchiPage({ onAdd }) {
 
   return (
     <div className="bg-paper text-forest [--card:#ffffff] [--fg:var(--color-forest)]">
-      <BoxReveal onCompose={() => composerRef.current?.scrollIntoView({ behavior: 'smooth' })} />
+      <BoxReveal
+        composeLabel={SHOW_BOX_COMPOSER ? 'Composer un coffret' : 'Découvrir les chocolats'}
+        onCompose={() => (SHOW_BOX_COMPOSER ? composerRef : barRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
       <MaisonCode pillars={patchiPage.pillars} />
       {flavors.length > 0 && <PralineShowcase flavors={flavors} weights={patchiPage.weights} pricePerKg={patchiPage.pricePerKg} onAdd={onAdd} />}
-      <BoxComposer ref={composerRef} flavors={patchiFlavors} sizes={patchiPage.boxSizes} pricePerKg={patchiPage.pricePerKg} />
+      {SHOW_BOX_COMPOSER && <BoxComposer ref={composerRef} flavors={patchiFlavors} sizes={patchiPage.boxSizes} pricePerKg={patchiPage.pricePerKg} />}
       <CollectionIndex collections={collections} counts={counts} total={products.length} onPick={pickCollection} loading={catalogStatus === 'loading'} />
       <CatalogueGrid
         ref={barRef}

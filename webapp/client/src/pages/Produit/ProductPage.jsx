@@ -231,8 +231,8 @@ function ProductView({ product, onAdd, onBuyNow }) {
             <Reveal as="h2" delay={0.1} className="mt-4 text-[clamp(30px,3.4vw,46px)] font-light leading-[1.12]">
               {t('Une praline se choisit')} <span className="accent">{t('une à une')}</span>{t(', puis se compose.')}
             </Reveal>
-            <p className="mt-5 max-w-[420px] text-[14px] leading-[1.75] text-paper/80">{t('Mélangez les pralines Patchi pour composer un coffret sur mesure, du petit au grand format.')}</p>
-            <a href="#maison/patchi" className="caps mt-7 self-start border-b border-gold pb-1.5">{t('Composer un coffret')} ⟶</a>
+            <p className="mt-5 max-w-[420px] text-[14px] leading-[1.75] text-paper/80">{t('Pralines au poids, en 250 g, 500 g ou 1 kg, et boîtes garnies prêtes à offrir.')}</p>
+            <a href="#maison/patchi" className="caps mt-7 self-start border-b border-gold pb-1.5">{t('Découvrir les chocolats')} ⟶</a>
           </div>
         </section>
       )}

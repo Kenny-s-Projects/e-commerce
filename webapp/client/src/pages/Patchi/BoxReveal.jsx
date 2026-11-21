@@ -16,7 +16,7 @@ const SLOTS = 12 // pralines visibles dans le coffret (4 × 3)
  *   5. zoom sur le coffret, puis la phrase de la Maison.
  * Avec « réduire les animations », le coffret est montré ouvert, sans défilement piloté.
  */
-export default function BoxReveal({ onCompose }) {
+export default function BoxReveal({ onCompose, composeLabel = 'Composer un coffret' }) {
   const t = useT()
   const ref = useRef(null)
   const reduce = useLiteMode() // mode léger ou « Réduire les animations »
@@ -121,7 +121,7 @@ export default function BoxReveal({ onCompose }) {
             </p>
             <p className="mt-2 max-w-[520px] text-[14px] leading-[1.7] text-paper/80">{t(hero.text)}</p>
             <button type="button" onClick={onCompose} className="caps mt-4 border-b border-gold pb-1.5">
-              {t('Composer un coffret')} ⟶
+              {t(composeLabel)} ⟶
             </button>
           </m.div>
 
