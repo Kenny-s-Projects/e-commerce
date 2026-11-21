@@ -116,9 +116,9 @@ export const aide = {
       id: 'commandes',
       label: 'Commandes et suivi',
       intro: 'Après votre commande, vous recevez un numéro et un contact WhatsApp pour suivre la livraison.',
-      cards: [],
+      cards: [{ kicker: 'Sans compte', title: 'Suivre ma commande', text: 'Avec le numéro de commande et le téléphone utilisé.', href: '#suivi' }],
       faq: [
-        { q: 'Comment suivre ma commande ?', a: 'Avec votre numéro de commande, en écrivant au concierge sur WhatsApp au +243 856 486 993.' },
+        { q: 'Comment suivre ma commande ?', a: 'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 856 486 993.' },
         { q: 'Puis-je modifier ma commande ?', a: '[Délai de modification à confirmer]' },
         { q: 'Faut-il créer un compte ?', a: 'Non, la commande se fait sans compte.' },
       ],

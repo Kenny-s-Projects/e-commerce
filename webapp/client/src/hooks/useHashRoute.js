@@ -13,6 +13,7 @@ const PROFILE_TABS = ['commandes', 'adresses', 'favoris', 'infos']
  *   aide/paiement      → page Aide, rubrique choisie (aide seul → Livraison ; contact → rubrique Contact)
  *   checkout           → page de commande
  *   compte             → connexion ; compte/inscription · compte/code · compte/profil/<onglet>
+ *   suivi              → « Suivre ma commande » (numéro + téléphone, sans compte)
  *   suivi/KC-0140      → suivi d'une commande
  *   sinon              → accueil, avec une ancre éventuelle (#patchi…)
  */

@@ -40,7 +40,6 @@ function fromApi(settings, brands) {
     whatsapp: g.whatsapp ?? '',
     address: g.address ?? '',
     lang: g.defaultLang ?? 'fr',
-    currency: g.currency ?? 'USD',
     zones: (d.zones ?? []).map((z, i) => ({ id: `z${i}`, ...z })),
     cutoff: d.sameDayCutoff ?? '17:00',
     cancelDelay: String(d.cancelWindowMinutes ?? 15),
@@ -66,7 +65,7 @@ function fromApi(settings, brands) {
 
 /** Valeurs du formulaire → corps de PUT /settings/:section */
 const toApi = {
-  general: (s) => ({ platform: s.platform, company: s.company, supportEmail: s.supportEmail, whatsapp: s.whatsapp, address: s.address, defaultLang: s.lang, currency: s.currency }),
+  general: (s) => ({ platform: s.platform, company: s.company, supportEmail: s.supportEmail, whatsapp: s.whatsapp, address: s.address, defaultLang: s.lang, currency: 'USD' }), // tout le site est en dollars
   delivery: (s) => ({
     zones: s.zones.map(({ commune, fee, delay, active }) => ({ commune: commune.trim(), fee: Number(fee), delay, active })),
     sameDayCutoff: s.cutoff,
@@ -260,12 +259,6 @@ function SettingsForm({ initial }) {
                   <select id="set-lang" className={input} value={s.lang} onChange={(e) => set({ lang: e.target.value })}>
                     <option value="fr">Français</option>
                     <option value="en">English</option>
-                  </select>
-                </Field>
-                <Field id="set-currency" label="Devise" hint="Les prix sont affichés en dollars américains.">
-                  <select id="set-currency" className={input} value={s.currency} onChange={(e) => set({ currency: e.target.value })}>
-                    <option value="USD">USD ($)</option>
-                    <option value="CDF">CDF (FC)</option>
                   </select>
                 </Field>
               </div>

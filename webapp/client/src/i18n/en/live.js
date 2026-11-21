@@ -70,6 +70,14 @@ export default {
   'Nous ne trouvons pas de commande avec ce numéro et ce téléphone. Vérifiez-les, ou écrivez à la conciergerie.':
     'We cannot find an order with this number and phone. Please check them, or message the concierge.',
   'Voir ma commande': 'See my order',
+  'Suivre ma': 'Track my',
+  'Pas besoin de compte : saisissez le numéro reçu après votre commande et le téléphone utilisé.': 'No account needed: enter the number you received after ordering and the phone you used.',
+  'Saisissez le numéro de commande, par exemple KC-00012.': 'Enter your order number, for example KC-00012.',
+  'Saisissez le téléphone utilisé lors de la commande.': 'Enter the phone number used for the order.',
+  'Bonjour, je souhaite suivre ma commande kclick.': 'Hello, I would like to track my kclick order.',
+  'Sans compte': 'No account',
+  'Avec le numéro de commande et le téléphone utilisé.': 'With your order number and the phone you used.',
+  'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 856 486 993.': 'On the “Track my order” page, with your order number and the phone you used. The concierge also answers on WhatsApp at +243 856 486 993.',
 
   /* Compte */
   'Envoi du code…': 'Sending the code…',

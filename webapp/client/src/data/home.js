@@ -55,6 +55,7 @@ export const footer = {
     {
       title: 'Aide',
       links: [
+        { label: 'Suivre ma commande', href: '#suivi' },
         { label: 'Livraison et retrait', href: '#aide/livraison' },
         { label: 'Paiement', href: '#aide/paiement' },
         { label: 'Contact', href: '#contact' },

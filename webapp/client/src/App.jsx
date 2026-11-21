@@ -43,6 +43,7 @@ const SignupPage = lazy(() => import('./pages/Compte/SignupPage.jsx'))
 const CodePage = lazy(() => import('./pages/Compte/CodePage.jsx'))
 const ProfilePage = lazy(() => import('./pages/Compte/ProfilePage.jsx'))
 const TrackingPage = lazy(() => import('./pages/Suivi/TrackingPage.jsx'))
+const TrackOrderPage = lazy(() => import('./pages/Suivi/TrackOrderPage.jsx'))
 
 export default function App() {
   // Préchargeur une seule fois par session, jamais en mode léger (connexion lente, petit téléphone)
@@ -176,6 +177,8 @@ export default function App() {
             <CodePage />
           ) : route.page === 'profil' ? (
             <ProfilePage tab={route.id} />
+          ) : route.page === 'suivi' && !route.id ? (
+            <TrackOrderPage />
           ) : route.page === 'suivi' ? (
             <TrackingPage number={route.id} />
           ) : (

@@ -15,6 +15,7 @@ const LINKS = [
   { label: 'Offrir', href: '#offrir/pour-elle', page: 'offrir' },
   { label: 'Notre histoire', href: '#notre-histoire', page: 'histoire' },
   { label: 'Aide et service client', href: '#aide/livraison', page: 'aide' },
+  { label: 'Suivre ma commande', href: '#suivi', page: 'suivi' },
   { label: 'Mon compte', href: '#compte', page: 'compte' },
 ]
 

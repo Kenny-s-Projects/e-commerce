@@ -6,6 +6,7 @@ import { whatsappFor } from '../../data/products.js'
 import { contact } from '../../data/home.js'
 import { api } from '../../lib/api.js'
 import { rememberOrder } from '../../lib/orderMemory.js'
+import { getAccessToken } from '../../lib/supabase.js'
 import { useT } from '../../i18n/lang.js'
 import useLiteMode from '../../hooks/useLiteMode.js'
 
@@ -59,11 +60,40 @@ function stepOfServerField(field = '') {
  *  fromCart  : true si la commande vient du panier (il est vidé après confirmation)
  *  onDone    : appelé à la confirmation
  */
+// Dernière adresse de livraison utilisée sur cet appareil (gardée dans le navigateur seulement)
+const ADDRESS_KEY = 'kclick-last-address'
+const ADDRESS_FIELDS = ['address', 'quartier', 'commune', 'notes']
+function readLastAddress() {
+  try {
+    const a = JSON.parse(localStorage.getItem(ADDRESS_KEY) ?? 'null')
+    return a && typeof a === 'object' ? a : null
+  } catch {
+    return null
+  }
+}
+function saveLastAddress(form) {
+  try {
+    localStorage.setItem(ADDRESS_KEY, JSON.stringify(Object.fromEntries(ADDRESS_FIELDS.map((k) => [k, form[k] ?? '']))))
+  } catch {
+    /* stockage indisponible : l'adresse ne sera pas proposée la prochaine fois */
+  }
+}
+// Ne remplit que les champs encore vides : ce que la personne a déjà tapé n'est jamais écrasé
+const fillEmpty = (form, values) => {
+  const next = { ...form }
+  for (const [k, v] of Object.entries(values)) if (v && !String(form[k] ?? '').trim()) next[k] = v
+  return next
+}
+
 export default function CheckoutPage({ items, fromCart, onDone }) {
   const t = useT()
   const lite = useLiteMode()
   const reduce = useReducedMotion() || lite
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', quartier: '', commune: 'Gombe', notes: '', operator: DEFAULT_OPERATORS[0], momo: '' })
+  const [form, setForm] = useState(() => {
+    const empty = { name: '', phone: '', email: '', address: '', quartier: '', commune: 'Gombe', notes: '', operator: DEFAULT_OPERATORS[0], momo: '' }
+    const last = readLastAddress()
+    return last ? fillEmpty(empty, { address: last.address, quartier: last.quartier, notes: last.notes }) : empty
+  })
   const [delivery, setDelivery] = useState('livraison')
   const [payment, setPayment] = useState('mobile_money')
   const [errors, setErrors] = useState({})
@@ -76,6 +106,21 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   const [done, setDone] = useState(() => new Set()) // étapes validées
   const sendingRef = useRef(false) // garde contre la double soumission
   const [focusTick, setFocusTick] = useState(0) // > 0 : l'utilisateur a changé d'étape → le focus suit
+
+  // Client connecté : nom, téléphone et e-mail de son profil (supabase-js n'est pas chargé pour un visiteur sans session)
+  useEffect(() => {
+    let alive = true
+    getAccessToken()
+      .then((token) => (token ? api.get('/users/me') : null))
+      .then((me) => {
+        if (!alive || !me) return
+        setForm((f) => fillEmpty(f, { name: me.fullName, phone: me.phone, email: me.email }))
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Zones et frais de livraison, opérateurs mobile money (Paramètres › Livraison / Paiements)
   useEffect(() => {
@@ -191,6 +236,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
     try {
       const created = await api.post('/orders', body)
       rememberOrder(created.number, phone)
+      if (delivery === 'livraison') saveLastAddress(form)
       setOrder({ number: created.number, total: created.total, count, delivery, payment, name: form.name.trim().split(' ')[0] })
       onDone?.(fromCart) // le panier n'est vidé qu'ici, une fois la commande enregistrée
       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
@@ -500,7 +546,7 @@ function Progress({ open, done, t }) {
  */
 function Step({ step, open, done, summary, onEdit, reduce, t, children }) {
   return (
-    <fieldset className={`rounded-2xl border px-[clamp(16px,2.4vw,28px)] py-5 transition-colors duration-300 ${open ? 'border-ink/20' : 'border-ink/10'}`}>
+    <fieldset className={`min-w-0 rounded-2xl border px-[clamp(16px,2.4vw,28px)] py-5 transition-colors duration-300 ${open ? 'border-ink/20' : 'border-ink/10'}`}>
       <legend className="sr-only">{t(step.title)}</legend>
       <div className="flex items-center gap-3">
         <span
