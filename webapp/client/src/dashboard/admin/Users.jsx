@@ -71,13 +71,80 @@ function Resend({ user, sent, onSend, className = '' }) {
 }
 
 /** Utilisateurs de l'équipe et leurs rôles (super admin) */
+/* E-mails non partis (invitations, commandes) : raison claire et bouton pour les renvoyer */
+const REASONS = {
+  'RESEND_API_KEY manquante': 'Le service d’e-mail n’est pas configuré sur le serveur (clé RESEND_API_KEY manquante).',
+}
+const readable = (e) => REASONS[e] ?? e ?? 'Raison inconnue'
+
+function EmailStatus({ notify }) {
+  const [emails, setEmails] = useState([])
+  const [busy, setBusy] = useState(false)
+  const load = async () => {
+    try {
+      const [ignored, failed] = await Promise.all([
+        api.get('/notifications/emails', { status: 'ignore', limit: 200 }),
+        api.get('/notifications/emails', { status: 'echec', limit: 200 }),
+      ])
+      setEmails([...(ignored ?? []), ...(failed ?? [])])
+    } catch {
+      /* écran secondaire : on n'affiche rien si la liste ne répond pas */
+    }
+  }
+  useEffect(() => {
+    // load est asynchrone : l'état change après la réponse du serveur, pas pendant l'effet
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load()
+  }, [])
+
+  if (!emails.length) return null
+  const reasons = [...new Set(emails.map((e) => readable(e.last_error)))]
+  const invitations = emails.filter((e) => e.kind === 'invitation').length
+
+  const retryAll = async () => {
+    setBusy(true)
+    let errors = 0
+    for (const e of emails) {
+      try {
+        await api.post(`/notifications/emails/${e.id}/retry`)
+      } catch {
+        errors += 1
+      }
+    }
+    // L'envoi se fait en arrière-plan (quelques secondes) : on relit ensuite la liste
+    await new Promise((r) => setTimeout(r, 12000))
+    await load()
+    setBusy(false)
+    notify(errors ? `${errors} e-mail(s) n’ont pas pu être relancés.` : 'E-mails relancés. Ceux qui restent affichés ne sont toujours pas partis.', errors ? undefined : 'ok')
+  }
+
+  return (
+    <Card className="mb-7 flex flex-wrap items-center justify-between gap-4 border-[#e9c46a] bg-[#fdf7e6] p-5" role="status">
+      <div className="min-w-0">
+        <p className="text-[15px]">
+          {emails.length} e-mail{emails.length > 1 ? 's' : ''} non envoyé{emails.length > 1 ? 's' : ''}
+          {invitations ? ` (dont ${invitations} invitation${invitations > 1 ? 's' : ''})` : ''}
+        </p>
+        <ul className="mt-1.5 text-[13px] leading-relaxed text-d-muted">
+          {reasons.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      </div>
+      <Button variant="outline" onClick={retryAll} disabled={busy} className="max-sm:w-full">
+        {busy ? 'Envoi en cours…' : 'Renvoyer les e-mails'}
+      </Button>
+    </Card>
+  )
+}
+
 export default function Users() {
   const { users, now, notify } = useStore()
   // Renvoyer l'invitation (l'e-mail partira quand le service d'e-mails sera branché)
   const resend = async (userId) => {
     try {
       const r = await api.post(`/users/invitations/${userId}/resend`)
-      if (r?.sent === false) notify(`Invitation notée. ${r.reason ?? ''}`.trim(), 'ok')
+      if (r?.sent === false) notify(`Invitation enregistrée, mais l’e-mail n’est pas parti : ${r.reason ?? 'service d’e-mail non configuré'}.`)
       setResent(userId)
     } catch (err) {
       notify(err.message)
@@ -117,6 +184,8 @@ export default function Users() {
           Ajouter un utilisateur
         </Button>
       </header>
+
+      <EmailStatus notify={notify} />
 
       {/* Les 3 rôles */}
       <div className="mb-7 grid gap-4 md:grid-cols-3">
