@@ -5,25 +5,29 @@
  *   flyToCart({ from: elementPhoto, src: urlImage })
  *
  * - Aucune dépendance React : un calque fixe est créé à la volée et animé avec l'API Web Animations
- *   (uniquement transform et opacity, ~0,5 s).
+ *   (uniquement transform et opacity). Durée totale : FLY_DURATION (10 s, demandé par le client).
+ * - Trajet : la vignette apparaît sur la photo, monte en arc, se place au-dessus du panier
+ *   puis tombe dedans en rétrécissant.
  * - La cible est l'icône du panier visible marquée data-cart-target (header en haut de page,
  *   pastille réduite au défilement, ou icône mobile).
  * - À l'arrivée, l'événement « kclick:cart-arrive » est émis : le header fait rebondir le compteur.
- * - Mode léger ou « Réduire les animations » : pas de vignette, seulement le rebond du compteur
+ * - Mode léger : même trajet, sans ombre (moins coûteux à dessiner).
+ * - « Réduire les animations » (réglage du système) : pas de vignette, seulement le rebond du compteur
  *   (que MotionConfig coupe à son tour en mouvement réduit).
  */
 export const CART_ARRIVE = 'kclick:cart-arrive'
 
-const DURATION = 520
-const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
+/** Durée totale du vol, de l'apparition à la chute dans le panier (ms) */
+export const FLY_DURATION = 10_000
 
 const arrive = () => window.dispatchEvent(new Event(CART_ARRIVE))
 
 function reduced() {
   if (typeof window === 'undefined') return true
-  if (document.documentElement.hasAttribute('data-lite')) return true
   return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
 }
+
+const isLite = () => document.documentElement.hasAttribute('data-lite')
 
 // Icône du panier réellement visible à l'écran (la dernière trouvée l'emporte)
 function cartTarget() {
@@ -68,28 +72,39 @@ export function flyToCart({ from, src } = {}) {
     objectFit: 'cover',
     borderRadius: '999px',
     background: '#f3f2ef',
-    boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
+    boxShadow: isLite() ? 'none' : '0 12px 30px rgba(0,0,0,0.18)',
     pointerEvents: 'none',
     zIndex: '80',
     willChange: 'transform, opacity',
   })
   document.body.appendChild(ghost)
 
-  // Départ : centre de la photo ; arrivée : centre de l'icône ; léger arc vers le haut
-  const x0 = a.left + a.width / 2 - size / 2
-  const y0 = a.top + a.height / 2 - size / 2
-  const x1 = b.left + b.width / 2 - size / 2
-  const y1 = b.top + b.height / 2 - size / 2
-  const lift = Math.min(120, Math.abs(y1 - y0) * 0.35 + 40)
+  // Départ : centre de la photo ; arrivée : centre de l'icône du panier.
+  // Les points du trajet restent dans l'écran (le panier est souvent tout en haut).
+  const half = size / 2
+  const cx0 = a.left + a.width / 2
+  const cy0 = a.top + a.height / 2
+  const cx1 = b.left + b.width / 2
+  const cy1 = b.top + b.height / 2
+  const inside = (cy, scale) => Math.max(cy, half * scale + 8) // garde la vignette entièrement visible
+  const lift = Math.min(160, Math.abs(cy1 - cy0) * 0.4 + 60) // hauteur de l'arc
+  const apex = { x: (cx0 + cx1) / 2, y: inside(Math.min(cy0, cy1) - lift, 0.75) }
+  const above = { x: cx1, y: inside(cy1 - Math.max(48, size * 0.6), 0.5) } // au-dessus du panier, avant la chute
+  const at = (cx, cy, s) => `translate(${cx - half}px, ${cy - half}px) scale(${s})`
 
   const anim = ghost.animate(
     [
-      { transform: `translate(${x0}px, ${y0}px) scale(0.6)`, opacity: 0 },
-      { transform: `translate(${x0}px, ${y0}px) scale(1)`, opacity: 1, offset: 0.15 },
-      { transform: `translate(${(x0 + x1) / 2}px, ${Math.min(y0, y1) - lift}px) scale(0.7)`, opacity: 1, offset: 0.55 },
-      { transform: `translate(${x1}px, ${y1}px) scale(0.18)`, opacity: 0.4 },
+      // apparition sur la photo
+      { transform: at(cx0, cy0, 0.6), opacity: 0, easing: 'ease-out' },
+      { transform: at(cx0, cy0, 1), opacity: 1, offset: 0.08, easing: 'ease-in-out' },
+      // montée en arc
+      { transform: at(apex.x, apex.y, 0.75), opacity: 1, offset: 0.45, easing: 'ease-in-out' },
+      // au-dessus du panier
+      { transform: at(above.x, above.y, 0.5), opacity: 1, offset: 0.82, easing: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+      // chute dans le panier
+      { transform: at(cx1, cy1, 0.15), opacity: 0.3 },
     ],
-    { duration: DURATION, easing: EASE, fill: 'forwards' },
+    { duration: FLY_DURATION, easing: 'linear', fill: 'forwards' },
   )
   const done = () => {
     ghost.remove()

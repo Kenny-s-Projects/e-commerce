@@ -1,18 +1,25 @@
-import { useState } from 'react'
-import { AnimatePresence, m } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, m, useInView } from 'framer-motion'
 import Praline from '../../components/maison/Praline.jsx'
 import Reveal from '../../components/maison/Reveal.jsx'
 import { getProduct } from '../../data/products.js'
 import { cartLine, isPurchasable } from '../../data/live.js'
 import { formatPrice } from '../../data/houses.js'
 import { useT } from '../../i18n/lang.js'
+import useLiteMode from '../../hooks/useLiteMode.js'
+import { flyToCart } from '../../components/FlyToCart/flyToCart.js'
 
 const ease = [0.22, 1, 0.36, 1]
+const AUTOPLAY_MS = 15_000
 
 /**
  * Les pralines, une par écran, chacune sur sa couleur.
  * Animations : la couleur de fond glisse d'une praline à l'autre, la praline entre en roulant,
  * le nom monte depuis un masque, le prix défile quand on change de quantité.
+ * Défilement automatique : praline suivante toutes les 15 s (AUTOPLAY_MS). Toute action (flèche, pastille,
+ * poids, ajout) relance les 15 s. En pause quand le clavier est dans la section, quand elle n'est pas
+ * à l'écran, et en mode léger. (Pas de pause au survol : la section occupe tout l'écran.)
+ * Photo : celle du produit réel (Storage) ; dessin CSS seulement si le produit n'a pas encore de photo.
  *  flavors : pralines (data/maisonPages.js) · weights : quantités · pricePerKg · onAdd
  */
 export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd }) {
@@ -20,6 +27,12 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
   const [index, setIndex] = useState(0)
   const [weight, setWeight] = useState(0)
   const [dir, setDir] = useState(1)
+  const [tick, setTick] = useState(0) // relance le compte à rebours après une action
+  const [focused, setFocused] = useState(false)
+  const lite = useLiteMode()
+  const sectionRef = useRef(null)
+  const visualRef = useRef(null)
+  const inView = useInView(sectionRef, { amount: 0.35 })
   const f = flavors[index]
   const w = weights[weight]
   // Prix, stock et ajout au panier : produit réel du catalogue (même code ERP), variante du même poids
@@ -28,18 +41,43 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
   const canBuy = Boolean(variant?.available) && isPurchasable(live)
   const price = variant?.price ?? Math.round(pricePerKg * w.kg)
   const stockKg = live?.live ? live.stockKg : f.stock
+  const photoOf = (fl) => {
+    const p = getProduct(fl.id)
+    return p?.live && p.hasPhoto ? p.img : null
+  }
+  const photo = photoOf(f)
+
+  const restart = () => setTick((n) => n + 1)
 
   const go = (i) => {
     setDir(i > index ? 1 : -1)
     setIndex((i + flavors.length) % flavors.length)
+    restart()
   }
 
+  // Praline suivante toutes les 15 s
+  const paused = focused || !inView || lite || flavors.length < 2
+  useEffect(() => {
+    if (paused) return
+    const id = setTimeout(() => {
+      setDir(1)
+      setIndex((i) => (i + 1) % flavors.length)
+    }, AUTOPLAY_MS)
+    return () => clearTimeout(id)
+  }, [paused, index, tick, flavors.length])
+
   const add = () => {
-    if (canBuy) onAdd(cartLine(live, variant), 1)
+    if (!canBuy) return
+    onAdd(cartLine(live, variant), 1)
+    flyToCart({ from: visualRef.current, src: photo })
+    restart()
   }
 
   return (
     <m.section
+      ref={sectionRef}
+      onFocus={(e) => e.target.matches(':focus-visible') && setFocused(true)}
+      onBlur={(e) => !e.currentTarget.contains(e.relatedTarget) && setFocused(false)}
       className="overflow-hidden px-gutter py-[clamp(64px,8vw,112px)]"
       animate={{ backgroundColor: f.bg, color: f.fg }}
       transition={{ duration: 0.8, ease }}
@@ -63,28 +101,36 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
       </div>
 
       <div className="mt-12 grid grid-cols-[1.1fr_1fr] items-center gap-[clamp(32px,6vw,96px)] max-md:grid-cols-1">
-        {/* Visuel : la praline entre en roulant */}
-        <div className="relative grid aspect-[5/4] place-items-center overflow-hidden rounded-2xl bg-white/10">
+        {/* Visuel : la praline entre en roulant (photo du produit, ou dessin en attendant sa photo) */}
+        <div ref={visualRef} className="relative grid aspect-[5/4] place-items-center overflow-hidden rounded-2xl bg-white/10">
           <AnimatePresence mode="popLayout" custom={dir} initial={false}>
             <m.div
               key={f.id}
               custom={dir}
-              className="w-[42%]"
+              className={photo ? 'w-[64%]' : 'w-[42%]'}
               variants={{
-                enter: (d) => ({ x: `${d * 120}%`, rotate: d * 140, opacity: 0 }),
+                enter: (d) => ({ x: `${d * 120}%`, rotate: d * (photo ? 30 : 140), opacity: 0 }),
                 center: { x: '0%', rotate: 0, opacity: 1 },
-                exit: (d) => ({ x: `${d * -120}%`, rotate: d * -140, opacity: 0 }),
+                exit: (d) => ({ x: `${d * -120}%`, rotate: d * (photo ? -30 : -140), opacity: 0 }),
               }}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{ duration: 0.9, ease }}
             >
-              <Praline choco={f.choco} className="aspect-square w-full" />
+              {photo ? (
+                <img src={photo} alt={t(f.name)} className="aspect-square w-full rounded-2xl bg-white object-contain p-[6%] shadow-[0_18px_40px_rgba(0,0,0,0.22)]" draggable={false} />
+              ) : (
+                <Praline choco={f.choco} className="aspect-square w-full" />
+              )}
             </m.div>
           </AnimatePresence>
           <span className="caps absolute right-5 top-5 opacity-70">{t('Réf.')} {f.ref}</span>
-          <span className="caps absolute bottom-5 left-5 text-[9px] opacity-60">{t('[Photo {ref}.webp à fournir]', { ref: f.ref })}</span>
+          {!photo && <span className="caps absolute bottom-5 left-5 text-[9px] opacity-60">{t('[Photo {ref}.webp à fournir]', { ref: f.ref })}</span>}
+          {/* Avancement vers la praline suivante */}
+          {!paused && (
+            <span key={`${index}-${tick}`} className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-current opacity-50" style={{ animation: `praline-progress ${AUTOPLAY_MS}ms linear forwards` }} aria-hidden />
+          )}
         </div>
 
         {/* Fiche */}
@@ -104,7 +150,10 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
                 key={wt.label}
                 type="button"
                 aria-pressed={i === weight}
-                onClick={() => setWeight(i)}
+                onClick={() => {
+                  setWeight(i)
+                  restart()
+                }}
                 className="relative rounded-full border border-current/30 px-5 py-2.5 text-[13px]"
               >
                 {i === weight && (
@@ -144,7 +193,11 @@ export default function PralineShowcase({ flavors, weights, pricePerKg, onAdd })
             aria-pressed={i === index}
             className={`flex items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 text-[12px] transition-colors ${i === index ? 'border-current' : 'border-transparent hover:border-current/40'}`}
           >
-            <Praline choco={fl.choco} className="size-6" />
+            {photoOf(fl) ? (
+              <img src={photoOf(fl)} alt="" className="size-6 rounded-full bg-white object-contain" loading="lazy" draggable={false} />
+            ) : (
+              <Praline choco={fl.choco} className="size-6" />
+            )}
             {t(fl.name)}
           </button>
         ))}

@@ -8,10 +8,30 @@ import { createContext, createElement, useContext, useEffect, useState } from 'r
  *   - peu de mémoire (navigator.deviceMemory <= 2)
  *   - « Réduire les animations » est activé dans le système
  * navigator.connection et deviceMemory n'existent pas partout (Safari, Firefox) : on les ignore alors.
- * Pour tester : localStorage.setItem('kclick-lite', '1') force le mode léger, '0' le désactive.
+ * Pour tester, ajouter à l'adresse du site (le choix est gardé sur cet appareil) :
+ *   ?lite=1     → force le mode léger      ex. https://kclick-tests.netlify.app/?lite=1
+ *   ?lite=0     → le désactive
+ *   ?lite=auto  → revient à la détection automatique
+ * (équivalent dans la console : localStorage.setItem('kclick-lite', '1' | '0') ou removeItem)
  */
 const OVERRIDE_KEY = 'kclick-lite'
 const SLOW = ['slow-2g', '2g', '3g']
+
+// ?lite=1 | 0 | auto dans l'adresse : enregistre le choix puis retire le paramètre de l'adresse
+;(function applyUrlOverride() {
+  if (typeof window === 'undefined') return
+  try {
+    const url = new URL(window.location.href)
+    const v = url.searchParams.get('lite')
+    if (v === null) return
+    if (v === '1' || v === '0') localStorage.setItem(OVERRIDE_KEY, v)
+    else localStorage.removeItem(OVERRIDE_KEY)
+    url.searchParams.delete('lite')
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  } catch {
+    /* stockage indisponible : on garde la détection automatique */
+  }
+})()
 
 function readOverride() {
   try {

@@ -163,3 +163,9 @@ html[data-lite] .img-reveal { transition: none !important; }
   .img-fade,
   .img-reveal { transition: none !important; }
 }
+
+/* Pralines Patchi : barre d'avancement vers la praline suivante (défilement automatique) */
+@keyframes praline-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
