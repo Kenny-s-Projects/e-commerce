@@ -70,10 +70,10 @@ export default function PatchiPage({ onAdd }) {
         composeLabel={SHOW_BOX_COMPOSER ? 'Composer un coffret' : 'Découvrir les chocolats'}
         onCompose={() => (SHOW_BOX_COMPOSER ? composerRef : barRef).current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
       />
-      <MaisonCode pillars={patchiPage.pillars} />
+      {/* <MaisonCode pillars={patchiPage.pillars} /> */}
+      <CollectionIndex collections={collections} counts={counts} total={products.length} onPick={pickCollection} loading={catalogStatus === 'loading'} />
       {flavors.length > 0 && <PralineShowcase flavors={flavors} weights={patchiPage.weights} pricePerKg={patchiPage.pricePerKg} onAdd={onAdd} />}
       {SHOW_BOX_COMPOSER && <BoxComposer ref={composerRef} flavors={patchiFlavors} sizes={patchiPage.boxSizes} pricePerKg={patchiPage.pricePerKg} />}
-      <CollectionIndex collections={collections} counts={counts} total={products.length} onPick={pickCollection} loading={catalogStatus === 'loading'} />
       <CatalogueGrid
         ref={barRef}
         products={list}
