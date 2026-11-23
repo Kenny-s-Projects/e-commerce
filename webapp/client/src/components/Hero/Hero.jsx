@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, AnimatePresence, useInView } from 'framer-motion'
-import { formatPrice, maisonHref } from '../../data/houses.js'
+import { maisonHref } from '../../data/houses.js'
 import { useLive } from '../../data/live.js'
 import { heroThemes } from '../../data/themes.js'
 import { useT } from '../../i18n/lang.js'
