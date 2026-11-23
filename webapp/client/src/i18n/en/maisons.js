@@ -245,4 +245,11 @@ export default {
   'Blouson léger': 'Light jacket',
   'Boxers, lot de 3': 'Boxers, pack of 3',
   'Ceinture en cuir': 'Leather belt',
+  'Finesse, Noblesse, Audace, Diamantine… les pralines de toujours, servies au poids : 250 g, 500 g ou 1 kg.': 'Finesse, Noblesse, Audace, Diamantine… the timeless pralines, sold by weight: 250 g, 500 g or 1 kg.',
+  'De grandes boîtes garnies, prêtes à offrir, de 445 g à 470 g.': 'Large filled boxes, ready to give, from 445 g to 470 g.',
+  'Capricio, Prestige, Parfait, les Croq’… les pralines fourrées, servies au poids.': 'Capricio, Prestige, Parfait, the Croqs… filled pralines, sold by weight.',
+  'De 100 g à 315 g, pour un merci, une visite ou un petit plaisir.': 'From 100 g to 315 g, for a thank-you, a visit or a little treat.',
+  'Lait aux fruits secs ou noir aux amandes, sans sucre ajouté, au poids.': 'Milk with nuts or dark with almonds, no added sugar, sold by weight.',
+  'Voir la collection': 'See the collection',
+  'Collection {n}': 'Collection {n}',
 }

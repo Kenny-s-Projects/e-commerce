@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import BoxReveal from './BoxReveal.jsx'
-import MaisonCode from './MaisonCode.jsx'
+// import MaisonCode from './MaisonCode.jsx' // section « Le code de la Maison » retirée de la page (voir plus bas)
 import PralineShowcase from './PralineShowcase.jsx'
 import BoxComposer from './BoxComposer.jsx'
 import CollectionIndex from './CollectionIndex.jsx'

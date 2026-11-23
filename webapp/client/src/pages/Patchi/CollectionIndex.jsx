@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, m, useMotionValue, useSpring } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
@@ -17,6 +17,15 @@ const COLLECTION_IMG = {
 }
 const imageOf = (id) => COLLECTION_IMG[id] ?? PATCHI_IMG
 
+// Texte des cartes (mobile et tablette)
+const COLLECTION_TEXT = {
+  classic: 'Finesse, Noblesse, Audace, Diamantine… les pralines de toujours, servies au poids : 250 g, 500 g ou 1 kg.',
+  giftboxes: 'De grandes boîtes garnies, prêtes à offrir, de 445 g à 470 g.',
+  deluxe: 'Capricio, Prestige, Parfait, les Croq’… les pralines fourrées, servies au poids.',
+  smallboxes: 'De 100 g à 315 g, pour un merci, une visite ou un petit plaisir.',
+  sansucre: 'Lait aux fruits secs ou noir aux amandes, sans sucre ajouté, au poids.',
+}
+
 /**
  * Index des collections : grands titres en italique, numérotés.
  * Animations : les filets se dessinent un à un ; au survol, la ligne glisse
@@ -24,6 +33,7 @@ const imageOf = (id) => COLLECTION_IMG[id] ?? PATCHI_IMG
  * à l'autre, l'image change en fondu.
  *  collections : [{ id, label, note }] · counts : { id: n } · onPick(id)
  *  loading     : catalogue en cours de chargement → lignes squelettes à la place des chapitres
+ * Mobile et tablette (< 1024 px) : cartes photo qu'on fait glisser du doigt (voir CollectionCards).
  */
 export default function CollectionIndex({ collections, counts, total, onPick, loading = false }) {
   const t = useT()
@@ -69,7 +79,9 @@ export default function CollectionIndex({ collections, counts, total, onPick, lo
         </SkeletonGroup>
       )}
 
-      <div className="relative" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      {!loading && <CollectionCards collections={collections} counts={counts} onPick={onPick} />}
+
+      <div className="relative max-lg:hidden" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {/* Vignette qui suit la souris */}
         <AnimatePresence>
           {hover && (
@@ -118,5 +130,96 @@ export default function CollectionIndex({ collections, counts, total, onPick, lo
         ))}
       </div>
     </section>
+  )
+}
+
+/**
+ * Mobile et tablette : une carte par collection, photo en fond sous un dégradé sombre,
+ * surtitre et titre en haut, texte en bas. Les cartes défilent à l'horizontale (glisser du doigt),
+ * avec arrêt net sur chaque carte ; points de position en dessous. Toucher une carte → catalogue filtré.
+ */
+function CollectionCards({ collections, counts, onPick }) {
+  const t = useT()
+  const track = useRef(null)
+  const [current, setCurrent] = useState(0)
+
+  // Largeur d'un pas = une carte + l'espace entre deux cartes
+  const step = () => {
+    const el = track.current
+    const [a, b] = el?.children ?? []
+    return a && b ? b.offsetLeft - a.offsetLeft : el?.clientWidth || 1
+  }
+  const onScroll = () => {
+    const el = track.current
+    if (!el) return
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4
+    setCurrent(atEnd ? collections.length - 1 : Math.round(el.scrollLeft / step()))
+  }
+  const goTo = (i) => track.current?.scrollTo({ left: i * step(), behavior: 'smooth' })
+
+  return (
+    <div className="lg:hidden">
+      <div
+        ref={track}
+        onScroll={onScroll}
+        className="-mx-gutter mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-gutter px-gutter pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label={t('Collections')}
+      >
+        {collections.map((c, i) => (
+          <m.button
+            key={c.id}
+            type="button"
+            onClick={() => onPick(c.id)}
+            className="group relative aspect-[4/5] w-[78vw] max-w-[380px] shrink-0 snap-start overflow-hidden rounded-2xl bg-forest-deep text-left text-white sm:w-[calc(50%-8px)] sm:max-w-none"
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, ease, delay: Math.min(i, 3) * 0.08 }}
+          >
+            <m.img
+              src={imageOf(c.id)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 size-full object-cover"
+              initial={{ scale: 1.12 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 1.2, ease }}
+            />
+            {/* Dégradé sombre : texte lisible en haut et en bas, même sur une photo claire */}
+            <span aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,20,15,0.78)_0%,rgba(12,20,15,0.35)_30%,rgba(12,20,15,0.25)_50%,rgba(12,20,15,0.88)_100%)]" />
+
+            <span className="absolute inset-x-6 top-6 block">
+              <span className="caps block text-[11px] tracking-[0.2em] text-gold">
+                {String(i + 1).padStart(2, '0')} · {t('{n} produits', { n: counts[c.id] ?? 0 })}
+              </span>
+              <span className="mt-1.5 block text-[clamp(26px,7vw,34px)] font-semibold leading-tight">{t(c.label)}</span>
+            </span>
+
+            <span className="absolute inset-x-6 bottom-6 block">
+              <span className="block text-[14px] leading-[1.55] text-white/90">{t(COLLECTION_TEXT[c.id] ?? c.note)}</span>
+              <span className="caps mt-4 inline-flex items-center gap-2 border-b border-gold pb-1 text-[11px] text-gold">
+                {t('Voir la collection')} <span aria-hidden className="transition-transform duration-500 ease-lux group-active:translate-x-1.5">⟶</span>
+              </span>
+            </span>
+          </m.button>
+        ))}
+      </div>
+
+      {/* Points de position */}
+      <div className="mt-5 flex justify-center gap-2">
+        {collections.map((c, i) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => goTo(i)}
+            aria-label={t('Collection {n}', { n: i + 1 })}
+            aria-current={i === current ? 'true' : undefined}
+            className={`h-1.5 rounded-full transition-all duration-500 ease-lux ${i === current ? 'w-6 bg-forest' : 'w-1.5 bg-forest/25'}`}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
