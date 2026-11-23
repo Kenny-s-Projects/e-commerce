@@ -5,7 +5,7 @@
  *   flyToCart({ from: elementPhoto, src: urlImage })
  *
  * - Aucune dépendance React : un calque fixe est créé à la volée et animé avec l'API Web Animations
- *   (uniquement transform et opacity). Durée totale : FLY_DURATION (10 s, demandé par le client).
+ *   (uniquement transform et opacity). Durée totale : FLY_DURATION (6 s, demandé par le client).
  * - Trajet : la vignette apparaît sur la photo, monte en arc, se place au-dessus du panier
  *   puis tombe dedans en rétrécissant.
  * - La cible est l'icône du panier visible marquée data-cart-target (header en haut de page,
@@ -18,7 +18,7 @@
 export const CART_ARRIVE = 'kclick:cart-arrive'
 
 /** Durée totale du vol, de l'apparition à la chute dans le panier (ms) */
-export const FLY_DURATION = 10_000
+export const FLY_DURATION = 6_000
 
 const arrive = () => window.dispatchEvent(new Event(CART_ARRIVE))
 

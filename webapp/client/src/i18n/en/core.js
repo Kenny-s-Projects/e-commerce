@@ -19,6 +19,7 @@ export default {
   'Accueil': 'Home',
   'Offrir': 'Gifts',
   'Notre histoire': 'Our story',
+  Marques: 'Brands',
   'Aide et service client': 'Help and customer service',
 
   /* Panier */

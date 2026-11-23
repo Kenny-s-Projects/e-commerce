@@ -1,17 +1,24 @@
+import { useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import useHashRoute from '../../hooks/useHashRoute.js'
 import { contact } from '../../data/home.js'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
 import { useT } from '../../i18n/lang.js'
+import { brandOpen, useLive } from '../../data/live.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
+// Sous-menu « Marques » : Patchi d'abord
+const BRANDS = [
+  { id: 'patchi', label: 'Patchi' },
+  { id: 'kyra', label: 'Kyra' },
+  { id: 'adidas', label: 'adidas' },
+  { id: 'celio', label: 'Celio' },
+]
+
 const LINKS = [
   { label: 'Accueil', href: '#', page: 'home' },
-  { label: 'Kyra', href: '#maison/kyra', page: 'maison-kyra' },
-  { label: 'Patchi', href: '#maison/patchi', page: 'maison-patchi' },
-  { label: 'adidas', href: '#maison/adidas', page: 'maison-adidas' },
-  { label: 'Celio', href: '#maison/celio', page: 'maison-celio' },
+  { label: 'Marques', brands: true },
   { label: 'Offrir', href: '#offrir/pour-elle', page: 'offrir' },
   { label: 'Notre histoire', href: '#notre-histoire', page: 'histoire' },
   { label: 'Aide et service client', href: '#aide/livraison', page: 'aide' },
@@ -23,6 +30,7 @@ const LINKS = [
  * Panneau du menu, façon Haven : il se déplie depuis la pastille « Menu », en haut au centre.
  * Les liens arrivent l'un après l'autre ; un carré marque la page en cours ;
  * téléphone et e-mail en bas. Fermeture : croix, clic à côté, Échap ou clic sur un lien.
+ * « Marques » s'ouvre en accordéon (Patchi, Kyra, adidas, Celio) ; ouvert d'office sur une page de Maison.
  *  open · onClose · onSearch (ouvre la recherche à la place du menu)
  */
 export default function MenuPanel({ open, onClose, onSearch }) {
@@ -70,6 +78,16 @@ export default function MenuPanel({ open, onClose, onSearch }) {
               variants={{ show: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } } }}
             >
               {LINKS.map((l) => {
+                if (l.brands)
+                  return (
+                    <m.li
+                      key={l.label}
+                      className="border-b border-cream/15 last:border-0"
+                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } } }}
+                    >
+                      <BrandsMenu current={current} onClose={onClose} />
+                    </m.li>
+                  )
                 const on = l.page === current
                 return (
                   <m.li
@@ -108,5 +126,62 @@ export default function MenuPanel({ open, onClose, onSearch }) {
         </div>
       )}
     </AnimatePresence>
+  )
+}
+
+/** « Marques » ▾ : accordéon avec les quatre Maisons ; « Bientôt » pour une Maison pas encore ouverte à la vente */
+function BrandsMenu({ current, onClose }) {
+  const t = useT()
+  const live = useLive()
+  const inBrand = current.startsWith('maison-')
+  const [open, setOpen] = useState(inBrand)
+  const known = live.status === 'ready'
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls="menu-brands"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 py-[15px] text-left text-[18px] transition-[padding] duration-400 ease-lux hover:pl-2"
+      >
+        {inBrand && !open && <span aria-hidden className="size-[7px] bg-gold" />}
+        {t('Marques')}
+        <m.span aria-hidden className="ml-auto text-[14px]" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.4, ease }}>
+          ▾
+        </m.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <m.ul
+            id="menu-brands"
+            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.45, ease }}
+          >
+            {BRANDS.map((b, i) => {
+              const on = current === `maison-${b.id}`
+              return (
+                <m.li key={b.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, ease, delay: 0.05 * i }}>
+                  <a
+                    href={`#maison/${b.id}`}
+                    onClick={onClose}
+                    aria-current={on ? 'page' : undefined}
+                    className="flex items-center gap-3 py-2.5 pl-5 text-[16px] text-cream/85 transition-[padding,color] duration-400 ease-lux last:pb-4 hover:pl-7 hover:text-cream"
+                  >
+                    {on && <span aria-hidden className="size-[6px] bg-gold" />}
+                    {b.label}
+                    {known && !brandOpen(b.id) && <span className="caps ml-auto text-[9px] text-cream/50">{t('Bientôt')}</span>}
+                  </a>
+                </m.li>
+              )
+            })}
+          </m.ul>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

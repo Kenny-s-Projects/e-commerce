@@ -1,30 +1,32 @@
-import { useEffect, useState } from 'react'
-import { m, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { m, AnimatePresence, useInView } from 'framer-motion'
 import { formatPrice, maisonHref } from '../../data/houses.js'
 import { useLive } from '../../data/live.js'
 import { heroThemes } from '../../data/themes.js'
 import { useT } from '../../i18n/lang.js'
 
 const ease = [0.22, 1, 0.36, 1]
-const AUTOPLAY_MS = 5000
+const AUTOPLAY_MS = 15_000 // la colonne suivante s'agrandit toute seule après 15 s
 
 export default function Hero({ houses, ready = true }) {
   const t = useT()
   const [active, setActive] = useState(houses.length - 1) // Celio ouvert, comme la maquette
-  const [paused, setPaused] = useState(false)
+  const sectionRef = useRef(null)
+  const inView = useInView(sectionRef, { amount: 0.3 })
 
-  // La colonne ouverte change toute seule tant que la souris n'est pas sur le hero
+  // Toutes les 15 s, la colonne suivante s'agrandit (Kyra → Patchi → adidas → Celio → …).
+  // Le survol d'une colonne l'agrandit et relance les 15 s (active change → le minuteur repart).
+  // Pas de pause au survol : le hero remplit l'écran, la souris est presque toujours dessus.
   useEffect(() => {
-    if (paused || !ready) return
-    const timer = setInterval(() => setActive((i) => (i + 1) % houses.length), AUTOPLAY_MS)
-    return () => clearInterval(timer)
-  }, [paused, ready, houses.length])
+    if (!ready || !inView) return
+    const timer = setTimeout(() => setActive((i) => (i + 1) % houses.length), AUTOPLAY_MS)
+    return () => clearTimeout(timer)
+  }, [active, ready, inView, houses.length])
 
   return (
     <section
+      ref={sectionRef}
       className="relative flex h-[calc(100svh-4rem)] min-h-[560px] overflow-hidden max-md:grid max-md:h-auto max-md:min-h-0 max-md:grid-cols-2 max-md:bg-beige"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       {houses.map((house, i) => (
         <HeroColumn
