@@ -16,7 +16,7 @@ const variantOf = async (ref, label) =>
 
 const order = (overrides = {}) =>
   orders.placeOrder(null, {
-    customer: { name: 'Merveille Kabongo', phone: '+243810000000' },
+    customer: { name: 'Merveille Kabongo', phone: '+243810000000', email: 'merveille@exemple.com' },
     mode: 'livraison',
     address: { commune: 'Gombe', street: 'avenue de la Justice', landmark: 'portail bleu' },
     paymentMethod: 'mobile_money',

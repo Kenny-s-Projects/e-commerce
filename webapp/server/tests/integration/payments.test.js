@@ -12,7 +12,7 @@ let db, admin, variant
 
 const order = () =>
   orders.placeOrder(null, {
-    customer: { name: 'Test', phone: '+243810000000' },
+    customer: { name: 'Test', phone: '+243810000000', email: 'test@exemple.com' },
     mode: 'retrait',
     paymentMethod: 'mobile_money',
     provider: 'Orange Money',

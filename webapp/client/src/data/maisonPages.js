@@ -9,7 +9,7 @@ export const PATCHI_IMG = '/img/logos/patchi-placeholder.png' // visuel provisoi
 // Une praline = un fond de section + l'aspect du chocolat dessiné en CSS (en attendant les photos)
 // choco.base : couleur du chocolat · choco.deco : 'gold' | 'drizzle' | 'nut' | 'plain' · choco.shape : 'round' | 'square'
 export const patchiFlavors = [
-  { id: 'ccd01', ref: 'CCD01', name: 'Praline lait', erp: 'Chocolate Milk Filled with Praline', coll: 'Deluxe', stock: 5, bg: '#8eb48e', fg: '#1c3322', choco: { base: '#7a4a2c', deco: 'drizzle', shape: 'round' } },
+  { id: 'ccd05', ref: 'CCD05', name: 'Prestige', erp: 'Prestige Chocolate', coll: 'Deluxe', stock: 15, bg: '#8eb48e', fg: '#1c3322', choco: { base: '#7a4a2c', deco: 'drizzle', shape: 'round' } },
   { id: 'ccd03', ref: 'CCD03', name: 'Capricio', erp: 'Capricio Chocolate', coll: 'Deluxe', stock: 10, bg: '#3b2418', fg: '#f2eee1', choco: { base: '#4a2a1a', deco: 'gold', shape: 'square' } },
   { id: 'ccd04', ref: 'CCD04', name: 'Gaufrette', erp: 'Chocolate Wafer Milk Square', coll: 'Deluxe', stock: 16, bg: '#1c3322', fg: '#f2eee1', choco: { base: '#8a5a36', deco: 'plain', shape: 'square' } },
   { id: 'ccn01', ref: 'CCN01', name: 'Finesse', erp: 'Finesse Chocolate', coll: 'Classiques', stock: 10, bg: '#e6d8bd', fg: '#3b2418', choco: { base: '#5c3520', deco: 'nut', shape: 'round' } },

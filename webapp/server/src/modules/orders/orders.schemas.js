@@ -9,7 +9,8 @@ export const createOrderBody = z
     customer: z.object({
       name: z.string().trim().min(2, 'Nom obligatoire'),
       phone: z.string().trim().regex(/^\+?[0-9 ]{8,20}$/, 'Téléphone invalide'),
-      email: z.email('E-mail invalide').optional().or(z.literal('').transform(() => undefined)),
+      // Obligatoire (connecté ou non) : la confirmation, avec le numéro et le lien de suivi, part à cette adresse
+      email: z.string('E-mail obligatoire').trim().toLowerCase().min(1, 'E-mail obligatoire').pipe(z.email('E-mail invalide')),
     }),
     mode: z.enum(['livraison', 'retrait']),
     address: z

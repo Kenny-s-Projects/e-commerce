@@ -53,6 +53,18 @@ test('commande Patchi : boîte à la pièce + chocolat au poids, totaux et stock
   assert.equal(parts[0].amount_due, 65.87)
 })
 
+test('e-mail obligatoire (connecté ou non) : sans e-mail ou e-mail invalide, la commande est refusée', async () => {
+  const { createOrderBody } = await import('../../src/modules/orders/orders.schemas.js')
+  const withEmail = (email) => createOrderBody.safeParse(checkout({ customer: { name: 'Aline Mbuyi', phone: '+243 810 000 000', ...(email === undefined ? {} : { email }) } }))
+  const issue = (r) => r.error.issues.find((i) => i.path.join('.') === 'customer.email')?.message
+  assert.equal(issue(withEmail(undefined)), 'E-mail obligatoire')
+  assert.equal(issue(withEmail('   ')), 'E-mail obligatoire')
+  assert.equal(issue(withEmail('aline@')), 'E-mail invalide')
+  const ok = withEmail('  Aline@Example.com ')
+  assert.equal(ok.success, true)
+  assert.equal(ok.data.customer.email, 'aline@example.com')
+})
+
 test('Maison fermée (Kyra) : « bientôt disponible », rien n’est enregistré', async () => {
   const res = await request(app).post('/api/v1/orders').send(checkout({ items: [{ variantId: kyraVariant, quantity: 1 }] }))
   assert.equal(res.status, 409)

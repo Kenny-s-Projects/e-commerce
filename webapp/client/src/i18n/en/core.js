@@ -101,6 +101,7 @@ export default {
   'Téléphone': 'Phone',
   'E-mail (facultatif)': 'Email (optional)',
   'Champ obligatoire': 'Required field',
+  'Votre e-mail est nécessaire pour recevoir la confirmation et le suivi de votre commande.': 'Your email is needed to receive your order confirmation and tracking link.',
   'Livraison ou retrait': 'Delivery or pickup',
   'Livraison à Gombe': 'Delivery in Gombe',
   'Le jour même, à moto': 'Same day, by motorbike',

@@ -177,7 +177,8 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const required = useMemo(() => {
-    const r = ['name', 'phone']
+    // E-mail obligatoire (connecté ou non) : la confirmation, avec le numéro et le lien de suivi, y est envoyée
+    const r = ['name', 'phone', 'email']
     if (delivery === 'livraison') r.push('address')
     if (payment === 'mobile_money') r.push('momo')
     return r
@@ -187,9 +188,10 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   const validate = (keys) => {
     const errs = {}
     for (const k of keys) {
-      if (required.includes(k) && !form[k].trim()) errs[k] = 'Champ obligatoire'
+      if (k === 'email' && !form.email.trim()) errs.email = 'Votre e-mail est nécessaire pour recevoir la confirmation et le suivi de votre commande.'
+      else if (required.includes(k) && !form[k].trim()) errs[k] = 'Champ obligatoire'
       else if (PHONE_FIELDS[k] && required.includes(k) && phoneError(form[PHONE_FIELDS[k]], form[k])) errs[k] = phoneError(form[PHONE_FIELDS[k]], form[k])
-      else if (k === 'email' && form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'E-mail invalide'
+      else if (k === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'E-mail invalide'
     }
     return errs
   }
@@ -228,7 +230,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
 
     const phone = formatPhone(form.phoneCode, form.phone)
     const body = {
-      customer: { name: form.name.trim(), phone, email: form.email.trim() || undefined },
+      customer: { name: form.name.trim(), phone, email: form.email.trim() },
       mode: delivery,
       address:
         delivery === 'livraison'
@@ -399,7 +401,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
               {field('name', 'Prénom et nom', { autoComplete: 'name', wide: true })}
               {phoneField('phone', 'Téléphone')}
-              {field('email', 'E-mail (facultatif)', { type: 'email', autoComplete: 'email' })}
+              {field('email', 'E-mail', { type: 'email', autoComplete: 'email', inputMode: 'email' })}
             </div>
             <ContinueButton t={t} />
           </Step>
