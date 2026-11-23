@@ -135,7 +135,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
         )}
       </m.div>
 
-      {/* Bas : catégorie + détails du produit quand la colonne est ouverte */}
+
       <m.footer layout="position" transition={{ layout: { duration: 0.9, ease } }} className="min-h-[110px] max-md:min-h-0">
         <p className="caps max-w-[180px] leading-[1.7]">{t(house.tagline)}</p>
 
@@ -148,7 +148,7 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
               exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
               transition={{ duration: 0.6, delay: 0.35, ease }}
             >
-              {/* Produit vedette (catalogue réel) : nom + prix réel ; squelette pendant le chargement */}
+              {/* Produit vedette (catalogue réel) : nom + prix réel ; squelette pendant le chargement 
               {hero.slug && (
                 <p className="mt-0.5 text-[15px]">
                   {hero.href ? <a href={hero.href} className="hover:underline hover:underline-offset-4">{t(hero.name)}</a> : t(hero.name)}
@@ -156,14 +156,14 @@ function HeroColumn({ house, index, ready, isActive, onActivate }) {
                     {hero.pending ? <span aria-hidden className="sk inline-block h-3 w-14 rounded-full align-middle" /> : hero.live && hero.price != null ? formatPrice(hero.price) : null}
                   </span>
                 </p>
-              )}
+              )}*/}
               <a
                 href={maisonHref(house.id)}
                 className="caps group mt-3.5 inline-flex items-center gap-2.5 whitespace-nowrap border-b border-current pb-1.5"
               >
                 {t('Entrer chez {m}', { m: house.name })}
                 <span aria-hidden className="transition-transform duration-400 ease-lux group-hover:translate-x-1.5">
-                  ⟶
+                  ⟶ 
                 </span>
               </a>
             </m.div>

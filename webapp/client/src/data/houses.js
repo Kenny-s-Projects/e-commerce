@@ -38,10 +38,10 @@ export const houses = [
     accent: 'l’art d’offrir.',
     accentInline: true, // titre sur une seule ligne, comme la maquette
     subtitle: 'Chocolats fins au poids, coffrets garnis, dragées et tablettes.',
+    hero: {img: PATCHI_IMG_SECTION},
     // Produit vedette du hero : prix réel lu dans l'API (slug), visuel de la Maison tant qu'il n'a pas de photo
-    hero: { slug: 'ggf0017', img: PATCHI_IMG_SECTION, name: 'Coffret brique garni, 470 g', price: null, boxed: true },
+    // hero: { slug: 'ggf0017', img: PATCHI_IMG_SECTION, name: 'Coffret brique garni, 470 g', price: null, boxed: true },
     // maison : produits du catalogue réel (squelette du prix pendant le chargement)
-    // variant : poids proposé par défaut pour les produits au poids (prix et ajout au panier de cette variante)
     products: [
       { id: 'ggf0016', ref: 'GGF0016', maison: 'patchi', store: 'Coffrets', name: 'Coffret orange garni, 465 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
       { id: 'gsb0013', ref: 'GSB0013', maison: 'patchi', store: 'Petites boîtes', name: 'Boîte verte garnie, 200 g', price: null, img: PATCHI_PLACEHOLDER, boxed: true },
