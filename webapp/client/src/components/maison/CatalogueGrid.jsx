@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
 import ProductSingle from '../ProductSingle/ProductSingle.jsx'
 import FilterPanel from './FilterPanel.jsx'
@@ -22,15 +22,30 @@ const ease = [0.22, 1, 0.36, 1]
  *  insert     : élément glissé après les `insertAfter` premiers produits (bandeau éditorial…)
  *  title      : titre au-dessus des filtres (facultatif)
  *  status     : 'ready' (défaut) | 'loading' → squelettes | 'error' → message + « Réessayer » (onRetry)
+ *  pageRows   : n lignes de produits affichées d'abord, puis « Voir plus » ajoute n lignes à chaque clic
+ *               (nombre de colonnes selon l'écran ; repart à n lignes quand les filtres changent). null = tout.
  */
 const CatalogueGrid = forwardRef(function CatalogueGrid(
-  { products, total, groups, value, onChange, barClass = '', pill = 'square', cols = 3, house, onAdd, insert = null, insertAfter = 6, title = null, status = 'ready', error = null, onRetry },
+  { products, total, groups, value, onChange, barClass = '', pill = 'square', cols = 3, house, onAdd, insert = null, insertAfter = 6, title = null, status = 'ready', error = null, onRetry, pageRows = null },
   ref
 ) {
   const t = useT()
   const radius = pill === 'round' ? 'rounded-full' : ''
-  const first = insert ? products.slice(0, insertAfter) : products
-  const rest = insert ? products.slice(insertAfter) : []
+
+  // « Voir plus » : n lignes au départ, n de plus à chaque clic ; on repart à n lignes si la liste change (filtre)
+  const perRow = useColumns(cols)
+  const [pages, setPages] = useState(1)
+  const [listFor, setListFor] = useState(products)
+  if (listFor !== products) {
+    setListFor(products)
+    setPages(1)
+  }
+  const limit = pageRows ? pageRows * perRow * pages : Infinity
+  const shown = products.slice(0, limit)
+  const remaining = products.length - shown.length
+
+  const first = insert ? shown.slice(0, insertAfter) : shown
+  const rest = insert ? shown.slice(insertAfter) : []
 
   return (
     <div id="grille">
@@ -94,12 +109,41 @@ const CatalogueGrid = forwardRef(function CatalogueGrid(
           <Grid items={first} cols={cols} house={house} onAdd={onAdd} />
           {insert && rest.length > 0 && insert}
           {rest.length > 0 && <Grid items={rest} cols={cols} house={house} onAdd={onAdd} />}
+          {remaining > 0 && (
+            <div className="flex justify-center px-gutter pb-[clamp(48px,6vw,88px)]">
+              <m.button
+                type="button"
+                onClick={() => setPages((n) => n + 1)}
+                whileTap={{ scale: 0.97 }}
+                className={`caps inline-flex items-center gap-3 border border-current px-8 py-4 text-[11px] transition-colors duration-300 hover:bg-current/10 ${radius}`}
+              >
+                {t('Voir plus')}
+                <span className="opacity-70">· {remaining === 1 ? t('1 produit restant') : t('{n} produits restants', { n: remaining })}</span>
+                <span aria-hidden>↓</span>
+              </m.button>
+            </div>
+          )}
           {products.length === 0 && <p className="px-gutter py-16 text-sm opacity-70">{t('Aucun produit pour ces filtres.')}</p>}
         </>
       )}
     </div>
   )
 })
+
+// Colonnes réellement affichées (mêmes seuils que gridClass : max-[900px] = largeur < 900 px)
+function columnsFor(cols, width) {
+  if (cols === 4) return width < 760 ? 2 : width < 1100 ? 3 : 4
+  return width < 900 ? 2 : 3
+}
+function useColumns(cols) {
+  const [n, setN] = useState(() => (typeof window === 'undefined' ? cols : columnsFor(cols, window.innerWidth)))
+  useEffect(() => {
+    const onResize = () => setN(columnsFor(cols, window.innerWidth))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [cols])
+  return n
+}
 
 const gridClass = (cols) => (cols === 4 ? 'grid-cols-4 max-[1100px]:grid-cols-3 max-[760px]:grid-cols-2' : 'grid-cols-3 max-[900px]:grid-cols-2')
 

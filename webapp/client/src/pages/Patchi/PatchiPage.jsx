@@ -88,6 +88,7 @@ export default function PatchiPage({ onAdd }) {
         status={catalogStatus}
         error={live.error}
         onRetry={loadLive}
+        pageRows={3}
       />
       <NextMaison
         id="kyra"

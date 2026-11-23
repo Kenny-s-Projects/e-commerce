@@ -20,6 +20,9 @@ export default {
   'Offrir': 'Gifts',
   'Notre histoire': 'Our story',
   Marques: 'Brands',
+  'Voir plus': 'See more',
+  '{n} produits restants': '{n} more products',
+  '1 produit restant': '1 more product',
   'Aide et service client': 'Help and customer service',
 
   /* Panier */
