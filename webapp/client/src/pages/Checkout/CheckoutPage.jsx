@@ -11,6 +11,7 @@ import { useT } from '../../i18n/lang.js'
 import useLiteMode from '../../hooks/useLiteMode.js'
 import PhoneField from '../../components/PhoneField/PhoneField.jsx'
 import { DEFAULT_CODE, formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
+import { HOME_HREF } from '../../hooks/useHashRoute.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const DEFAULT_FEE = 4 // Gombe, le jour même (remplacé par les paramètres de l'API)
@@ -306,7 +307,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             <a href={`#suivi/${order.number}`} className="rounded-full bg-ink px-7 py-4 text-[14px] text-white">{t('Suivre ma commande')}</a>
             <a href={follow} target="_blank" rel="noreferrer" className="rounded-full border border-ink px-7 py-4 text-[14px]">{t('Une question sur WhatsApp')}</a>
           </div>
-          <a href="#" className="caps mt-8 inline-block border-b border-current pb-1 text-[10px]">{t('Retour à l’accueil')}</a>
+          <a href={HOME_HREF} className="caps mt-8 inline-block border-b border-current pb-1 text-[10px]">{t('Retour à l’accueil')}</a>
         </m.div>
       </section>
     )
@@ -318,7 +319,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       <section className="grid min-h-[60svh] place-items-center px-gutter py-20 text-center text-ink">
         <div>
           <h1 className="text-[clamp(36px,4vw,56px)] font-light">{t('Rien à commander')} <span className="accent">{t('pour l’instant.')}</span></h1>
-          <a href="#" className="caps mt-8 inline-block border-b border-current pb-1">{t('Découvrir les Maisons')}</a>
+          <a href={HOME_HREF} className="caps mt-8 inline-block border-b border-current pb-1">{t('Découvrir les Maisons')}</a>
         </div>
       </section>
     )

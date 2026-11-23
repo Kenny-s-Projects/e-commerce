@@ -134,7 +134,7 @@ export default function HistoirePage() {
         </Reveal>
         <div className="flex flex-wrap gap-3">
           <a href="#maison/kyra" className="caps bg-cream px-6 py-4 text-black transition-colors hover:bg-gold">{t('Découvrir les Maisons')}</a>
-          <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="caps border border-cream px-6 py-4 transition-colors hover:bg-cream hover:text-black">{t('Écrire au concierge')}</a>
+          <a href="https://wa.me/243817723066" target="_blank" rel="noreferrer" className="caps border border-cream px-6 py-4 transition-colors hover:bg-cream hover:text-black">{t('Écrire au concierge')}</a>
         </div>
       </section>
     </div>

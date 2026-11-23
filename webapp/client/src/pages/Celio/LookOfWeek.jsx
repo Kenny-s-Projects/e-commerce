@@ -86,7 +86,7 @@ export default function LookOfWeek({ look }) {
         </div>
 
         <m.a
-          href={chosen.length ? `https://wa.me/243818592999?text=${encodeURIComponent(message)}` : undefined}
+          href={chosen.length ? `https://wa.me/243817723066?text=${encodeURIComponent(message)}` : undefined}
           target="_blank"
           rel="noreferrer"
           aria-disabled={!chosen.length}

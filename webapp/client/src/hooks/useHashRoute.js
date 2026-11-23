@@ -15,11 +15,18 @@ const PROFILE_TABS = ['commandes', 'adresses', 'favoris', 'infos']
  *   compte             → connexion ; compte/inscription · compte/code · compte/profil/<onglet>
  *   suivi              → « Suivre ma commande » (numéro + téléphone, sans compte)
  *   suivi/KC-0140      → suivi d'une commande
+ *   (rien)             → page Patchi : le site démarre sur Patchi
+ *   accueil            → accueil aux quatre Maisons (logo kclick, lien « Accueil » du menu)
  *   sinon              → accueil, avec une ancre éventuelle (#patchi…)
  */
+export const HOME_HREF = '#accueil'
 const parse = () => {
   const hash = decodeURIComponent(window.location.hash.slice(1))
   const [head, sub] = hash.split('/')
+
+  // Adresse du site sans rien derrière : page Patchi (les autres Maisons restent dans le menu « Marques »)
+  if (!hash) return { page: 'maison', id: 'patchi', anchor: '' }
+  if (head === 'accueil') return { page: 'home', id: '', anchor: '' }
 
   if (head === 'maison' && MAISON_PAGES.includes(sub)) return { page: 'maison', id: sub, anchor: '' }
   // Fiche produit : le catalogue réel arrive après le chargement, la page gère « introuvable »

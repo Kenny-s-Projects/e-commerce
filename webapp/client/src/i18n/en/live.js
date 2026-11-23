@@ -77,7 +77,7 @@ export default {
   'Bonjour, je souhaite suivre ma commande kclick.': 'Hello, I would like to track my kclick order.',
   'Sans compte': 'No account',
   'Avec le numéro de commande et le téléphone utilisé.': 'With your order number and the phone you used.',
-  'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 856 486 993.': 'On the “Track my order” page, with your order number and the phone you used. The concierge also answers on WhatsApp at +243 856 486 993.',
+  'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 817 723 066.': 'On the “Track my order” page, with your order number and the phone you used. The concierge also answers on WhatsApp at +243 817 723 066.',
 
   /* Compte */
   'Envoi du code…': 'Sending the code…',

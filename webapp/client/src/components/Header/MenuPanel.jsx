@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
-import useHashRoute from '../../hooks/useHashRoute.js'
+import useHashRoute, { HOME_HREF } from '../../hooks/useHashRoute.js'
 import { contact } from '../../data/home.js'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
 import { useT } from '../../i18n/lang.js'
@@ -17,7 +17,7 @@ const BRANDS = [
 ]
 
 const LINKS = [
-  { label: 'Accueil', href: '#', page: 'home' },
+  { label: 'Accueil', href: HOME_HREF, page: 'home' },
   { label: 'Marques', brands: true },
   { label: 'Offrir', href: '#offrir/pour-elle', page: 'offrir' },
   { label: 'Notre histoire', href: '#notre-histoire', page: 'histoire' },

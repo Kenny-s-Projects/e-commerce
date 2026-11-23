@@ -9,6 +9,7 @@ import SearchBar from './SearchBar.jsx'
 import LangSwitch from '../LangSwitch/LangSwitch.jsx'
 import { useT } from '../../i18n/lang.js'
 import { CART_ARRIVE } from '../FlyToCart/flyToCart.js'
+import { HOME_HREF } from '../../hooks/useHashRoute.js'
 
 const ease = [0.22, 1, 0.36, 1]
 
@@ -86,7 +87,7 @@ export default function Header({ cartCount = 0, ready = true, onCart }) {
               {!scrolled && (
                 <m.a
                   key="logo"
-                  href="#"
+                  href={HOME_HREF}
                   className="pointer-events-auto text-[17px] font-medium tracking-wide"
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}

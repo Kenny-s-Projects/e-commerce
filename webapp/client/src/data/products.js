@@ -87,4 +87,4 @@ export const WEIGHTS = [
 ]
 
 // Message WhatsApp prérempli pour le concierge
-export const whatsappFor = (text) => `https://wa.me/243856486993?text=${encodeURIComponent(text)}`
+export const whatsappFor = (text) => `https://wa.me/243817723066?text=${encodeURIComponent(text)}`

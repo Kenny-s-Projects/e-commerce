@@ -105,7 +105,7 @@ export default {
   'Commandes et suivi': 'Orders and tracking',
   'Après votre commande, vous recevez un numéro et un contact WhatsApp pour suivre la livraison.': 'After ordering, you receive an order number and a WhatsApp contact to track your delivery.',
   'Comment suivre ma commande ?': 'How do I track my order?',
-  'Avec votre numéro de commande, en écrivant au concierge sur WhatsApp au +243 856 486 993.': 'With your order number, by messaging the concierge on WhatsApp at +243 856 486 993.',
+  'Avec votre numéro de commande, en écrivant au concierge sur WhatsApp au +243 817 723 066.': 'With your order number, by messaging the concierge on WhatsApp at +243 817 723 066.',
   'Puis-je modifier ma commande ?': 'Can I change my order?',
   '[Délai de modification à confirmer]': '[Change window to be confirmed]',
   'Faut-il créer un compte ?': 'Do I need an account?',

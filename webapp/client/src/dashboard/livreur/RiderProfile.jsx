@@ -6,7 +6,7 @@ import { useRider } from './rider.js'
 import { tr } from '../lib/i18n.js'
 import LangSwitch from '../ui/LangSwitch.jsx'
 
-const AIDE = 'https://wa.me/243856486993?text=' + encodeURIComponent('Bonjour, je suis livreur kclick et j’ai une question.')
+const AIDE = 'https://wa.me/243817723066?text=' + encodeURIComponent('Bonjour, je suis livreur kclick et j’ai une question.')
 
 /** Livreur · Profil */
 export default function RiderProfile() {

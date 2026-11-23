@@ -28,14 +28,14 @@ export const services = [
   { icon: 'delivery', line: 'Livraison', bold: 'le jour même à Gombe' },
   { icon: 'store', line: 'Retrait en boutique', bold: 'gratuit, dès 9h00' },
   { icon: 'payment', line: 'Mobile money, carte', bold: 'ou à la livraison' },
-  { icon: 'concierge', line: 'Un conseil ?', bold: 'Concierge WhatsApp', href: 'https://wa.me/243856486993' },
+  { icon: 'concierge', line: 'Un conseil ?', bold: 'Concierge WhatsApp', href: 'https://wa.me/243817723066' },
 ]
 
 // Coordonnées (reprises de brands.js)
 export const contact = {
   address: '124 Boulevard du 30 Juin, Gombe',
-  phone: '+243 818 592 999',
-  phoneHref: 'tel:+243818592999',
+  phone: '+243 817 723 066',
+  phoneHref: 'tel:+243817723066',
   email: 'serviceclient@kennysinternational.com',
 }
 
@@ -88,6 +88,6 @@ export const concierge = {
   accent: 'parlant',
   titleEnd: 'à quelqu’un ?',
   text: 'Un conseiller vous répond sur WhatsApp, prépare votre commande et organise la livraison ou le retrait en boutique.',
-  phone: '+243 818 592 999',
-  href: 'https://wa.me/243818592999',
+  phone: '+243 817 723 066',
+  href: 'https://wa.me/243817723066',
 }

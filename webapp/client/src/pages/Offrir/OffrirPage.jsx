@@ -106,7 +106,7 @@ export default function OffrirPage({ tab, onAdd }) {
             </m.div>
           ))}
         </m.div>
-        <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="caps mt-10 inline-block border-b border-gold pb-1.5">{t('Composer un cadeau avec le concierge')} ⟶</a>
+        <a href="https://wa.me/243817723066" target="_blank" rel="noreferrer" className="caps mt-10 inline-block border-b border-gold pb-1.5">{t('Composer un cadeau avec le concierge')} ⟶</a>
       </section>
     </div>
   )

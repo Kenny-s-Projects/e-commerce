@@ -81,7 +81,7 @@ export const aide = {
   shortcuts: [
     { section: 'livraison', kicker: 'Livraison', title: 'Le jour même à Gombe', text: '4 $, à moto' },
     { section: 'paiement', kicker: 'Paiement', title: 'Mobile money, carte', text: 'Ou à la livraison' },
-    { section: 'contact', kicker: 'Contact', title: '+243 856 486 993', text: 'WhatsApp et téléphone' },
+    { section: 'contact', kicker: 'Contact', title: '+243 817 723 066', text: 'WhatsApp et téléphone' },
   ],
   sections: [
     {
@@ -118,7 +118,7 @@ export const aide = {
       intro: 'Après votre commande, vous recevez un numéro et un contact WhatsApp pour suivre la livraison.',
       cards: [{ kicker: 'Sans compte', title: 'Suivre ma commande', text: 'Avec le numéro de commande et le téléphone utilisé.', href: '#suivi' }],
       faq: [
-        { q: 'Comment suivre ma commande ?', a: 'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 856 486 993.' },
+        { q: 'Comment suivre ma commande ?', a: 'Sur la page « Suivre ma commande », avec votre numéro de commande et le téléphone utilisé. Le concierge répond aussi sur WhatsApp au +243 817 723 066.' },
         { q: 'Puis-je modifier ma commande ?', a: '[Délai de modification à confirmer]' },
         { q: 'Faut-il créer un compte ?', a: 'Non, la commande se fait sans compte.' },
       ],
@@ -138,7 +138,7 @@ export const aide = {
       label: 'Contact',
       intro: 'Une question, une commande spéciale, un conseil ? Nous répondons.',
       cards: [
-        { kicker: 'WhatsApp et téléphone', title: '+243 856 486 993', text: 'Le plus rapide pour commander ou suivre une livraison.', href: 'https://wa.me/243856486993' },
+        { kicker: 'WhatsApp et téléphone', title: '+243 817 723 066', text: 'Le plus rapide pour commander ou suivre une livraison.', href: 'https://wa.me/243817723066' },
         { kicker: 'E-mail', title: 'serviceclient@kennysinternational.com', text: 'Réponse sous [délai à confirmer].', href: 'mailto:serviceclient@kennysinternational.com' },
         { kicker: 'Adresse', title: '124 Boulevard du 30 Juin', text: 'Gombe, Kinshasa.' },
         { kicker: 'Horaires', title: '[À confirmer]', text: 'Du lundi au samedi [à confirmer].' },

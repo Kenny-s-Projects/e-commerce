@@ -159,7 +159,7 @@ export default function AidePage({ section }) {
           </Reveal>
           <p className="mt-2.5 text-[14px] text-paper/75">{contact.phone} · {contact.email} · {t('Horaires [à confirmer]')}</p>
         </div>
-        <a href="https://wa.me/243818592999" target="_blank" rel="noreferrer" className="rounded-full bg-paper px-7 py-4 text-[14px] text-forest-deep transition-transform hover:scale-[1.03]">
+        <a href="https://wa.me/243817723066" target="_blank" rel="noreferrer" className="rounded-full bg-paper px-7 py-4 text-[14px] text-forest-deep transition-transform hover:scale-[1.03]">
           {t('Écrire sur WhatsApp')}
         </a>
       </section>
