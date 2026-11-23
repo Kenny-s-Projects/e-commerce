@@ -1,0 +1,26 @@
+# Netlify : le site client (React + Vite) est dans webapp/client.
+# Lu à chaque déploiement depuis GitHub : pas besoin de régler le build à la main sur Netlify.
+[build]
+  base = "webapp/client"
+  command = "npm run build"
+  publish = "dist" # relatif à base → webapp/client/dist
+
+# Valeurs publiques (faites pour être dans le navigateur) : API Railway et connexion Supabase.
+# La clé serveur Supabase (service_role) et les autres secrets ne doivent JAMAIS être ici.
+[build.environment]
+  NODE_VERSION = "22"
+  VITE_API_URL = "https://e-commerce-production-46b752b9.up.railway.app"
+  VITE_SUPABASE_URL = "https://lyroyrwrufgpeagjtzgv.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_IZPS3CDYGZ6DUiNKYd8Xaw_R_Lpst5y"
+
+# Application d'une seule page : toutes les adresses ouvrent index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Site de test : ne pas indexer dans les moteurs de recherche (à retirer seulement avec l'accord du client)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
