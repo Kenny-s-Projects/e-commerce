@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, m, useMotionValue, useSpring } from 'framer-motion'
 import Reveal, { DrawLine } from '../../components/maison/Reveal.jsx'
 import { PATCHI_IMG } from '../../data/maisonPages.js'
@@ -7,10 +7,21 @@ import { SkeletonGroup } from '../../components/Skeleton/Skeleton.jsx'
 
 const ease = [0.22, 1, 0.36, 1]
 
+// Image de chaque collection (public/img/patchi/collections/<slug>.webp), sinon le visuel Patchi
+const COLLECTION_IMG = {
+  smallboxes: '/img/patchi/collections/smallboxes.webp',
+  giftboxes: '/img/patchi/collections/giftboxes.webp',
+  deluxe: '/img/patchi/collections/deluxe.webp',
+  classic: '/img/patchi/collections/classic.webp',
+  sansucre: '/img/patchi/collections/sansucre.webp',
+}
+const imageOf = (id) => COLLECTION_IMG[id] ?? PATCHI_IMG
+
 /**
  * Index des collections : grands titres en italique, numérotés.
  * Animations : les filets se dessinent un à un ; au survol, la ligne glisse
- * et une vignette suit la souris (ordinateur).
+ * et la vignette de la collection survolée suit la souris (ordinateur) ; d'une collection
+ * à l'autre, l'image change en fondu.
  *  collections : [{ id, label, note }] · counts : { id: n } · onPick(id)
  *  loading     : catalogue en cours de chargement → lignes squelettes à la place des chapitres
  */
@@ -21,6 +32,13 @@ export default function CollectionIndex({ collections, counts, total, onPick, lo
   const y = useMotionValue(0)
   const sx = useSpring(x, { stiffness: 200, damping: 25 })
   const sy = useSpring(y, { stiffness: 200, damping: 25 })
+
+  // Images préchargées après l'affichage : le survol les montre tout de suite
+  useEffect(() => {
+    if (loading) return
+    const id = setTimeout(() => collections.forEach((c) => (new Image().src = imageOf(c.id))), 1200)
+    return () => clearTimeout(id)
+  }, [loading, collections])
 
   const onMove = (e) => {
     const r = e.currentTarget.getBoundingClientRect()
@@ -56,14 +74,26 @@ export default function CollectionIndex({ collections, counts, total, onPick, lo
         <AnimatePresence>
           {hover && (
             <m.div
-              className="pointer-events-none absolute left-0 top-0 z-10 w-[clamp(140px,14vw,200px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl shadow-2xl max-md:hidden"
+              className="pointer-events-none absolute left-0 top-0 z-10 grid w-[clamp(160px,16vw,240px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl max-md:hidden"
               style={{ x: sx, y: sy }}
               initial={{ opacity: 0, scale: 0.6, rotate: -8 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               exit={{ opacity: 0, scale: 0.6 }}
               transition={{ duration: 0.35, ease }}
             >
-              <img loading="lazy" decoding="async" src={PATCHI_IMG} alt="" className="aspect-square w-full object-cover" />
+              <AnimatePresence initial={false}>
+                <m.img
+                  key={hover}
+                  src={imageOf(hover)}
+                  alt=""
+                  decoding="async"
+                  className="col-start-1 row-start-1 aspect-square w-full object-cover"
+                  initial={{ opacity: 0, scale: 1.08 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4, ease }}
+                />
+              </AnimatePresence>
             </m.div>
           )}
         </AnimatePresence>
