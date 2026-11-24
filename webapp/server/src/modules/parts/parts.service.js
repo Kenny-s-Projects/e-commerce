@@ -24,7 +24,7 @@ async function resolveBrand(user, slug) {
   return { id: user.brandIds[0] }
 }
 
-/** File de la Maison : commandes qui contiennent sa part, avec seulement ses articles */
+/** File de la Maison : commandes PAYÉES qui contiennent sa part, avec seulement ses articles */
 export async function listForBrand(user, { brand: slug, scope }) {
   const brand = await resolveBrand(user, slug)
   const since = scope === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)).toISOString() : null
@@ -32,6 +32,7 @@ export async function listForBrand(user, { brand: slug, scope }) {
     brandId: brand.id,
     statuses: scope === 'active' ? ACTIVE_STATUSES : null,
     since,
+    paidOnly: true, // une commande n'arrive chez la Maison qu'une fois le paiement confirmé
     limit: 200,
   })
   return rows.map(presentOrder).map((o) => forBrand(o, [brand.id]))
@@ -47,6 +48,7 @@ export async function setStatus(user, partId, { status, reason }) {
     if (!part) throw notFound('Part')
     if (!user.has('super_admin') && !user.brandIds.includes(part.brand_id)) throw notFound('Part')
     if (!canMovePart(part.status, status)) throw conflict('INVALID_TRANSITION', `Changement impossible : ${part.status} → ${status}`)
+    if (!(await payments.isPaid(db, part.order_id))) throw conflict('NOT_PAID', 'Cette commande n’est pas encore payée')
 
     await orders.setPartState(db, partId, { status, refusalReason: status === 'refusee' ? reason : null })
     await orders.insertHistory(db, { orderId: part.order_id, partId, from: part.status, to: status, by: user.id, reason: reason ?? null })
