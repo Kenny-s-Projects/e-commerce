@@ -219,7 +219,7 @@ export async function findOrderRowByNumber(number) {
  *  statuses (order_status[]), since (date), search (numéro, nom, téléphone), brandId (commandes contenant cette Maison),
  *  customerId, riderProfileId, ids
  */
-export async function findOrderRows({ statuses, since, search, brandId, customerId, riderProfileId, ids, limit = 50, offset = 0 } = {}) {
+export async function findOrderRows({ statuses, since, search, brandId, customerId, riderProfileId, ids, paidOnly = false, limit = 50, offset = 0 } = {}) {
   const { rows } = await query(
     `${ORDER_ROW}
       where ($1::text[] is null or o.status::text = any($1::text[]))
@@ -232,9 +232,12 @@ export async function findOrderRows({ statuses, since, search, brandId, customer
         and ($6::uuid is null or exists (select 1 from public.deliveries d join public.riders r on r.id = d.rider_id
                                           where d.order_id = o.id and r.profile_id = $6))
         and ($7::uuid[] is null or o.id = any($7))
+        -- Maisons : seulement les commandes payées
+        and (not $10::boolean or exists (select 1 from public.payments pay
+                                          where pay.order_id = o.id and pay.kind = 'paiement' and pay.status = 'paye'))
       order by o.created_at desc
       limit $8 offset $9`,
-    [statuses ?? null, since ?? null, search ?? null, brandId ?? null, customerId ?? null, riderProfileId ?? null, ids ?? null, limit, offset],
+    [statuses ?? null, since ?? null, search ?? null, brandId ?? null, customerId ?? null, riderProfileId ?? null, ids ?? null, limit, offset, paidOnly],
   )
   return rows
 }

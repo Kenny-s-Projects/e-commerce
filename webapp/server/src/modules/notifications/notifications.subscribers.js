@@ -5,6 +5,7 @@ import { presentOrder } from '../orders/orders.present.js'
 import * as model from './notifications.model.js'
 import { queueEmail } from './notifications.service.js'
 import * as orderEmails from './templates/orders.js'
+import { isOnlineMethod } from '../payments/payments.service.js'
 import { invitation } from './templates/invitation.js'
 
 /*
@@ -44,19 +45,28 @@ async function toCustomer(kind, orderId, render) {
 
 const paidOrRefunding = (order) => order.payment?.status === 'paye' || order.refundPending > 0
 
+// « Nouvelle commande » pour l'équipe : à la commande si le paiement se confirme à la main (l'équipe doit le vérifier),
+// sinon (paiement en ligne MaishaPay) seulement une fois le paiement confirmé, comme pour les Maisons.
+async function notifyTeam(orderId, ctx) {
+  const s = await settings()
+  const team = orderEmails.teamNewOrder(ctx.order)
+  for (const to of new Set(s.teamRecipients.map((e) => String(e).trim().toLowerCase()).filter(Boolean))) {
+    await queueEmail({ kind: 'team_new_order', to, orderId, ...team })
+  }
+}
+
 events.on('order.created', async ({ orderId }) => {
   const s = await settings()
   const ctx = await context(orderId)
   if (!ctx) return
   if (s.customerEmails.confirmation && ctx.to) await queueEmail({ kind: 'order_confirmation', to: ctx.to, orderId, ...orderEmails.orderConfirmation(ctx.order, { lang: ctx.lang }) })
-  const team = orderEmails.teamNewOrder(ctx.order)
-  for (const to of new Set(s.teamRecipients.map((e) => String(e).trim().toLowerCase()).filter(Boolean))) {
-    await queueEmail({ kind: 'team_new_order', to, orderId, ...team })
-  }
+  if (!isOnlineMethod(ctx.order.payment?.method)) await notifyTeam(orderId, ctx)
 })
 
 events.on('payment.confirmed', async ({ orderId }) => {
   await toCustomer('payment_received', orderId, (order, lang) => orderEmails.paymentReceived(order, { lang }))
+  const ctx = await context(orderId)
+  if (ctx && isOnlineMethod(ctx.order.payment?.method)) await notifyTeam(orderId, ctx)
 })
 
 events.on('part.refused', async ({ orderId, brand, reason, refund }) => {

@@ -20,6 +20,14 @@ const schema = z.object({
   EMAIL_FROM: z.string().default('kclick <commandes@notification.kclick-api.com>'),
   EMAIL_REPLY_TO: z.string().default('ecommerce@kennysinternational.com'),
   PUBLIC_SITE_URL: z.string().default('http://localhost:5173').transform((v) => v.replace(/\/$/, '')),
+  // Paiements MaishaPay : sans les deux clés, les paiements restent confirmés à la main (dashboard)
+  MAISHAPAY_PUBLIC_KEY: z.string().optional().transform((v) => v || undefined),
+  MAISHAPAY_SECRET_KEY: z.string().optional().transform((v) => v || undefined),
+  MAISHAPAY_MODE: z.enum(['0', '1']).default('0'), // 0 : test (sandbox), 1 : réel (live)
+  MAISHAPAY_API_URL: z.url().default('https://marchand.maishapay.online/api').transform((v) => v.replace(/\/$/, '')),
+  // Adresse publique de cette API (MaishaPay y envoie le résultat des paiements), ex. https://xxx.up.railway.app
+  API_PUBLIC_URL: z.string().optional().transform((v) => (v ? v.replace(/\/$/, '') : undefined)),
+  PAYMENT_TIMEOUT_MINUTES: z.coerce.number().int().min(2).max(60).default(10),
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:5173')
