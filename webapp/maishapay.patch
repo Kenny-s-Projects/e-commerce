@@ -1,0 +1,2076 @@
+diff --git a/webapp/client/src/components/PaymentStatus/PaymentStatus.jsx b/webapp/client/src/components/PaymentStatus/PaymentStatus.jsx
+new file mode 100644
+index 0000000..743222f
+--- /dev/null
++++ b/webapp/client/src/components/PaymentStatus/PaymentStatus.jsx
+@@ -0,0 +1,185 @@
++import { useCallback, useEffect, useRef, useState } from 'react'
++import { AnimatePresence, m } from 'framer-motion'
++import { useT } from '../../i18n/lang.js'
++import { formatPrice } from '../../data/houses.js'
++import { goToCardPage, paymentStatus, startPayment } from '../../lib/payment.js'
++import PhoneField from '../PhoneField/PhoneField.jsx'
++import { DEFAULT_CODE, formatPhone, phoneError } from '../PhoneField/phone.js'
++
++const ease = [0.22, 1, 0.36, 1]
++const POLL_MS = 3000
++const DEFAULT_OPERATORS = ['M-Pesa', 'Orange Money', 'Airtel Money']
++
++/**
++ * État du paiement d'une commande (page de commande et suivi).
++ *  - mobile money : « Validez sur votre téléphone », compte à rebours, le site interroge toutes les 3 s
++ *  - carte : bouton vers la page de paiement sécurisée
++ *  - payé : coche ; échec : motif + « Réessayer » (même numéro, ou un autre opérateur / numéro)
++ *  - paiement en ligne pas activé : message d'attente (l'équipe confirme à la main)
++ *  number · phone (téléphone de la commande) · initial (dernier état connu) · operators · onPaid
++ */
++export default function PaymentStatus({ number, phone, initial = null, operators = DEFAULT_OPERATORS, onPaid, className = '' }) {
++  const t = useT()
++  const [state, setState] = useState(initial)
++  const [busy, setBusy] = useState(false)
++  const [error, setError] = useState('')
++  const [other, setOther] = useState(false) // autre opérateur / autre numéro
++  const [operator, setOperator] = useState(operators[0])
++  const [momo, setMomo] = useState('')
++  const [momoCode, setMomoCode] = useState(DEFAULT_CODE)
++  const paidOnce = useRef(false)
++
++  const refresh = useCallback(async () => {
++    try {
++      const s = await paymentStatus(number, phone)
++      setState(s)
++      setError('')
++      return s
++    } catch (err) {
++      setError(err.message)
++      return null
++    }
++  }, [number, phone])
++
++  // Premier état (si la page n'en a pas), puis toutes les 3 s tant qu'une demande attend le client
++  useEffect(() => {
++    if (state) return
++    const id = setTimeout(refresh, 0)
++    return () => clearTimeout(id)
++  }, [state, refresh])
++  useEffect(() => {
++    if (!state?.waiting) return
++    const id = setInterval(refresh, POLL_MS)
++    return () => clearInterval(id)
++  }, [state?.waiting, refresh])
++
++  useEffect(() => {
++    if (state?.status === 'paye' && !paidOnce.current) {
++      paidOnce.current = true
++      onPaid?.(state)
++    }
++  }, [state, onPaid])
++
++  const retry = async () => {
++    if (busy) return
++    let opts = {}
++    if (other && state?.method === 'mobile_money') {
++      const problem = momo.trim() ? phoneError(momoCode, momo) : null
++      if (problem) return setError(t(problem))
++      opts = { provider: operator, payerPhone: momo.trim() ? formatPhone(momoCode, momo) : undefined }
++    }
++    setBusy(true)
++    setError('')
++    try {
++      const s = await startPayment(number, phone, opts)
++      setState(s)
++      setOther(false)
++      if (s.method === 'carte' && s.paymentPage) goToCardPage(s.paymentPage)
++    } catch (err) {
++      setError(err.message)
++    } finally {
++      setBusy(false)
++    }
++  }
++
++  if (!state) return <p className={`text-[13px] text-ink/60 ${className}`}>{error ? t(error) : t('Vérification du paiement…')}</p>
++
++  const amount = formatPrice(state.amount)
++  const box = `rounded-xl bg-white/80 px-5 py-4 text-left text-[13px] leading-relaxed text-ink/80 ${className}`
++
++  // Paiement en ligne pas encore activé : l'équipe confirme le paiement à la main
++  if (!state.online && state.status !== 'paye')
++    return (
++      <p className={box}>
++        {t('Paiement en attente : notre équipe confirme votre paiement et vous prévient. La préparation commence dès que le paiement est confirmé.')}
++      </p>
++    )
++
++  return (
++    <div className={box} role="status" aria-live="polite">
++      <AnimatePresence mode="wait" initial={false}>
++        <m.div key={`${state.status}-${state.waiting}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3, ease }}>
++          {state.status === 'paye' ? (
++            <p className="flex items-center gap-3 text-[14px] text-[#2f6b40]">
++              <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full bg-[#2f6b40] text-[12px] text-white">✓</span>
++              {t('Paiement de {p} confirmé. La Maison prépare votre commande.', { p: amount })}
++            </p>
++          ) : state.waiting && state.method === 'mobile_money' ? (
++            <>
++              <p className="flex items-center gap-3 text-[14px] text-ink">
++                <span aria-hidden className="size-4 shrink-0 animate-spin rounded-full border-2 border-ink/20 border-t-ink" />
++                {t('Validez le paiement de {p} sur votre téléphone.', { p: amount })}
++              </p>
++              <p className="mt-2">
++                {t('Une demande {o} a été envoyée au {n} : tapez votre code PIN pour confirmer.', { o: state.provider ?? 'mobile money', n: state.payerPhone ?? '' })}{' '}
++                <Countdown until={state.expiresAt} />
++              </p>
++            </>
++          ) : state.waiting && state.method === 'carte' ? (
++            <>
++              <p className="text-[14px] text-ink">{t('Paiement par carte en attente.')}</p>
++              <button type="button" onClick={() => goToCardPage(state.paymentPage)} className="mt-3 h-11 rounded-full bg-ink px-6 text-[13px] text-white">
++                {t('Continuer vers le paiement sécurisé')} ⟶
++              </button>
++            </>
++          ) : (
++            <>
++              {state.status === 'echoue' ? (
++                <p className="text-[14px] text-celio">
++                  {state.failureReason && state.failureReason !== 'Le paiement n’a pas abouti'
++                    ? t('Le paiement n’a pas abouti : {r}.', { r: t(state.failureReason) })
++                    : t('Le paiement n’a pas abouti.')}
++                </p>
++              ) : (
++                <p className="text-[14px] text-ink">{t('Paiement de {p} à effectuer.', { p: amount })}</p>
++              )}
++              {state.canRetry && (
++                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
++                  <button type="button" onClick={retry} disabled={busy} aria-busy={busy} className="h-11 rounded-full bg-ink px-6 text-[13px] text-white disabled:opacity-60">
++                    {busy ? t('Envoi…') : state.status === 'echoue' ? t('Réessayer') : t('Payer {p}', { p: amount })}
++                  </button>
++                  {state.method === 'mobile_money' && (
++                    <button type="button" onClick={() => setOther((v) => !v)} aria-expanded={other} className="text-[12px] underline underline-offset-4">
++                      {t('Changer d’opérateur ou de numéro')}
++                    </button>
++                  )}
++                </div>
++              )}
++              {other && state.method === 'mobile_money' && (
++                <div className="mt-3 grid gap-3 sm:grid-cols-2">
++                  <label className="text-[12px]">
++                    {t('Opérateur')}
++                    <select value={operator} onChange={(e) => setOperator(e.target.value)} className="mt-1 h-11 w-full rounded-lg border border-ink/20 bg-white px-3 text-[14px]">
++                      {operators.map((o) => <option key={o}>{o}</option>)}
++                    </select>
++                  </label>
++                  <div className="text-[12px]">
++                    <label htmlFor={`pay-momo-${number}`}>{t('Numéro mobile money')}</label>
++                    <PhoneField id={`pay-momo-${number}`} code={momoCode} onCodeChange={setMomoCode} value={momo} onChange={setMomo} className="mt-1 h-11 rounded-lg border border-ink/20 bg-white" />
++                  </div>
++                </div>
++              )}
++            </>
++          )}
++        </m.div>
++      </AnimatePresence>
++      {state.status !== 'paye' && <p className="mt-3 text-[11px] text-ink/55">{t('Les frais de l’opérateur de paiement sont à la charge du client.')}</p>}
++      {error && <p className="mt-2 text-[12px] text-celio">{t(error)}</p>}
++    </div>
++  )
++}
++
++/** Temps restant pour valider la demande (mm:ss) */
++function Countdown({ until }) {
++  const t = useT()
++  const [now, setNow] = useState(() => Date.now())
++  useEffect(() => {
++    const id = setInterval(() => setNow(Date.now()), 1000)
++    return () => clearInterval(id)
++  }, [])
++  if (!until) return null
++  const left = Math.max(0, Math.round((new Date(until) - now) / 1000))
++  const mm = String(Math.floor(left / 60)).padStart(2, '0')
++  const ss = String(left % 60).padStart(2, '0')
++  return <span className="font-mono text-ink/60">{t('Temps restant : {t}', { t: `${mm}:${ss}` })}</span>
++}
+diff --git a/webapp/client/src/dashboard/DashboardApp.jsx b/webapp/client/src/dashboard/DashboardApp.jsx
+index 86bb20b..170fe60 100644
+--- a/webapp/client/src/dashboard/DashboardApp.jsx
++++ b/webapp/client/src/dashboard/DashboardApp.jsx
+@@ -11,6 +11,7 @@ import Dispatch from './admin/Dispatch.jsx'
+ import ComingSoon from './admin/ComingSoon.jsx'
+ import Settings from './admin/Settings.jsx'
+ import Clients from './admin/Clients.jsx'
++import Payments from './admin/Payments.jsx'
+ import ClientDetail from './admin/ClientDetail.jsx'
+ import Users from './admin/Users.jsx'
+ import UserForm from './admin/UserForm.jsx'
+@@ -143,6 +144,8 @@ function Screens({ route }) {
+             <ClientDetail id={route.id} />
+           ) : route.section === 'clients' ? (
+             <Clients />
++          ) : route.section === 'paiements' ? (
++            <Payments />
+           ) : route.section === 'utilisateurs' && route.id ? (
+             <UserForm id={route.id === 'nouveau' ? null : route.id} />
+           ) : route.section === 'utilisateurs' ? (
+diff --git a/webapp/client/src/dashboard/admin/Payments.jsx b/webapp/client/src/dashboard/admin/Payments.jsx
+new file mode 100644
+index 0000000..f4ce6f9
+--- /dev/null
++++ b/webapp/client/src/dashboard/admin/Payments.jsx
+@@ -0,0 +1,218 @@
++import { useCallback, useEffect, useState } from 'react'
++import { api } from '../../lib/api.js'
++import { dateLocale, money } from '../lib/format.js'
++import { Card, PageTitle } from '../ui/ui.jsx'
++import Icon from '../ui/Icon.jsx'
++import { tr } from '../lib/i18n.js'
++
++// Filtres : paiements par statut, ou remboursements
++const FILTERS = [
++  { id: 'tous', label: 'Tous', query: {} },
++  { id: 'en_attente', label: 'En attente', query: { kind: 'paiement', status: 'en_attente' } },
++  { id: 'paye', label: 'Payés', query: { kind: 'paiement', status: 'paye' } },
++  { id: 'echoue', label: 'Échoués', query: { kind: 'paiement', status: 'echoue' } },
++  { id: 'remboursement', label: 'Remboursements', query: { kind: 'remboursement' } },
++]
++
++// Statut kclick → libellé et couleurs
++const STATUS = {
++  en_attente: { label: 'En attente', bg: '#f6ead2', fg: '#86671f' },
++  paye: { label: 'Payé', bg: '#dcebdd', fg: '#2f6b40' },
++  echoue: { label: 'Échoué', bg: '#f7deda', fg: '#a2392b' },
++  rembourse: { label: 'Remboursé', bg: '#e4e7ef', fg: '#3c4a6b' },
++  annule: { label: 'Annulé', bg: '#ecebe7', fg: '#6b675e' },
++}
++const METHOD = { mobile_money: 'Mobile money', carte: 'Carte' }
++
++const dateTime = (d) =>
++  d ? new Date(d).toLocaleString(dateLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', '') : '—'
++
++function StatusPill({ status, kind }) {
++  const s = STATUS[status] ?? STATUS.annule
++  const label = kind === 'remboursement' && status === 'en_attente' ? 'À rembourser' : s.label
++  return (
++    <span className="inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium" style={{ background: s.bg, color: s.fg }}>
++      <span className="size-1.5 rounded-full bg-current" aria-hidden />
++      {tr(label)}
++    </span>
++  )
++}
++
++/** Paiements : chaque tentative, son statut kclick, le dernier statut MaishaPay et ses références */
++export default function Payments() {
++  const [filter, setFilter] = useState('tous')
++  const [q, setQ] = useState('')
++  const [search, setSearch] = useState('')
++  const [data, setData] = useState(null)
++  const [error, setError] = useState('')
++
++  const load = useCallback(() => {
++    const f = FILTERS.find((x) => x.id === filter)
++    return api
++      .get('/payments', { ...f.query, q: search || undefined, limit: 200 })
++      .then((d) => {
++        setData(d)
++        setError('')
++      })
++      .catch((err) => setError(err.message))
++  }, [filter, search])
++
++  // Chargement, puis rafraîchissement toutes les 20 s (paiements en attente qui se confirment)
++  useEffect(() => {
++    let alive = true
++    const run = () => alive && load()
++    const first = setTimeout(run, 0)
++    const id = setInterval(run, 20_000)
++    return () => {
++      alive = false
++      clearTimeout(first)
++      clearInterval(id)
++    }
++  }, [load])
++
++  const rows = data?.items ?? []
++
++  return (
++    <>
++      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
++        <PageTitle eyebrow={tr('Mobile money et carte · MaishaPay')} before={tr('Paie')} accent={tr('ments')} />
++        <form
++          role="search"
++          onSubmit={(e) => {
++            e.preventDefault()
++            setSearch(q.trim())
++          }}
++          className="w-full sm:w-[340px]"
++        >
++          <label className="flex h-11 items-center gap-3 rounded-[10px] border border-d-line bg-white px-4 focus-within:border-d-ink">
++            <Icon name="search" className="size-4 shrink-0 text-d-muted" />
++            <span className="sr-only">{tr('Rechercher un paiement')}</span>
++            <input
++              type="search"
++              value={q}
++              onChange={(e) => {
++                setQ(e.target.value)
++                if (!e.target.value) setSearch('')
++              }}
++              placeholder={tr('Commande, référence, client…')}
++              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-d-muted"
++            />
++          </label>
++        </form>
++      </header>
++
++      <div role="tablist" aria-label={tr('Filtrer les paiements')} className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1">
++        {FILTERS.map((f) => (
++          <button
++            key={f.id}
++            type="button"
++            role="tab"
++            aria-selected={filter === f.id}
++            onClick={() => setFilter(f.id)}
++            className={`flex h-9 shrink-0 items-center rounded-full border px-4 text-[13.5px] transition-colors ${
++              filter === f.id ? 'border-d-ink bg-d-ink text-white' : 'border-d-line bg-white hover:border-d-border'
++            }`}
++          >
++            {tr(f.label)}
++          </button>
++        ))}
++        <button type="button" onClick={load} className="ml-auto flex h-9 shrink-0 items-center gap-2 rounded-full border border-d-line bg-white px-4 text-[13px] hover:border-d-border">
++          {tr('Actualiser')}
++        </button>
++      </div>
++
++      <Card className="overflow-hidden">
++        {!data ? (
++          <p className="px-5 py-12 text-center text-sm text-d-muted">{error ? tr(error) : tr('Chargement des paiements…')}</p>
++        ) : !rows.length ? (
++          <p className="px-5 py-12 text-center text-sm text-d-muted">{search ? tr('Aucun paiement ne correspond à cette recherche.') : tr('Aucun paiement pour ce filtre.')}</p>
++        ) : (
++          <>
++            {/* Ordinateur : tableau */}
++            <div className="overflow-x-auto max-md:hidden">
++              <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
++                <thead>
++                  <tr className="border-b border-d-line text-[12.5px] text-d-muted">
++                    <th scope="col" className="py-3 pl-5 pr-3 font-normal">{tr('Date')}</th>
++                    <th scope="col" className="px-3 py-3 font-normal">{tr('Commande')}</th>
++                    <th scope="col" className="px-3 py-3 font-normal">{tr('Moyen')}</th>
++                    <th scope="col" className="px-3 py-3 text-right font-normal">{tr('Montant')}</th>
++                    <th scope="col" className="px-3 py-3 text-right font-normal">{tr('Frais')}</th>
++                    <th scope="col" className="px-3 py-3 font-normal">{tr('Statut')}</th>
++                    <th scope="col" className="px-3 py-3 font-normal">{tr('Statut MaishaPay')}</th>
++                    <th scope="col" className="py-3 pl-3 pr-5 font-normal">{tr('Références')}</th>
++                  </tr>
++                </thead>
++                <tbody>
++                  {rows.map((p) => (
++                    <tr key={p.id} className="border-b border-d-line align-top last:border-0">
++                      <td className="whitespace-nowrap py-3.5 pl-5 pr-3 text-[13px]">{dateTime(p.created_at)}</td>
++                      <td className="px-3 py-3.5">
++                        <a href={`#admin/commandes/${p.order_number}`} className="font-mono text-[13px] underline decoration-d-border underline-offset-4 hover:decoration-d-ink">
++                          {p.order_number}
++                        </a>
++                        <span className="block text-xs text-d-muted">{p.customer_name}</span>
++                      </td>
++                      <td className="px-3 py-3.5 text-[13px]">
++                        {tr(METHOD[p.method] ?? p.method)}
++                        {p.provider && <span className="block text-xs text-d-muted">{p.provider}</span>}
++                        {p.payer_phone && <span className="block font-mono text-xs text-d-muted">{p.payer_phone}</span>}
++                      </td>
++                      <td className="px-3 py-3.5 text-right font-mono">
++                        {p.kind === 'remboursement' ? '−' : ''}
++                        {money(p.amount)}
++                      </td>
++                      <td className="px-3 py-3.5 text-right font-mono text-[13px] text-d-muted">{p.fees != null ? money(p.fees) : '—'}</td>
++                      <td className="px-3 py-3.5">
++                        <StatusPill status={p.status} kind={p.kind} />
++                        {p.failure_reason && <span className="mt-1 block max-w-[200px] text-xs text-d-muted">{tr(p.failure_reason)}</span>}
++                        {p.paid_at && <span className="mt-1 block text-xs text-d-muted">{tr('le {d}', { d: dateTime(p.paid_at) })}</span>}
++                      </td>
++                      <td className="px-3 py-3.5 font-mono text-[12.5px]">
++                        {p.provider_status ?? (p.started_at ? '—' : <span className="font-sans text-d-muted">{tr('Pas encore lancé')}</span>)}
++                        {p.checked_at && <span className="block font-sans text-xs text-d-muted">{tr('vérifié {d}', { d: dateTime(p.checked_at) })}</span>}
++                      </td>
++                      <td className="py-3.5 pl-3 pr-5 font-mono text-[12px]">
++                        {p.reference && <span className="block">{p.reference}</span>}
++                        {p.provider_tx_id && <span className="block text-d-muted">MaishaPay #{p.provider_tx_id}</span>}
++                        {!p.reference && p.provider_ref && <span className="block text-d-muted">{p.provider_ref}</span>}
++                      </td>
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </div>
++
++            {/* Mobile : cartes */}
++            <ul className="divide-y divide-d-line md:hidden">
++              {rows.map((p) => (
++                <li key={p.id} className="px-4 py-4">
++                  <div className="flex items-start justify-between gap-3">
++                    <div className="min-w-0">
++                      <a href={`#admin/commandes/${p.order_number}`} className="font-mono text-[13px] underline underline-offset-4">{p.order_number}</a>
++                      <p className="truncate text-xs text-d-muted">{p.customer_name} · {tr(METHOD[p.method] ?? p.method)}{p.provider ? ` · ${p.provider}` : ''}</p>
++                    </div>
++                    <p className="font-mono">{p.kind === 'remboursement' ? '−' : ''}{money(p.amount)}</p>
++                  </div>
++                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-d-muted">
++                    <StatusPill status={p.status} kind={p.kind} />
++                    {p.provider_status && <span className="font-mono">MaishaPay : {p.provider_status}</span>}
++                    <span>{dateTime(p.created_at)}</span>
++                  </div>
++                  {p.failure_reason && <p className="mt-1 text-xs text-d-muted">{tr(p.failure_reason)}</p>}
++                  {(p.reference || p.provider_tx_id) && (
++                    <p className="mt-1 break-all font-mono text-[11.5px] text-d-muted">
++                      {p.reference}
++                      {p.provider_tx_id ? ` · #${p.provider_tx_id}` : ''}
++                    </p>
++                  )}
++                </li>
++              ))}
++            </ul>
++          </>
++        )}
++      </Card>
++      {data && <p className="mt-3 text-xs text-d-muted">{tr('{n} paiement(s)', { n: data.total })} · {tr('Les statuts se mettent à jour tout seuls toutes les 20 s.')}</p>}
++    </>
++  )
++}
+diff --git a/webapp/client/src/i18n/en/dashboard.js b/webapp/client/src/i18n/en/dashboard.js
+index e523587..46cb87d 100644
+--- a/webapp/client/src/i18n/en/dashboard.js
++++ b/webapp/client/src/i18n/en/dashboard.js
+@@ -597,4 +597,39 @@ export default {
+   "File des commandes de la Maison.": "The House’s order queue.",
+   "Courses du jour, récupération et remise (pensé pour le téléphone).": "Today’s deliveries, collection and handover (designed for phones).",
+   "Choisir un": "Choose an",
++  'Mobile money et carte · MaishaPay': 'Mobile money and card · MaishaPay',
++  'Paie': 'Pay',
++  'ments': 'ments',
++  'Rechercher un paiement': 'Search a payment',
++  'Commande, référence, client…': 'Order, reference, customer…',
++  'Filtrer les paiements': 'Filter payments',
++  'Payés': 'Paid',
++  'Échoués': 'Failed',
++  'Remboursements': 'Refunds',
++  'Actualiser': 'Refresh',
++  'Chargement des paiements…': 'Loading payments…',
++  'Aucun paiement ne correspond à cette recherche.': 'No payment matches this search.',
++  'Aucun paiement pour ce filtre.': 'No payment for this filter.',
++  'Date': 'Date',
++  'Moyen': 'Method',
++  'Montant': 'Amount',
++  'Frais': 'Fees',
++  'Statut MaishaPay': 'MaishaPay status',
++  'Références': 'References',
++  'Payé': 'Paid',
++  'Échoué': 'Failed',
++  'Remboursé': 'Refunded',
++  'Annulé': 'Cancelled',
++  'À rembourser': 'To refund',
++  'Carte': 'Card',
++  'Pas encore lancé': 'Not started yet',
++  'vérifié {d}': 'checked {d}',
++  'le {d}': 'on {d}',
++  '{n} paiement(s)': '{n} payment(s)',
++  'Les statuts se mettent à jour tout seuls toutes les 20 s.': 'Statuses refresh on their own every 20 s.',
++  'Délai de validation dépassé': 'Validation time ran out',
++  'Paiement annulé': 'Payment cancelled',
++  'Paiement refusé par l’opérateur': 'Payment declined by the operator',
++  'Le paiement n’a pas abouti': 'The payment did not go through',
++  'Remplacé par une nouvelle demande': 'Replaced by a new request',
+ }
+diff --git a/webapp/client/src/i18n/en/live.js b/webapp/client/src/i18n/en/live.js
+index 29f5f33..313fbff 100644
+--- a/webapp/client/src/i18n/en/live.js
++++ b/webapp/client/src/i18n/en/live.js
+@@ -125,4 +125,27 @@ export default {
+   'Royaume-Uni': 'United Kingdom',
+   'Numéro invalide : 9 chiffres après +243.': 'Invalid number: 9 digits after +243.',
+   'Numéro invalide : 6 à 12 chiffres après l’indicatif.': 'Invalid number: 6 to 12 digits after the country code.',
++  'Vous serez redirigé vers le paiement sécurisé (Visa, Mastercard) pour saisir votre carte. Aucune donnée de carte ne passe par kclick.': 'You will be redirected to the secure payment page (Visa, Mastercard) to enter your card. No card data goes through kclick.',
++  'Paiement sécurisé par MaishaPay, en dollars. Les frais de l’opérateur de paiement sont à la charge du client.': 'Secure payment by MaishaPay, in US dollars. Payment operator fees are paid by the customer.',
++  'Les frais de l’opérateur de paiement sont à la charge du client.': 'Payment operator fees are paid by the customer.',
++  'Vérification du paiement…': 'Checking the payment…',
++  'Paiement en attente : notre équipe confirme votre paiement et vous prévient. La préparation commence dès que le paiement est confirmé.': 'Payment pending: our team confirms your payment and lets you know. Preparation starts as soon as the payment is confirmed.',
++  'Paiement de {p} confirmé. La Maison prépare votre commande.': 'Payment of {p} confirmed. The House is preparing your order.',
++  'Validez le paiement de {p} sur votre téléphone.': 'Approve the {p} payment on your phone.',
++  'Une demande {o} a été envoyée au {n} : tapez votre code PIN pour confirmer.': 'A {o} request was sent to {n}: enter your PIN to confirm.',
++  'Paiement par carte en attente.': 'Card payment pending.',
++  'Continuer vers le paiement sécurisé': 'Continue to secure payment',
++  'Le paiement n’a pas abouti : {r}.': 'The payment did not go through: {r}.',
++  'Paiement de {p} à effectuer.': 'Payment of {p} to make.',
++  'Envoi…': 'Sending…',
++  'Changer d’opérateur ou de numéro': 'Change operator or number',
++  'Temps restant : {t}': 'Time left: {t}',
++  'Délai de validation dépassé': 'Validation time ran out',
++  'Paiement annulé': 'Payment cancelled',
++  'Paiement refusé par l’opérateur': 'Payment declined by the operator',
++  'Le paiement n’a pas abouti': 'The payment did not go through',
++  'Remplacé par une nouvelle demande': 'Replaced by a new request',
++  'Le service de paiement ne répond pas. Réessayez dans un instant.': 'The payment service is not responding. Please try again in a moment.',
++  'Cette commande est déjà payée': 'This order is already paid',
++  'Le paiement n’a pas abouti.': 'The payment did not go through.',
+ }
+diff --git a/webapp/client/src/lib/payment.js b/webapp/client/src/lib/payment.js
+new file mode 100644
+index 0000000..386f316
+--- /dev/null
++++ b/webapp/client/src/lib/payment.js
+@@ -0,0 +1,19 @@
++import { api } from './api.js'
++
++/*
++ * Paiement en ligne (MaishaPay) côté site : lancer, relancer, suivre.
++ * Accès comme le suivi sans compte : numéro de commande + téléphone de la commande.
++ * Les clés MaishaPay restent sur le serveur : le site ne parle jamais directement à MaishaPay.
++ */
++
++/** Lance (ou relance) le paiement ; autre opérateur / autre numéro mobile money possibles pour réessayer */
++export const startPayment = (number, phone, { provider, payerPhone } = {}) =>
++  api.post('/payments/start', { number, phone, provider: provider || undefined, payerPhone: payerPhone || undefined }, { auth: false })
++
++/** Où en est le paiement ? { status: a_payer | en_attente | paye | echoue, waiting, paymentPage, failureReason, canRetry, online… } */
++export const paymentStatus = (number, phone) => api.get(`/payments/status/${encodeURIComponent(number)}`, { phone }, { auth: false })
++
++/** Carte : envoie le client sur la page de paiement sécurisée de MaishaPay (CyberSource, Visa) */
++export function goToCardPage(url) {
++  if (url && /^https:\/\//.test(url)) window.location.assign(url)
++}
+diff --git a/webapp/client/src/pages/Checkout/CheckoutPage.jsx b/webapp/client/src/pages/Checkout/CheckoutPage.jsx
+index 5211633..5d4d97c 100644
+--- a/webapp/client/src/pages/Checkout/CheckoutPage.jsx
++++ b/webapp/client/src/pages/Checkout/CheckoutPage.jsx
+@@ -12,6 +12,8 @@ import useLiteMode from '../../hooks/useLiteMode.js'
+ import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+ import { DEFAULT_CODE, formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
+ import { HOME_HREF } from '../../hooks/useHashRoute.js'
++import PaymentStatus from '../../components/PaymentStatus/PaymentStatus.jsx'
++import { goToCardPage, startPayment } from '../../lib/payment.js'
+ 
+ const ease = [0.22, 1, 0.36, 1]
+ const DEFAULT_FEE = 4 // Gombe, le jour même (remplacé par les paramètres de l'API)
+@@ -250,8 +252,15 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
+       const created = await api.post('/orders', body)
+       rememberOrder(created.number, phone)
+       if (delivery === 'livraison') saveLastAddress(form)
+-      setOrder({ number: created.number, total: created.total, count, delivery, payment, name: form.name.trim().split(' ')[0] })
++      // Paiement en ligne (MaishaPay) : demande sur le téléphone, ou page de paiement sécurisée pour la carte.
++      // Si le lancement échoue, la commande reste enregistrée : le client réessaie depuis la confirmation.
++      const payState = await startPayment(created.number, phone).catch(() => null)
+       onDone?.(fromCart) // le panier n'est vidé qu'ici, une fois la commande enregistrée
++      if (payState?.method === 'carte' && payState.paymentPage) {
++        goToCardPage(payState.paymentPage) // retour par le suivi de la commande
++        return
++      }
++      setOrder({ number: created.number, phone, total: created.total, count, delivery, payment, payState, name: form.name.trim().split(' ')[0] })
+       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
+     } catch (err) {
+       const byItem = Object.fromEntries((Array.isArray(err.details) ? err.details : []).filter((d) => d.variantId).map((d) => [d.variantId, d]))
+@@ -278,7 +287,6 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
+   /* ---------- Confirmation ---------- */
+   if (order) {
+     const follow = whatsappFor(t('Bonjour, je souhaite suivre ma commande kclick {n}.', { n: order.number }))
+-    const momo = order.payment === 'mobile_money'
+     return (
+       <section className="grid min-h-[calc(100svh-4rem)] place-items-center bg-cream px-gutter py-20 text-center text-ink">
+         <m.div className="max-w-[560px]" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}>
+@@ -290,11 +298,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
+             {t('Votre commande {n} est enregistrée.', { n: order.number })}{' '}
+             {order.delivery === 'livraison' ? t('Elle vous sera livrée aujourd’hui à Gombe.') : t('Elle vous attend en boutique, dès 9h00.')}
+           </p>
+-          <p className="mx-auto mt-4 max-w-[460px] rounded-xl bg-white/70 px-5 py-4 text-[13px] leading-relaxed text-ink/80">
+-            {momo
+-              ? t('Paiement en attente : validez la demande mobile money sur votre téléphone. La préparation commence dès que le paiement est confirmé.')
+-              : t('Paiement en attente : vous serez redirigé vers le paiement sécurisé par carte [prestataire à brancher].')}
+-          </p>
++          <PaymentStatus number={order.number} phone={order.phone} initial={order.payState} operators={operators} className="mx-auto mt-4 max-w-[460px]" />
+           {/* Le numéro apparaît une fois la coche dessinée */}
+           <m.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: reduce ? 0 : 0.75, ease }}>
+             <p className="caps mt-8 text-gold">{t('Numéro de commande')}</p>
+@@ -450,7 +454,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
+             )}
+             {payment === 'carte' && (
+               <m.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
+-                {t('Vous serez redirigé vers le paiement sécurisé pour saisir votre carte [prestataire à brancher]. Aucune donnée de carte ne passe par kclick.')}
++                {t('Vous serez redirigé vers le paiement sécurisé (Visa, Mastercard) pour saisir votre carte. Aucune donnée de carte ne passe par kclick.')}
+               </m.p>
+             )}
+ 
+@@ -469,6 +473,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
+               <p aria-live="polite" className="min-h-[1.25rem] text-center text-[13px] text-ink/75">
+                 {sending && longWait && t('Validez le paiement sur votre téléphone.')}
+               </p>
++              <p className="text-center text-[11px] text-ink/55">{t('Paiement sécurisé par MaishaPay, en dollars. Les frais de l’opérateur de paiement sont à la charge du client.')}</p>
+               <AnimatePresence>
+                 {serverError && !sending && (
+                   <m.div
+diff --git a/webapp/client/src/pages/Suivi/TrackingPage.jsx b/webapp/client/src/pages/Suivi/TrackingPage.jsx
+index b539a68..094c156 100644
+--- a/webapp/client/src/pages/Suivi/TrackingPage.jsx
++++ b/webapp/client/src/pages/Suivi/TrackingPage.jsx
+@@ -10,6 +10,7 @@ import { phoneFor, rememberOrder } from '../../lib/orderMemory.js'
+ import { ease, fadeUp, underline } from '../Compte/accountUi.jsx'
+ import PhoneField from '../../components/PhoneField/PhoneField.jsx'
+ import { formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
++import PaymentStatus from '../../components/PaymentStatus/PaymentStatus.jsx'
+ 
+ const TRIP_SECONDS = 20 * 60 // durée de référence d'une course, pour la barre de progression
+ const REFRESH_MS = 30000
+@@ -124,6 +125,13 @@ export default function TrackingPage({ number }) {
+         </div>
+       </section>
+ 
++      {/* Paiement pas encore confirmé : état en direct, réessayer, ou finir le paiement par carte */}
++      {!paid && status !== 'annulee' && (
++        <div className="mx-auto max-w-[1100px] px-gutter pt-[clamp(24px,3vw,40px)] max-sm:px-[22px]">
++          <PaymentStatus number={order.number} phone={phone} onPaid={() => load()} className="bg-cream" />
++        </div>
++      )}
++
+       <div className="mx-auto grid max-w-[1100px] gap-10 px-gutter py-[clamp(28px,4vw,64px)] max-sm:px-[22px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
+         {/* Étapes */}
+         <m.ol aria-label={t('Étapes de la commande')} className="flex flex-col" {...fadeUp(0.1)}>
+diff --git a/webapp/server/.env.example b/webapp/server/.env.example
+index e4b631e..0ff6ec5 100644
+--- a/webapp/server/.env.example
++++ b/webapp/server/.env.example
+@@ -26,6 +26,17 @@ EMAIL_REPLY_TO=ecommerce@kennysinternational.com
+ # Adresse publique du site (liens de suivi et de connexion dans les e-mails)
+ PUBLIC_SITE_URL=http://localhost:5173
+ 
++# Paiements MaishaPay (marchand.maishapay.online › Développeur › Clés API). Jamais dans Git, jamais dans le front.
++# Vides = paiements confirmés à la main dans le dashboard.
++# Clés de test : MP-SBPK… / MP-SBSK… avec MAISHAPAY_MODE=0 ; clés réelles : MP-LIVEPK… / MP-LIVESK… avec MAISHAPAY_MODE=1
++MAISHAPAY_PUBLIC_KEY=
++MAISHAPAY_SECRET_KEY=
++MAISHAPAY_MODE=0
++# Adresse publique de cette API : MaishaPay y envoie le résultat des paiements (HTTPS obligatoire pour la carte)
++API_PUBLIC_URL=https://e-commerce-production-46b752b9.up.railway.app
++# Au-delà de ce délai, un paiement non validé est considéré comme échoué (le client peut réessayer)
++PAYMENT_TIMEOUT_MINUTES=10
++
+ # Origines autorisées à appeler l'API, séparées par des virgules
+ CORS_ORIGINS=http://localhost:5173,https://kclick-demo.netlify.app
+ 
+diff --git a/webapp/server/src/config/env.js b/webapp/server/src/config/env.js
+index 7d328a8..33e9d20 100644
+--- a/webapp/server/src/config/env.js
++++ b/webapp/server/src/config/env.js
+@@ -20,6 +20,14 @@ const schema = z.object({
+   EMAIL_FROM: z.string().default('kclick <commandes@notification.kclick-api.com>'),
+   EMAIL_REPLY_TO: z.string().default('ecommerce@kennysinternational.com'),
+   PUBLIC_SITE_URL: z.string().default('http://localhost:5173').transform((v) => v.replace(/\/$/, '')),
++  // Paiements MaishaPay : sans les deux clés, les paiements restent confirmés à la main (dashboard)
++  MAISHAPAY_PUBLIC_KEY: z.string().optional().transform((v) => v || undefined),
++  MAISHAPAY_SECRET_KEY: z.string().optional().transform((v) => v || undefined),
++  MAISHAPAY_MODE: z.enum(['0', '1']).default('0'), // 0 : test (sandbox), 1 : réel (live)
++  MAISHAPAY_API_URL: z.url().default('https://marchand.maishapay.online/api').transform((v) => v.replace(/\/$/, '')),
++  // Adresse publique de cette API (MaishaPay y envoie le résultat des paiements), ex. https://xxx.up.railway.app
++  API_PUBLIC_URL: z.string().optional().transform((v) => (v ? v.replace(/\/$/, '') : undefined)),
++  PAYMENT_TIMEOUT_MINUTES: z.coerce.number().int().min(2).max(60).default(10),
+   CORS_ORIGINS: z
+     .string()
+     .default('http://localhost:5173')
+diff --git a/webapp/server/src/middlewares/rateLimit.js b/webapp/server/src/middlewares/rateLimit.js
+index c3a543c..29c1251 100644
+--- a/webapp/server/src/middlewares/rateLimit.js
++++ b/webapp/server/src/middlewares/rateLimit.js
+@@ -3,3 +3,5 @@ import rateLimit from 'express-rate-limit'
+ // Limite générale, et une plus stricte pour la création de commandes.
+ export const apiLimiter = rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false })
+ export const orderLimiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false })
++// Lancement d'un paiement en ligne (demande envoyée sur le téléphone du client)
++export const paymentStartLimiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false })
+diff --git a/webapp/server/src/modules/notifications/notifications.subscribers.js b/webapp/server/src/modules/notifications/notifications.subscribers.js
+index c40300e..b6ae507 100644
+--- a/webapp/server/src/modules/notifications/notifications.subscribers.js
++++ b/webapp/server/src/modules/notifications/notifications.subscribers.js
+@@ -5,6 +5,7 @@ import { presentOrder } from '../orders/orders.present.js'
+ import * as model from './notifications.model.js'
+ import { queueEmail } from './notifications.service.js'
+ import * as orderEmails from './templates/orders.js'
++import { isOnlineMethod } from '../payments/payments.service.js'
+ import { invitation } from './templates/invitation.js'
+ 
+ /*
+@@ -44,19 +45,28 @@ async function toCustomer(kind, orderId, render) {
+ 
+ const paidOrRefunding = (order) => order.payment?.status === 'paye' || order.refundPending > 0
+ 
+-events.on('order.created', async ({ orderId }) => {
++// « Nouvelle commande » pour l'équipe : à la commande si le paiement se confirme à la main (l'équipe doit le vérifier),
++// sinon (paiement en ligne MaishaPay) seulement une fois le paiement confirmé, comme pour les Maisons.
++async function notifyTeam(orderId, ctx) {
+   const s = await settings()
+-  const ctx = await context(orderId)
+-  if (!ctx) return
+-  if (s.customerEmails.confirmation && ctx.to) await queueEmail({ kind: 'order_confirmation', to: ctx.to, orderId, ...orderEmails.orderConfirmation(ctx.order, { lang: ctx.lang }) })
+   const team = orderEmails.teamNewOrder(ctx.order)
+   for (const to of new Set(s.teamRecipients.map((e) => String(e).trim().toLowerCase()).filter(Boolean))) {
+     await queueEmail({ kind: 'team_new_order', to, orderId, ...team })
+   }
++}
++
++events.on('order.created', async ({ orderId }) => {
++  const s = await settings()
++  const ctx = await context(orderId)
++  if (!ctx) return
++  if (s.customerEmails.confirmation && ctx.to) await queueEmail({ kind: 'order_confirmation', to: ctx.to, orderId, ...orderEmails.orderConfirmation(ctx.order, { lang: ctx.lang }) })
++  if (!isOnlineMethod(ctx.order.payment?.method)) await notifyTeam(orderId, ctx)
+ })
+ 
+ events.on('payment.confirmed', async ({ orderId }) => {
+   await toCustomer('payment_received', orderId, (order, lang) => orderEmails.paymentReceived(order, { lang }))
++  const ctx = await context(orderId)
++  if (ctx && isOnlineMethod(ctx.order.payment?.method)) await notifyTeam(orderId, ctx)
+ })
+ 
+ events.on('part.refused', async ({ orderId, brand, reason, refund }) => {
+diff --git a/webapp/server/src/modules/orders/orders.model.js b/webapp/server/src/modules/orders/orders.model.js
+index a6b8840..4cd2ea8 100644
+--- a/webapp/server/src/modules/orders/orders.model.js
++++ b/webapp/server/src/modules/orders/orders.model.js
+@@ -219,7 +219,7 @@ export async function findOrderRowByNumber(number) {
+  *  statuses (order_status[]), since (date), search (numéro, nom, téléphone), brandId (commandes contenant cette Maison),
+  *  customerId, riderProfileId, ids
+  */
+-export async function findOrderRows({ statuses, since, search, brandId, customerId, riderProfileId, ids, limit = 50, offset = 0 } = {}) {
++export async function findOrderRows({ statuses, since, search, brandId, customerId, riderProfileId, ids, paidOnly = false, limit = 50, offset = 0 } = {}) {
+   const { rows } = await query(
+     `${ORDER_ROW}
+       where ($1::text[] is null or o.status::text = any($1::text[]))
+@@ -232,9 +232,12 @@ export async function findOrderRows({ statuses, since, search, brandId, customer
+         and ($6::uuid is null or exists (select 1 from public.deliveries d join public.riders r on r.id = d.rider_id
+                                           where d.order_id = o.id and r.profile_id = $6))
+         and ($7::uuid[] is null or o.id = any($7))
++        -- Maisons : seulement les commandes payées
++        and (not $10::boolean or exists (select 1 from public.payments pay
++                                          where pay.order_id = o.id and pay.kind = 'paiement' and pay.status = 'paye'))
+       order by o.created_at desc
+       limit $8 offset $9`,
+-    [statuses ?? null, since ?? null, search ?? null, brandId ?? null, customerId ?? null, riderProfileId ?? null, ids ?? null, limit, offset],
++    [statuses ?? null, since ?? null, search ?? null, brandId ?? null, customerId ?? null, riderProfileId ?? null, ids ?? null, limit, offset, paidOnly],
+   )
+   return rows
+ }
+diff --git a/webapp/server/src/modules/parts/parts.service.js b/webapp/server/src/modules/parts/parts.service.js
+index e4c3201..ae85665 100644
+--- a/webapp/server/src/modules/parts/parts.service.js
++++ b/webapp/server/src/modules/parts/parts.service.js
+@@ -24,7 +24,7 @@ async function resolveBrand(user, slug) {
+   return { id: user.brandIds[0] }
+ }
+ 
+-/** File de la Maison : commandes qui contiennent sa part, avec seulement ses articles */
++/** File de la Maison : commandes PAYÉES qui contiennent sa part, avec seulement ses articles */
+ export async function listForBrand(user, { brand: slug, scope }) {
+   const brand = await resolveBrand(user, slug)
+   const since = scope === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)).toISOString() : null
+@@ -32,6 +32,7 @@ export async function listForBrand(user, { brand: slug, scope }) {
+     brandId: brand.id,
+     statuses: scope === 'active' ? ACTIVE_STATUSES : null,
+     since,
++    paidOnly: true, // une commande n'arrive chez la Maison qu'une fois le paiement confirmé
+     limit: 200,
+   })
+   return rows.map(presentOrder).map((o) => forBrand(o, [brand.id]))
+@@ -47,6 +48,7 @@ export async function setStatus(user, partId, { status, reason }) {
+     if (!part) throw notFound('Part')
+     if (!user.has('super_admin') && !user.brandIds.includes(part.brand_id)) throw notFound('Part')
+     if (!canMovePart(part.status, status)) throw conflict('INVALID_TRANSITION', `Changement impossible : ${part.status} → ${status}`)
++    if (!(await payments.isPaid(db, part.order_id))) throw conflict('NOT_PAID', 'Cette commande n’est pas encore payée')
+ 
+     await orders.setPartState(db, partId, { status, refusalReason: status === 'refusee' ? reason : null })
+     await orders.insertHistory(db, { orderId: part.order_id, partId, from: part.status, to: status, by: user.id, reason: reason ?? null })
+diff --git a/webapp/server/src/modules/payments/payments.controller.js b/webapp/server/src/modules/payments/payments.controller.js
+index 951cb18..1166b45 100644
+--- a/webapp/server/src/modules/payments/payments.controller.js
++++ b/webapp/server/src/modules/payments/payments.controller.js
+@@ -1,3 +1,4 @@
++import { env } from '../../config/env.js'
+ import * as service from './payments.service.js'
+ 
+ export const list = async (req, res) => res.json(await service.list(req.valid.query))
+@@ -5,4 +6,19 @@ export const confirm = async (req, res) => res.json(await service.confirm(req.us
+ export const fail = async (req, res) => res.json(await service.fail(req.user, req.valid.params.id, req.valid.body))
+ export const refunds = async (req, res) => res.json(await service.refunds(req.valid.query))
+ export const refundDone = async (req, res) => res.json(await service.refundDone(req.user, req.valid.params.id, req.valid.body))
+-export const webhook = async (req, res) => res.json(await service.webhook(req.valid.params.provider, req))
++
++// Paiement en ligne (client, avec ou sans compte : numéro de commande + téléphone)
++export const start = async (req, res) => res.json(await service.startPayment(req.valid.body))
++export const status = async (req, res) => res.json(await service.paymentStatus({ number: req.valid.params.number, phone: req.valid.query.phone }))
++
++// Message de MaishaPay. Mobile money : POST, on répond 200 (même si le paiement est inconnu, pour éviter les renvois).
++export const webhook = async (req, res) => {
++  const result = await service.webhook(req.valid.params.provider, req)
++  res.json({ received: true, ok: result.ok })
++}
++
++// Carte : le client revient du paiement sécurisé par cette adresse (GET) → vérification, puis suivi de sa commande
++export const webhookReturn = async (req, res) => {
++  const result = await service.webhook(req.valid.params.provider, req).catch(() => ({ orderNumber: null }))
++  res.redirect(302, `${env.PUBLIC_SITE_URL}/#suivi${result.orderNumber ? `/${result.orderNumber}` : ''}`)
++}
+diff --git a/webapp/server/src/modules/payments/payments.model.js b/webapp/server/src/modules/payments/payments.model.js
+index 52c801a..40647fa 100644
+--- a/webapp/server/src/modules/payments/payments.model.js
++++ b/webapp/server/src/modules/payments/payments.model.js
+@@ -48,16 +48,107 @@ export async function lockPayment(db, id) {
+   return rows[0] ?? null
+ }
+ 
+-export async function updatePayment(db, id, { status, providerRef, paidAt }) {
++export async function updatePayment(db, id, { status, providerRef, paidAt, fees, failureReason }) {
+   const { rows } = await db.query(
+     `update public.payments set status = $2, provider_ref = coalesce($3, provider_ref),
+-                                paid_at = coalesce($4, paid_at)
++                                paid_at = coalesce($4, paid_at), fees = coalesce($5, fees),
++                                failure_reason = coalesce($6, failure_reason), checked_at = now()
+       where id = $1 returning *`,
+-    [id, status, providerRef ?? null, paidAt ?? null],
++    [id, status, providerRef ?? null, paidAt ?? null, fees ?? null, failureReason ?? null],
+   )
+   return rows[0]
+ }
+ 
++/* ---------- Paiement en ligne (prestataire) ---------- */
++
++/** Commande par son numéro, verrouillée (lancement d'un paiement) */
++export async function lockOrderByNumber(db, number) {
++  const { rows } = await db.query(`select * from public.orders where number = $1 for update`, [number])
++  return rows[0] ?? null
++}
++
++export async function findOrderByNumber(number) {
++  const { rows } = await query(`select * from public.orders where number = $1`, [number])
++  return rows[0] ?? null
++}
++
++/** Dernier paiement en attente de la commande (la tentative en cours ou à lancer), verrouillé */
++export async function lockPendingPayment(db, orderId) {
++  const { rows } = await db.query(
++    `select * from public.payments
++      where order_id = $1 and kind = 'paiement' and status = 'en_attente'
++      order by created_at desc limit 1 for update`,
++    [orderId],
++  )
++  return rows[0] ?? null
++}
++
++/** Paiements (pas les remboursements) d'une commande, du plus récent au plus ancien */
++export async function findOrderPayments(orderId) {
++  const { rows } = await query(
++    `select * from public.payments where order_id = $1 and kind = 'paiement' order by created_at desc`,
++    [orderId],
++  )
++  return rows
++}
++
++/** Tentative lancée : référence envoyée au prestataire, délai de validation */
++export async function markStarted(db, id, { reference, provider, payerPhone, expiresAt }) {
++  const { rows } = await db.query(
++    `update public.payments set reference = $2, provider = coalesce($3, provider), payer_phone = coalesce($4, payer_phone),
++                                started_at = now(), expires_at = $5, failure_reason = null
++      where id = $1 returning *`,
++    [id, reference, provider ?? null, payerPhone ?? null, expiresAt],
++  )
++  return rows[0]
++}
++
++/** Réponse du prestataire à la demande : son numéro de transaction, ses frais, la page de paiement (carte) */
++export async function saveStartResult(db, id, { providerTxId, fees, paymentPage }) {
++  const { rows } = await db.query(
++    `update public.payments set provider_tx_id = coalesce($2, provider_tx_id), fees = coalesce($3, fees),
++                                payment_page = coalesce($4, payment_page), checked_at = now()
++      where id = $1 returning *`,
++    [id, providerTxId ?? null, fees ?? null, paymentPage ?? null],
++  )
++  return rows[0]
++}
++
++export async function touchChecked(id) {
++  await query(`update public.payments set checked_at = now() where id = $1`, [id])
++}
++
++/** Journal du paiement (sans les clés du prestataire) */
++export async function insertEvent(db, { paymentId, source, status = null, payload = null }) {
++  await (db ?? { query }).query(
++    `insert into public.payment_events (payment_id, source, status, payload) values ($1, $2, $3, $4)`,
++    [paymentId, source, status, payload == null ? null : JSON.stringify(payload)],
++  )
++}
++
++/** Paiement visé par un message du prestataire : par notre référence, sinon par son numéro de transaction */
++export async function findByProviderIds({ reference, providerTxId }) {
++  const { rows } = await query(
++    `select pay.*, o.number as order_number from public.payments pay join public.orders o on o.id = pay.order_id
++      where ($1::text is not null and pay.reference = $1) or ($2::text is not null and pay.provider_tx_id = $2)
++      order by pay.created_at desc limit 1`,
++    [reference ?? null, providerTxId ?? null],
++  )
++  return rows[0] ?? null
++}
++
++/** Paiements lancés encore en attente, pas revérifiés depuis `seconds` (filet de sécurité) */
++export async function findPendingToCheck(seconds = 45, limit = 25) {
++  const { rows } = await query(
++    `select pay.* from public.payments pay
++      where pay.kind = 'paiement' and pay.status = 'en_attente' and pay.started_at is not null
++        and (pay.checked_at is null or pay.checked_at < now() - make_interval(secs => $1))
++      order by pay.started_at limit $2`,
++    [seconds, limit],
++  )
++  return rows
++}
++
+ export async function insertHistory(db, { orderId, from, to, by, reason }) {
+   await db.query(
+     `insert into public.order_status_history (order_id, from_status, to_status, changed_by, reason)
+@@ -66,10 +157,13 @@ export async function insertHistory(db, { orderId, from, to, by, reason }) {
+   )
+ }
+ 
+-export async function findPayments({ status, kind, limit, offset }) {
++export async function findPayments({ status, kind, limit, offset, q }) {
+   const { rows } = await query(
+     `select pay.id, pay.kind, pay.method, pay.provider, pay.amount, pay.currency, pay.status, pay.provider_ref,
+             pay.payer_phone, pay.paid_at, pay.created_at,
++            pay.reference, pay.provider_tx_id, pay.fees, pay.failure_reason, pay.started_at, pay.expires_at, pay.checked_at,
++            (select e.status from public.payment_events e where e.payment_id = pay.id and e.status is not null
++              order by e.created_at desc limit 1) as provider_status,
+             o.id as order_id, o.number as order_number, o.status as order_status, o.customer_name, o.customer_phone,
+             p.brand_id as refund_brand_id, b.name as refund_brand,
+             count(*) over () as total
+@@ -79,9 +173,39 @@ export async function findPayments({ status, kind, limit, offset }) {
+        left join public.brands b on b.id = p.brand_id
+       where ($1::public.payment_status is null or pay.status = $1)
+         and ($2::public.payment_kind is null or pay.kind = $2)
++        and ($5::text is null or o.number ilike '%' || $5 || '%' or pay.reference ilike '%' || $5 || '%'
++             or pay.provider_tx_id = $5 or pay.provider_ref = $5 or o.customer_name ilike '%' || $5 || '%')
+       order by pay.created_at desc
+       limit $3 offset $4`,
+-    [status ?? null, kind ?? null, limit, offset],
++    [status ?? null, kind ?? null, limit, offset, q?.trim() || null],
+   )
+   return rows
+ }
++
++/** Montant dû par la commande (0 si annulée ou refusée) */
++export async function orderDue(db, orderId) {
++  const { rows } = await db.query(
++    `select status, total, adjusted_total from public.orders where id = $1`,
++    [orderId],
++  )
++  const o = rows[0]
++  if (!o || ['annulee', 'refusee'].includes(o.status)) return 0
++  return Number(o.adjusted_total) > 0 ? Number(o.adjusted_total) : Number(o.total)
++}
++
++/** Tentatives de paiement pas encore lancées (créées pour réessayer) : annulées, la commande est payée */
++export async function cancelUnstartedPayments(db, orderId) {
++  await db.query(
++    `update public.payments set status = 'annule'
++      where order_id = $1 and kind = 'paiement' and status = 'en_attente' and started_at is null`,
++    [orderId],
++  )
++}
++
++export async function hasPaidPayment(db, orderId) {
++  const { rows } = await db.query(
++    `select 1 from public.payments where order_id = $1 and kind = 'paiement' and status = 'paye' limit 1`,
++    [orderId],
++  )
++  return rows.length > 0
++}
+diff --git a/webapp/server/src/modules/payments/payments.routes.js b/webapp/server/src/modules/payments/payments.routes.js
+index 8608f04..8ef205d 100644
+--- a/webapp/server/src/modules/payments/payments.routes.js
++++ b/webapp/server/src/modules/payments/payments.routes.js
+@@ -1,18 +1,28 @@
+-import { Router } from 'express'
++import express, { Router } from 'express'
+ import { requireAuth } from '../../middlewares/auth.js'
+ import { requireRole } from '../../middlewares/requireRole.js'
+ import { validate } from '../../middlewares/validate.js'
++import { paymentStartLimiter } from '../../middlewares/rateLimit.js'
+ import * as controller from './payments.controller.js'
+-import { confirmBody, failBody, listQuery, paymentParams, providerParams } from './payments.schemas.js'
++import { confirmBody, failBody, listQuery, paymentParams, providerParams, startBody, statusParams, statusQuery } from './payments.schemas.js'
+ 
+-// Paiements et remboursements (super-admin), confirmations des prestataires
++// Paiements : en ligne avec MaishaPay (client), suivi et remboursements (super-admin)
+ export const paymentsRoutes = Router()
+ 
+ const admin = [requireAuth, requireRole('super_admin')]
+ 
+-paymentsRoutes.post('/webhooks/:provider', validate({ params: providerParams }), controller.webhook)              // prestataire (à brancher)
+-paymentsRoutes.get('/', ...admin, validate({ query: listQuery }), controller.list)                                // ?status=en_attente&kind=paiement
++// Client (avec ou sans compte) : numéro de commande + téléphone de la commande
++paymentsRoutes.post('/start', paymentStartLimiter, validate({ body: startBody }), controller.start)                 // lancer / relancer le paiement
++paymentsRoutes.get('/status/:number', validate({ params: statusParams, query: statusQuery }), controller.status)  // où en est le paiement ?
++
++// MaishaPay : résultat d'un paiement (non signé : toujours revérifié auprès de MaishaPay avant de compter)
++// (corps JSON, ou formulaire si MaishaPay l'envoie ainsi)
++paymentsRoutes.post('/webhooks/:provider', express.urlencoded({ extended: false, limit: '50kb' }), validate({ params: providerParams }), controller.webhook) // mobile money
++paymentsRoutes.get('/webhooks/:provider', validate({ params: providerParams }), controller.webhookReturn)        // carte : retour du client
++
++// Super-admin
++paymentsRoutes.get('/', ...admin, validate({ query: listQuery }), controller.list)                                // ?status=&kind=&q=
+ paymentsRoutes.get('/refunds', ...admin, validate({ query: listQuery }), controller.refunds)                      // remboursements à faire
+ paymentsRoutes.post('/refunds/:id/done', ...admin, validate({ params: paymentParams, body: confirmBody }), controller.refundDone)
+-paymentsRoutes.post('/:id/confirm', ...admin, validate({ params: paymentParams, body: confirmBody }), controller.confirm) // paiement reçu
++paymentsRoutes.post('/:id/confirm', ...admin, validate({ params: paymentParams, body: confirmBody }), controller.confirm) // paiement reçu (vérifié à la main)
+ paymentsRoutes.post('/:id/fail', ...admin, validate({ params: paymentParams, body: failBody }), controller.fail)          // paiement échoué
+diff --git a/webapp/server/src/modules/payments/payments.schemas.js b/webapp/server/src/modules/payments/payments.schemas.js
+index 5d120c2..cca4a95 100644
+--- a/webapp/server/src/modules/payments/payments.schemas.js
++++ b/webapp/server/src/modules/payments/payments.schemas.js
+@@ -5,10 +5,24 @@ export const listQuery = z.object({
+   kind: z.enum(['paiement', 'remboursement']).optional(),
+   limit: z.coerce.number().int().min(1).max(200).default(50),
+   offset: z.coerce.number().int().min(0).default(0),
++  q: z.string().trim().max(80).optional(), // numéro de commande, référence, client
+ })
+ 
+ export const paymentParams = z.object({ id: z.uuid() })
+-export const providerParams = z.object({ provider: z.enum(['mobile_money', 'carte']) })
++export const providerParams = z.object({ provider: z.enum(['maishapay']) })
++
++const phone = z.string().trim().regex(/^\+?[0-9 ]{8,20}$/, 'Téléphone invalide')
++const orderNumber = z.string().trim().toUpperCase().regex(/^KC-\d{5,}$/, 'Numéro de commande invalide')
++
++// Lancer (ou relancer) le paiement d'une commande : numéro + téléphone de la commande, comme le suivi sans compte
++export const startBody = z.object({
++  number: orderNumber,
++  phone,
++  provider: z.string().trim().max(40).optional(),   // autre opérateur pour réessayer
++  payerPhone: phone.optional(),                      // autre numéro mobile money pour réessayer
++})
++export const statusParams = z.object({ number: orderNumber })
++export const statusQuery = z.object({ phone })
+ 
+ // Confirmation manuelle (en attendant le prestataire) : la référence de la transaction est obligatoire
+ export const confirmBody = z.object({
+diff --git a/webapp/server/src/modules/payments/payments.service.js b/webapp/server/src/modules/payments/payments.service.js
+index 36f5f21..e56cec4 100644
+--- a/webapp/server/src/modules/payments/payments.service.js
++++ b/webapp/server/src/modules/payments/payments.service.js
+@@ -1,11 +1,20 @@
++import { randomBytes } from 'node:crypto'
+ import { transaction } from '../../config/db.js'
++import { env } from '../../config/env.js'
++import { logger } from '../../config/logger.js'
+ import { events } from '../../shared/events.js'
+ import { conflict, notFound } from '../../shared/errors.js'
+ import * as model from './payments.model.js'
+ import { providers } from './providers/index.js'
++import { redact, walletId } from './providers/maishapay.js'
+ 
+ // Paiements : mobile money et carte uniquement (pas de paiement à la livraison).
+-// Tant qu'aucun prestataire n'est branché, l'équipe confirme les paiements à la main (super-admin).
++// Prestataire : MaishaPay (providers/). Sans clés MaishaPay, l'équipe confirme les paiements à la main (super-admin).
++//
++// Une ligne de `payments` = une tentative. Elle est lancée chez le prestataire (startPayment), puis réglée
++// (settle) quand son état réel est connu : JAMAIS sur la seule foi d'un message reçu, toujours après
++// vérification auprès du prestataire (verifyPayment). Une tentative échouée laisse une nouvelle ligne
++// « en_attente » pour réessayer. Chaque étape est écrite dans payment_events (sans les clés).
+ 
+ /* ---------- Utilisé par les autres modules, dans leur transaction (db = client de transaction) ---------- */
+ 
+@@ -36,6 +45,12 @@ export async function settlePartRefusal(db, { orderId, partId, method, partAmoun
+   return model.insertPayment(db, { orderId, partId, kind: 'remboursement', method, amount: Math.min(balance, partAmount) })
+ }
+ 
++/** La commande est-elle payée ? (au moins un paiement confirmé) */
++export const isPaid = (db, orderId) => model.hasPaidPayment(db, orderId)
++
++/** Paiement en ligne actif pour ce moyen de paiement (sinon : confirmation à la main) */
++export const isOnlineMethod = (method) => Boolean(providers[method]?.isEnabled?.())
++
+ /* ---------- Routes (super-admin) ---------- */
+ 
+ export async function list(filters) {
+@@ -91,7 +106,240 @@ export async function refundDone(user, id, { providerRef, note }) {
+   return refund
+ }
+ 
+-/** Message envoyé par un prestataire (mobile money, carte) : à brancher quand le prestataire est choisi */
+-export async function webhook(providerName, req) {
+-  return providers[providerName].verify(req)
++/* ---------- Paiement en ligne (MaishaPay) ---------- */
++
++const last9 = (s) => String(s ?? '').replace(/\D/g, '').slice(-9)
++const phoneMatches = (order, phone) => last9(phone).length === 9 && last9(order.customer_phone) === last9(phone)
++const isOnline = (method) => Boolean(providers[method]?.isEnabled?.())
++const isExpired = (p) => Boolean(p.expires_at) && new Date(p.expires_at) <= new Date()
++const timeoutMs = () => env.PAYMENT_TIMEOUT_MINUTES * 60_000
++
++/** Notre référence unique pour le prestataire : KC-00012-7F3Q9A */
++const newReference = (number) => `${number}-${randomBytes(4).toString('hex').slice(0, 6).toUpperCase()}`
++
++// Motif d'échec lisible par le client
++function failureText(result) {
++  const s = String(result.rawStatus ?? '').trim().toUpperCase()
++  if (s === 'EXPIRED') return 'Délai de validation dépassé'
++  if (s === 'CANCELED' || s === 'CANCELLED') return 'Paiement annulé'
++  if (s === 'DECLINED' || s === 'REJECTED') return 'Paiement refusé par l’opérateur'
++  return result.message || 'Le paiement n’a pas abouti'
++}
++
++const logEvent = (paymentId, source, status, payload) =>
++  model.insertEvent(null, { paymentId, source, status: status ? String(status).trim() : null, payload: redact(payload) }).catch((err) =>
++    logger.warn({ err: err.message, paymentId }, 'Journal du paiement non écrit'),
++  )
++
++/**
++ * Règle une tentative d'après son état RÉEL (vérifié auprès du prestataire). Sans effet si déjà réglée.
++ * Payé après coup (après expiration ou annulation de la commande) : enregistré quand même, et le trop-perçu
++ * part en remboursement pour l'équipe.
++ */
++export async function settle(paymentId, result, source = 'verification') {
++  const outcome = await transaction(async (db) => {
++    const p = await model.lockPayment(db, paymentId)
++    if (!p || p.kind !== 'paiement') return null
++
++    if (result.status === 'paye' && p.status !== 'paye') {
++      const ref = result.providerTxId ?? p.provider_tx_id ?? p.reference
++      const updated = await model.updatePayment(db, p.id, { status: 'paye', providerRef: ref, paidAt: new Date(), fees: result.fees })
++      await model.cancelUnstartedPayments(db, p.order_id)
++      await model.insertHistory(db, { orderId: p.order_id, from: `paiement ${p.status}`, to: 'paiement paye', by: null, reason: `MaishaPay ${ref}` })
++      // Trop-perçu (commande annulée entre-temps, ou payée deux fois) → remboursement à faire
++      const excess = Math.round(((await model.paidBalance(db, p.order_id)) - (await model.orderDue(db, p.order_id))) * 100) / 100
++      const refund = excess > 0 ? await model.insertPayment(db, { orderId: p.order_id, kind: 'remboursement', method: p.method, amount: excess }) : null
++      return { payment: { ...updated, order_number: p.order_number }, changed: 'paye', refund }
++    }
++
++    if (result.status === 'echoue' && p.status === 'en_attente') {
++      const reason = failureText(result)
++      const updated = await model.updatePayment(db, p.id, { status: 'echoue', failureReason: reason, fees: result.fees })
++      // Nouvelle tentative prête : le client peut réessayer sur la même commande
++      if (!['annulee', 'refusee', 'livree', 'retiree'].includes(p.order_status))
++        await model.insertPayment(db, { orderId: p.order_id, method: p.method, provider: p.provider, amount: p.amount, payerPhone: p.payer_phone })
++      await model.insertHistory(db, { orderId: p.order_id, from: 'paiement en_attente', to: 'paiement echoue', by: null, reason })
++      return { payment: { ...updated, order_number: p.order_number }, changed: 'echoue', reason }
++    }
++
++    return { payment: { ...p }, changed: false }
++  })
++
++  if (outcome?.changed) await logEvent(paymentId, source === 'expiration' ? 'expiration' : 'verification', result.rawStatus, { settled: outcome.changed })
++  if (outcome?.changed === 'paye') events.emit('payment.confirmed', { orderId: outcome.payment.order_id, paymentId, amount: outcome.payment.amount })
++  if (outcome?.changed === 'echoue') events.emit('payment.failed', { orderId: outcome.payment.order_id, paymentId, reason: outcome.reason })
++  return outcome
++}
++
++/** Demande au prestataire l'état réel d'une tentative lancée, puis la règle */
++export async function verifyPayment(p) {
++  const impl = providers[p.method]
++  if (!impl?.isEnabled?.() || !p.started_at) return null
++  let result
++  try {
++    result = await impl.verify(p)
++  } catch (err) {
++    await model.touchChecked(p.id)
++    await logEvent(p.id, 'erreur', err.code, { message: err.message })
++    return null
++  }
++  await logEvent(p.id, 'verification', result.rawStatus, result.payload)
++  if (result.status === 'en_attente') {
++    if (p.status === 'en_attente' && isExpired(p))
++      return settle(p.id, { status: 'echoue', rawStatus: 'EXPIRED', message: 'Délai de validation dépassé' }, 'expiration')
++    await model.touchChecked(p.id)
++    return null
++  }
++  return settle(p.id, result)
++}
++
++/**
++ * Lance (ou relance) le paiement d'une commande chez le prestataire.
++ * Accès comme le suivi sans compte : numéro de commande + téléphone de la commande.
++ * Une demande déjà en cours n'est pas renvoyée (double clic, rechargement) ; avec un autre numéro
++ * ou un autre opérateur, la demande en cours est remplacée.
++ */
++export async function startPayment({ number, phone, provider, payerPhone }) {
++  const prep = await transaction(async (db) => {
++    const order = await model.lockOrderByNumber(db, number)
++    if (!order || !phoneMatches(order, phone)) throw notFound('Commande')
++    if (['annulee', 'refusee'].includes(order.status)) throw conflict('ORDER_CLOSED', 'Cette commande est annulée')
++    const p = await model.lockPendingPayment(db, order.id)
++    if (!p) {
++      if ((await model.paidBalance(db, order.id)) > 0) throw conflict('ALREADY_PAID', 'Cette commande est déjà payée')
++      throw conflict('NO_PENDING_PAYMENT', 'Aucun paiement à faire pour cette commande')
++    }
++    if (!isOnline(p.method)) return { order, payment: p, manual: true }
++
++    const changed = (provider && provider !== p.provider) || (payerPhone && walletId(payerPhone) !== walletId(p.payer_phone))
++    if (p.started_at && !isExpired(p) && !changed) return { order, payment: p, already: true }
++
++    let target = p
++    if (p.started_at) {
++      // Tentative précédente expirée ou remplacée : elle est close, une nouvelle part chez le prestataire
++      await model.updatePayment(db, p.id, { status: 'echoue', failureReason: isExpired(p) ? 'Délai de validation dépassé' : 'Remplacé par une nouvelle demande' })
++      target = await model.insertPayment(db, { orderId: order.id, method: p.method, provider: p.provider, amount: p.amount, payerPhone: p.payer_phone })
++    }
++    const started = await model.markStarted(db, target.id, {
++      reference: newReference(order.number),
++      provider: p.method === 'mobile_money' ? provider : null,
++      payerPhone: p.method === 'mobile_money' && payerPhone ? walletId(payerPhone) : null,
++      expiresAt: new Date(Date.now() + timeoutMs()),
++    })
++    return { order, payment: started }
++  })
++
++  const { order, payment } = prep
++  if (prep.manual || prep.already) return paymentStatus({ number: order.number, phone })
++
++  // Appel au prestataire, en dehors de la transaction
++  let result
++  try {
++    result = await providers[payment.method].start({ order, payment })
++  } catch (err) {
++    await logEvent(payment.id, 'erreur', err.code, { message: err.message })
++    await settle(payment.id, { status: 'echoue', rawStatus: err.code, message: err.message }, 'demande')
++    return paymentStatus({ number: order.number, phone })
++  }
++  await logEvent(payment.id, 'demande', null, result.request)
++  await logEvent(payment.id, 'reponse', result.rawStatus, result.payload)
++
++  // Réponse directe de MaishaPay à notre appel : fiable (ce n'est pas un message reçu)
++  if (result.status === 'en_attente') await transaction((db) => model.saveStartResult(db, payment.id, result))
++  else {
++    await transaction((db) => model.saveStartResult(db, payment.id, result))
++    await settle(payment.id, result, 'demande')
++  }
++  return paymentStatus({ number: order.number, phone })
++}
++
++/**
++ * Où en est le paiement de la commande ? (le site interroge toutes les 3 s pendant l'attente)
++ * Une tentative en attente pas vérifiée depuis 8 s est revérifiée auprès du prestataire.
++ */
++export async function paymentStatus({ number, phone }) {
++  const order = await model.findOrderByNumber(number)
++  if (!order || !phoneMatches(order, phone)) throw notFound('Commande')
++
++  let list = await model.findOrderPayments(order.id)
++  const started = (ps) => ps.find((p) => p.started_at || p.status !== 'en_attente')
++  const current = started(list)
++  if (current?.status === 'en_attente' && current.started_at && (!current.checked_at || Date.now() - new Date(current.checked_at) > 8000)) {
++    await verifyPayment(current)
++    list = await model.findOrderPayments(order.id)
++  }
++
++  const paid = list.find((p) => p.status === 'paye')
++  const attempt = paid ?? started(list) ?? list[0]
++  const closed = ['annulee', 'refusee'].includes(order.status)
++  const waiting = attempt?.status === 'en_attente' && Boolean(attempt.started_at) && !isExpired(attempt)
++  const masked = (ph) => (ph ? String(ph).replace(/\D/g, '').replace(/^(\d{3})(\d+)(\d{2})$/, (_, a, b, c) => `+${a} ${'•'.repeat(b.length)}${c}`) : null)
++
++  return {
++    number: order.number,
++    amount: Number(order.adjusted_total) > 0 ? Number(order.adjusted_total) : Number(order.total),
++    currency: attempt?.currency ?? 'USD',
++    method: attempt?.method ?? order.payment_method,
++    online: isOnline(attempt?.method ?? order.payment_method),
++    status: paid ? 'paye' : attempt?.status === 'en_attente' && !attempt.started_at ? 'a_payer' : attempt?.status ?? 'a_payer',
++    waiting, // demande envoyée, en attente de validation par le client
++    provider: attempt?.provider ?? null,
++    payerPhone: masked(attempt?.payer_phone),
++    paymentPage: waiting && attempt.method === 'carte' ? attempt.payment_page : null,
++    expiresAt: waiting ? attempt.expires_at : null,
++    failureReason: !paid && attempt?.status === 'echoue' ? attempt.failure_reason : null,
++    canRetry: !paid && !closed && list.some((p) => p.status === 'en_attente' && (!p.started_at || isExpired(p))),
++    paidAt: paid?.paid_at ?? null,
++  }
++}
++
++/**
++ * Message de MaishaPay : POST (mobile money, corps JSON) ou GET (carte, paramètres d'adresse).
++ * Non signé : on retrouve la tentative, on écrit le message au journal, puis on vérifie auprès de MaishaPay.
++ * Renvoie le numéro de commande (la carte y renvoie le client, sur le suivi).
++ */
++export async function webhook(_providerName, req) {
++  const b = req.method === 'GET' ? {} : (req.body ?? {})
++  const q = req.query ?? {}
++  const ids = {
++    reference: b.originatingTransactionId ?? b.transactionReference ?? q.transactionRefId ?? null,
++    providerTxId: b.transactionId != null ? String(b.transactionId) : (q.operatorRefId ?? null),
++  }
++  if (!ids.reference && !ids.providerTxId) return { ok: false, orderNumber: null }
++  const p = await model.findByProviderIds(ids)
++  if (!p) {
++    logger.warn(ids, 'Message MaishaPay pour un paiement inconnu')
++    return { ok: false, orderNumber: null }
++  }
++  await logEvent(p.id, 'notification', b.transactionStatus ?? q.description ?? null, { ...b, ...q })
++  await verifyPayment(p) // ne règle que si MaishaPay confirme
++  return { ok: true, orderNumber: p.order_number }
++}
++
++/* ---------- Filet de sécurité : revérifie les paiements en attente toutes les minutes ---------- */
++
++let sweepTimer = null
++let sweeping = false
++
++export async function sweepPending() {
++  if (sweeping) return
++  sweeping = true
++  try {
++    for (const p of await model.findPendingToCheck(45)) await verifyPayment(p)
++  } catch (err) {
++    logger.warn({ err: err.message }, 'Vérification des paiements en attente impossible')
++  } finally {
++    sweeping = false
++  }
++}
++
++export function startPaymentWorker(intervalMs = 60_000) {
++  if (sweepTimer || !Object.values(providers).some((impl) => impl.isEnabled?.())) return
++  sweepTimer = setInterval(sweepPending, intervalMs)
++  sweepTimer.unref?.()
++}
++
++export function stopPaymentWorker() {
++  clearInterval(sweepTimer)
++  sweepTimer = null
+ }
+diff --git a/webapp/server/src/modules/payments/providers/card.js b/webapp/server/src/modules/payments/providers/card.js
+index 9357fd3..28fe1dd 100644
+--- a/webapp/server/src/modules/payments/providers/card.js
++++ b/webapp/server/src/modules/payments/providers/card.js
+@@ -1,6 +1,33 @@
+-import { notImplemented } from '../../../shared/errors.js'
++import * as maishapay from './maishapay.js'
+ 
+-// Prestataire à choisir (card) : brancher ici son API.
+-export async function start() { throw notImplemented() }
+-export async function verify() { throw notImplemented() }
+-export async function refund() { throw notImplemented() }
++/*
++ * Carte (Visa, Mastercard) par MaishaPay : le client est envoyé sur la page de paiement sécurisée
++ * (CyberSource, de Visa). Aucun numéro de carte ne passe par kclick.
++ * start  : crée la transaction et renvoie paymentPage (où rediriger le client)
++ * verify : état réel de la transaction
++ * refund : remboursement fait à la main par l'équipe pour l'instant
++ */
++export const isEnabled = maishapay.isEnabled
++
++export async function start({ order, payment }) {
++  const [firstname, ...rest] = String(order.customer_name ?? '').trim().split(/\s+/)
++  const address = order.address_snapshot ?? {}
++  return maishapay.collectCard({
++    reference: payment.reference,
++    amount: payment.amount,
++    currency: payment.currency ?? 'USD',
++    firstname,
++    lastname: rest.join(' '),
++    address: [address.street, address.quartier].filter(Boolean).join(', ') || null,
++    city: 'Kinshasa',
++    phone: order.customer_phone,
++    email: order.customer_email,
++    provider: 'VISA', // la page CyberSource accepte aussi Mastercard
++  })
++}
++
++export const verify = (payment) => maishapay.lookup({ providerTxId: payment.provider_tx_id, reference: payment.reference })
++
++export async function refund() {
++  return null // remboursement manuel pour l'instant
++}
+diff --git a/webapp/server/src/modules/payments/providers/index.js b/webapp/server/src/modules/payments/providers/index.js
+index bd898e2..6c88d18 100644
+--- a/webapp/server/src/modules/payments/providers/index.js
++++ b/webapp/server/src/modules/payments/providers/index.js
+@@ -1,10 +1,12 @@
+ // Chaque moyen de paiement respecte la même interface :
+-//   start({ order, payment })  → démarre le paiement (ex. demande de validation sur le téléphone)
+-//   verify(webhookRequest)     → confirme ou refuse le paiement à partir du message du prestataire
++//   isEnabled()               → le prestataire est branché (clés présentes)
++//   start({ order, payment }) → démarre le paiement ; renvoie { status, providerTxId, fees, paymentPage, rawStatus, message, request, payload }
++//   verify(payment)           → état réel du paiement chez le prestataire (même forme)
+ //   refund({ payment, amount })
+-// Changer de prestataire = remplacer un seul fichier de ce dossier.
++// Prestataire actuel : MaishaPay (maishapay.js). Changer de prestataire = remplacer ces fichiers.
+ // Pas de paiement à la livraison.
+ import * as mobileMoney from './mobileMoney.js'
+ import * as card from './card.js'
+ 
+ export const providers = { mobile_money: mobileMoney, carte: card }
++export { configure as configureMaishaPay } from './maishapay.js'
+diff --git a/webapp/server/src/modules/payments/providers/maishapay.js b/webapp/server/src/modules/payments/providers/maishapay.js
+new file mode 100644
+index 0000000..d9572a1
+--- /dev/null
++++ b/webapp/server/src/modules/payments/providers/maishapay.js
+@@ -0,0 +1,169 @@
++import { env } from '../../../config/env.js'
++import { logger } from '../../../config/logger.js'
++import { AppError } from '../../../shared/errors.js'
++
++/*
++ * MaishaPay : tous les appels à leur API sont ici (documentation : collection Postman « Maishapay REST API DOC »).
++ *   Mobile money  POST /collect/v2/store/mobileMoney   → PENDING, puis résultat envoyé à notre callbackUrl (POST)
++ *   Carte         POST /collect/v3/store/card          → PENDING + paymentPage (page CyberSource), résultat en GET sur callbackUrl
++ *   Vérification  POST /transaction/rest/v2/check      → état réel d'une transaction (par son id, ou par notre référence avec ?useRef=1)
++ *
++ * Sécurité : les messages de MaishaPay ne sont pas signés. On ne s'y fie JAMAIS :
++ * chaque résultat est revérifié ici (verify) avant de marquer un paiement « payé ».
++ * Les clés ne sortent jamais de ce fichier (ni journaux, ni base, ni réponses).
++ */
++
++const config = {
++  publicKey: env.MAISHAPAY_PUBLIC_KEY,
++  secretKey: env.MAISHAPAY_SECRET_KEY,
++  mode: env.MAISHAPAY_MODE, // '0' test, '1' réel
++  apiUrl: env.MAISHAPAY_API_URL,
++  publicApiUrl: env.API_PUBLIC_URL,
++  fetch: (...args) => globalThis.fetch(...args),
++  timeoutMs: 30_000,
++}
++
++/** Tests : remplace l'accès réseau et les réglages (jamais utilisé en production) */
++export function configure(overrides) {
++  Object.assign(config, overrides)
++}
++
++/** MaishaPay est branché : les deux clés et l'adresse publique de l'API sont connues */
++export const isEnabled = () => Boolean(config.publicKey && config.secretKey && config.publicApiUrl)
++export const isLive = () => config.mode === '1'
++
++/** Adresse où MaishaPay envoie le résultat (mobile money : POST ; carte : GET, le client y revient) */
++export const callbackUrl = () => `${config.publicApiUrl}/api/v1/payments/webhooks/maishapay`
++
++// Nos libellés d'opérateurs (Paramètres › Paiements) → codes MaishaPay
++const PROVIDERS = {
++  'm-pesa': 'MPESA',
++  mpesa: 'MPESA',
++  'orange money': 'ORANGE',
++  orange: 'ORANGE',
++  'airtel money': 'AIRTEL',
++  airtel: 'AIRTEL',
++  afrimoney: 'AFRIMONEY',
++  'afri money': 'AFRIMONEY',
++}
++export const providerCode = (label) => PROVIDERS[String(label ?? '').trim().toLowerCase()] ?? null
++
++/** Téléphone au format attendu par MaishaPay : +243xxxxxxxxx (sans espaces) */
++export function walletId(phone) {
++  const digits = String(phone ?? '').replace(/\D/g, '')
++  if (!digits) return null
++  if (digits.startsWith('243')) return `+${digits}`
++  if (digits.startsWith('0') && digits.length === 10) return `+243${digits.slice(1)}`
++  if (digits.length === 9) return `+243${digits}`
++  return `+${digits}`
++}
++
++/**
++ * Statut MaishaPay → statut kclick : 'paye' | 'echoue' | 'en_attente'.
++ * (La doc montre « PENDING » avec une espace en trop : on nettoie.)
++ */
++export function normalizeStatus(raw) {
++  const s = String(raw ?? '').trim().toUpperCase()
++  if (['SUCCESS', 'SUCCESSFUL', 'APPROVED', 'COMPLETED', 'PAID'].includes(s)) return 'paye'
++  if (['FAILED', 'FAILURE', 'DECLINED', 'CANCELED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'ERROR'].includes(s)) return 'echoue'
++  return 'en_attente'
++}
++
++const keys = () => ({ gatewayMode: Number(config.mode), publicApiKey: config.publicKey, secretApiKey: config.secretKey })
++
++/** Copie d'un message sans les clés (pour le journal des paiements) */
++export function redact(body) {
++  if (!body || typeof body !== 'object') return body ?? null
++  const { publicApiKey: _p, secretApiKey: _s, ...rest } = body
++  return rest
++}
++
++const unavailable = (message) => new AppError(502, 'PAYMENT_PROVIDER_ERROR', message)
++
++async function call(path, body, { timeoutMs = config.timeoutMs } = {}) {
++  if (!isEnabled()) throw new AppError(503, 'PAYMENT_PROVIDER_OFF', 'Le paiement en ligne n’est pas encore activé')
++  let res
++  try {
++    res = await config.fetch(`${config.apiUrl}${path}`, {
++      method: 'POST',
++      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
++      body: JSON.stringify({ ...keys(), ...body }),
++      signal: AbortSignal.timeout(timeoutMs),
++    })
++  } catch (err) {
++    logger.warn({ path, err: err.name }, 'MaishaPay injoignable')
++    throw unavailable('Le service de paiement ne répond pas. Réessayez dans un instant.')
++  }
++  const text = await res.text()
++  let data = null
++  try {
++    data = text ? JSON.parse(text) : null
++  } catch {
++    data = null
++  }
++  // 202 : paiement lancé ; 200 : vérification ; 400 : refus (corps quand même renvoyé avec un statut lisible)
++  if (!data) {
++    logger.warn({ path, status: res.status }, 'Réponse MaishaPay illisible')
++    throw unavailable('Le service de paiement a renvoyé une réponse inattendue. Réessayez dans un instant.')
++  }
++  return { httpStatus: res.status, data: data.data && typeof data.data === 'object' && !Array.isArray(data.data) ? data.data : data }
++}
++
++// Lecture d'une réponse MaishaPay (champs communs à la collecte et à la vérification).
++// Réponse sans statut de transaction (champ manquant, clé invalide, transaction inconnue…) :
++//  - à la demande de paiement → refusée (échec) ;
++//  - à la vérification → on ne conclut rien, le paiement reste en attente.
++function readResult(httpStatus, d, { missing = 'echoue' } = {}) {
++  const raw = d.transactionStatus ?? d.status ?? d.description
++  const rejected = !raw && httpStatus >= 400
++  return {
++    status: rejected ? missing : normalizeStatus(raw),
++    rawStatus: rejected ? `HTTP ${httpStatus}` : String(raw ?? '').trim(),
++    providerTxId: d.transactionId != null ? String(d.transactionId) : null,
++    reference: d.originatingTransactionId ?? d.transactionReference ?? null,
++    fees: Number.isFinite(Number(d.order?.cost?.frais ?? d.cost?.frais)) ? Number(d.order?.cost?.frais ?? d.cost?.frais) : null,
++    paymentPage: d.paymentPage ?? null,
++    message: rejected ? String(d.message ?? d.error ?? 'Demande refusée par le service de paiement') : (d.transactionDescription ?? null),
++    payload: d,
++  }
++}
++
++/** Mobile money : demande de validation envoyée sur le téléphone du client */
++export async function collectMobileMoney({ reference, amount, currency = 'USD', customerName, customerEmail, provider, phone }) {
++  const code = providerCode(provider)
++  if (!code) throw new AppError(400, 'UNKNOWN_OPERATOR', `Opérateur mobile money inconnu : ${provider}`)
++  const request = {
++    transactionReference: reference,
++    order: { amount: String(amount), currency, customerFullName: customerName ?? '', customerEmailAdress: customerEmail ?? '' },
++    paymentChannel: { channel: 'MOBILEMONEY', provider: code, walletID: walletId(phone), callbackUrl: callbackUrl() },
++  }
++  const { httpStatus, data } = await call('/collect/v2/store/mobileMoney', request)
++  return { request, ...readResult(httpStatus, data) }
++}
++
++/** Carte : MaishaPay renvoie la page de paiement sécurisée (CyberSource) où envoyer le client */
++export async function collectCard({ reference, amount, currency = 'USD', firstname, lastname, address, city = 'Kinshasa', phone, email, provider = 'VISA' }) {
++  const request = {
++    transactionReference: reference,
++    order: {
++      amount: String(amount),
++      currency,
++      customerFirstname: firstname || 'Client',
++      customerLastname: lastname || firstname || 'kclick',
++      customerAddress: address || 'Gombe',
++      customerCity: city,
++      customerPhoneNumber: walletId(phone),
++      customerEmailAdress: email,
++    },
++    paymentChannel: { channel: 'CARD', provider, callbackUrl: callbackUrl() },
++  }
++  const { httpStatus, data } = await call('/collect/v3/store/card', request)
++  return { request, ...readResult(httpStatus, data) }
++}
++
++/** État réel d'une transaction : par son numéro MaishaPay, sinon par notre référence */
++export async function lookup({ providerTxId, reference }) {
++  const byRef = !providerTxId
++  const { httpStatus, data } = await call(`/transaction/rest/v2/check${byRef ? '?useRef=1' : ''}`, { transactionId: providerTxId ?? reference })
++  return readResult(httpStatus, data, { missing: 'en_attente' })
++}
+diff --git a/webapp/server/src/modules/payments/providers/mobileMoney.js b/webapp/server/src/modules/payments/providers/mobileMoney.js
+index ea0aace..a8e4b25 100644
+--- a/webapp/server/src/modules/payments/providers/mobileMoney.js
++++ b/webapp/server/src/modules/payments/providers/mobileMoney.js
+@@ -1,6 +1,27 @@
+-import { notImplemented } from '../../../shared/errors.js'
++import * as maishapay from './maishapay.js'
+ 
+-// Prestataire à choisir (mobileMoney) : brancher ici son API.
+-export async function start() { throw notImplemented() }
+-export async function verify() { throw notImplemented() }
+-export async function refund() { throw notImplemented() }
++/*
++ * Mobile money (M-Pesa, Orange Money, Airtel Money, Afrimoney) par MaishaPay.
++ * start  : envoie la demande de validation sur le téléphone du client (réponse PENDING)
++ * verify : état réel de la transaction (jamais le message reçu tel quel)
++ * refund : remboursement fait à la main par l'équipe pour l'instant (dashboard › Paiements)
++ */
++export const isEnabled = maishapay.isEnabled
++
++export async function start({ order, payment }) {
++  return maishapay.collectMobileMoney({
++    reference: payment.reference,
++    amount: payment.amount,
++    currency: payment.currency ?? 'USD',
++    customerName: order.customer_name,
++    customerEmail: order.customer_email,
++    provider: payment.provider,
++    phone: payment.payer_phone ?? order.customer_phone,
++  })
++}
++
++export const verify = (payment) => maishapay.lookup({ providerTxId: payment.provider_tx_id, reference: payment.reference })
++
++export async function refund() {
++  return null // remboursement manuel (B2C MaishaPay à brancher plus tard)
++}
+diff --git a/webapp/server/src/server.js b/webapp/server/src/server.js
+index dd44305..6e23440 100644
+--- a/webapp/server/src/server.js
++++ b/webapp/server/src/server.js
+@@ -3,17 +3,22 @@ import { env } from './config/env.js'
+ import { logger } from './config/logger.js'
+ import { pool } from './config/db.js'
+ import { startEmailWorker, stopEmailWorker } from './modules/notifications/notifications.service.js'
++import { startPaymentWorker, stopPaymentWorker } from './modules/payments/payments.service.js'
+ 
+ const server = createApp().listen(env.PORT, () => logger.info(`API kclick prête sur le port ${env.PORT}`))
+ 
+ // File d'envoi des e-mails (Resend) : passe toutes les 10 s
+ startEmailWorker()
+ 
++// Paiements MaishaPay en attente : revérifiés toutes les minutes (si un message de MaishaPay se perd)
++startPaymentWorker()
++
+ // Arrêt propre (Railway / Render envoient SIGTERM à chaque déploiement)
+ for (const signal of ['SIGTERM', 'SIGINT']) {
+   process.on(signal, () => {
+     logger.info(`${signal} reçu, arrêt en cours…`)
+     stopEmailWorker()
++    stopPaymentWorker()
+     server.close(async () => {
+       await pool.end()
+       process.exit(0)
+diff --git a/webapp/server/tests/integration/emails.test.js b/webapp/server/tests/integration/emails.test.js
+index 376ddc0..0b443e3 100644
+--- a/webapp/server/tests/integration/emails.test.js
++++ b/webapp/server/tests/integration/emails.test.js
+@@ -5,6 +5,7 @@ import { createTestDatabase, createUser } from '../db.js'
+ 
+ const orders = await import('../../src/modules/orders/orders.service.js')
+ const parts = await import('../../src/modules/parts/parts.service.js')
++const payments = await import('../../src/modules/payments/payments.service.js')
+ const users = await import('../../src/modules/users/users.service.js')
+ const notifications = await import('../../src/modules/notifications/notifications.service.js')
+ await import('../../src/modules/subscribers.js') // abonnés aux événements (chargés par app.js en temps normal)
+@@ -116,6 +117,9 @@ test('commande sans e-mail client : seule l’équipe est prévenue', async () =
+ test('rupture d’une part : le client est prévenu (motif et commande refusée)', async () => {
+   const o = await checkout()
+   await waitForEmails((r) => r.length >= 2)
++  // Payée : la Maison peut alors la préparer… ou la refuser
++  const payId = (await db.query(`select id from public.payments where order_id = $1 and kind = 'paiement'`, [o.id])).rows[0].id
++  await payments.confirm(admin, payId, { providerRef: 'MP-RUPTURE' })
+   const partId = (await db.query('select id from public.order_parts where order_id = $1', [o.id])).rows[0].id
+   await parts.setStatus(employee, partId, { status: 'refusee', reason: 'Rupture de stock' })
+   const rows = await waitForEmails((r) => r.some((x) => x.kind === 'part_refused'))
+diff --git a/webapp/server/tests/integration/flow.test.js b/webapp/server/tests/integration/flow.test.js
+index 0476f90..13a2844 100644
+--- a/webapp/server/tests/integration/flow.test.js
++++ b/webapp/server/tests/integration/flow.test.js
+@@ -26,6 +26,13 @@ const order = (overrides = {}) =>
+     ...overrides,
+   })
+ 
++// Paiement confirmé : une commande n'arrive chez les Maisons qu'une fois payée
++const pay = async (o) => {
++  const [{ id }] = (await db.query(`select id from public.payments where order_id = $1 and kind = 'paiement' and status = 'en_attente'`, [o.id])).rows
++  await payments.confirm(admin, id, { providerRef: `MP-${o.number}` })
++  return o
++}
++
+ const partOf = async (orderId, brand = 'patchi') =>
+   (await db.query(`select p.id from public.order_parts p join public.brands b on b.id = p.brand_id where p.order_id = $1 and b.slug = $2`, [orderId, brand])).rows[0].id
+ 
+@@ -43,8 +50,16 @@ before(async () => {
+   riderId = (await db.query(`insert into public.riders (profile_id, vehicle, zone, is_available) values ($1, 'Moto', 'Gombe', true) returning id`, [riderUser.id])).rows[0].id
+ })
+ 
+-test('employé Patchi : file de sa Maison, préparation puis prête (qui et quand)', async () => {
++test('commande pas encore payée : invisible pour la Maison, impossible à préparer', async () => {
+   const o = await order()
++  assert.ok(!(await parts.listForBrand(employee, {})).some((x) => x.id === o.id))
++  await assert.rejects(parts.setStatus(employee, await partOf(o.id), { status: 'en_preparation' }), { code: 'NOT_PAID' })
++  await pay(o)
++  assert.ok((await parts.listForBrand(employee, {})).some((x) => x.id === o.id))
++})
++
++test('employé Patchi : file de sa Maison, préparation puis prête (qui et quand)', async () => {
++  const o = await pay(await order())
+   const queue = await parts.listForBrand(employee, {})
+   const mine = queue.find((x) => x.id === o.id)
+   assert.equal(mine.parts[0].status, 'nouvelle')
+@@ -67,7 +82,7 @@ test('employé Patchi : file de sa Maison, préparation puis prête (qui et quan
+ })
+ 
+ test('dispatch, collecte et livraison', async () => {
+-  const o = await order()
++  const o = await pay(await order())
+   const partId = await partOf(o.id)
+   await assert.rejects(deliveries.assign(admin, { orderId: o.id, riderId, etaMinutes: 20 }), { code: 'NO_PART_READY' })
+ 
+@@ -116,19 +131,22 @@ test('refus partiel (commande multi-Maisons) : la commande continue, montant aju
+   await db.query(`update public.brands set is_open = true where slug = 'kyra'`)
+   const kyraVariant = (await db.query(`select v.id from public.product_variants v join public.products p on p.id = v.product_id where p.slug = 'chanel-n5-deodorant'`)).rows[0].id
+   await db.query('update public.product_variants set stock = 10 where id = $1', [kyraVariant])
+-  const o = await order({ items: [{ variantId: box, quantity: 1 }, { variantId: kyraVariant, quantity: 1 }] })
++  const o = await pay(await order({ items: [{ variantId: box, quantity: 1 }, { variantId: kyraVariant, quantity: 1 }] }))
+   await db.query(`update public.brands set is_open = false where slug = 'kyra'`)
+ 
+   const view = await parts.setStatus(employee, await partOf(o.id), { status: 'refusee', reason: 'Rupture de stock' })
+   assert.equal(view.status, 'en_attente')
+   assert.equal(view.partial, true)
+   assert.equal(view.otherBrands[0].brand, 'kyra')
+-  const { rows } = await db.query(`select amount from public.payments where order_id = $1 and kind = 'paiement' and status = 'en_attente'`, [o.id])
+-  assert.equal(rows[0].amount, 97)
++  // Déjà payée : la part refusée (petite boîte, 17,83 $) part en remboursement
++  const { rows } = await db.query(`select amount, status from public.payments where order_id = $1 and kind = 'remboursement'`, [o.id])
++  assert.equal(rows[0].amount, 17.83)
++  assert.equal(rows[0].status, 'en_attente')
++  assert.equal((await db.query('select adjusted_total from public.orders where id = $1', [o.id])).rows[0].adjusted_total, 97)
+ })
+ 
+ test('retrait : remise au client quand la part est prête', async () => {
+-  const o = await order({ mode: 'retrait', address: undefined, items: [{ variantId: box, quantity: 1 }] })
++  const o = await pay(await order({ mode: 'retrait', address: undefined, items: [{ variantId: box, quantity: 1 }] }))
+   await assert.rejects(orders.handover(employee, o.id), { code: 'PARTS_NOT_READY' })
+   const partId = await partOf(o.id)
+   await parts.setStatus(employee, partId, { status: 'en_preparation' })
+@@ -139,7 +157,7 @@ test('retrait : remise au client quand la part est prête', async () => {
+ })
+ 
+ test('vue d’ensemble admin : chiffres du jour, statuts, Maisons, alertes, livreurs', async () => {
+-  const late = await order()
++  const late = await pay(await order())
+   const partId = await partOf(late.id)
+   await parts.setStatus(employee, partId, { status: 'en_preparation' })
+   await db.query(`update public.order_status_history set created_at = now() - interval '30 minutes' where order_part_id = $1 and to_status = 'en_preparation'`, [partId])
+diff --git a/webapp/server/tests/integration/maishapay.test.js b/webapp/server/tests/integration/maishapay.test.js
+new file mode 100644
+index 0000000..f7535a4
+--- /dev/null
++++ b/webapp/server/tests/integration/maishapay.test.js
+@@ -0,0 +1,257 @@
++import { before, beforeEach, test } from 'node:test'
++import assert from 'node:assert/strict'
++import request from 'supertest'
++import { createTestDatabase, createUser } from '../db.js'
++
++/*
++ * Paiements MaishaPay, de bout en bout, avec un FAUX MaishaPay : aucun appel réel.
++ * Le faux serveur enregistre chaque demande et répond ce que chaque test lui dicte.
++ */
++const { createApp } = await import('../../src/app.js')
++const orders = await import('../../src/modules/orders/orders.service.js')
++const payments = await import('../../src/modules/payments/payments.service.js')
++const { configureMaishaPay } = await import('../../src/modules/payments/providers/index.js')
++const app = createApp()
++let db, admin, variant
++
++const PUBLIC_KEY = 'MP-SBPK-test-public'
++const SECRET_KEY = 'MP-SBSK-test-secret'
++
++// Faux MaishaPay
++const fake = { calls: [], collect: null, card: null, check: null, down: false }
++const reply = (status, body) => ({ status, text: async () => JSON.stringify(body) })
++async function fakeFetch(url, init) {
++  if (fake.down) throw new TypeError('fetch failed')
++  const path = url.replace('https://maishapay.test/api', '')
++  const body = JSON.parse(init.body)
++  fake.calls.push({ path, body })
++  if (path === '/collect/v2/store/mobileMoney') return fake.collect?.(body) ?? reply(202, pendingMomo(body))
++  if (path === '/collect/v3/store/card') return fake.card?.(body) ?? reply(202, pendingCard(body))
++  if (path.startsWith('/transaction/rest/v2/check')) return fake.check?.(body, path) ?? reply(200, { transactionStatus: 'PENDING', transactionId: body.transactionId })
++  return reply(404, { message: 'inconnu' })
++}
++let txSeq = 1000
++const pendingMomo = (b) => ({
++  status_code: 202,
++  transactionStatus: 'PENDING ', // avec l'espace en trop, comme dans la documentation
++  transactionId: ++txSeq,
++  originatingTransactionId: b.transactionReference,
++  order: { cost: { amount: Number(b.order.amount), frais: 0.4, total: Number(b.order.amount) + 0.4, currency: b.order.currency } },
++})
++const pendingCard = (b) => ({
++  status_code: 202,
++  transactionId: ++txSeq,
++  originatingTransactionId: b.transactionReference,
++  transactionStatus: 'PENDING',
++  paymentPage: `https://maishapay.test/api/collect/postRedirectionRequest/${txSeq}`,
++})
++const checkSays = (status) => (fake.check = (body) => reply(200, { transaction_type: 'C2B | Collect', status_code: status === 'SUCCESS' ? 200 : 400, transactionStatus: status, transactionId: body.transactionId, order: { cost: { frais: 0.4 } } }))
++
++const PHONE = '+243 810 000 000'
++const placeOrder = (method = 'mobile_money') =>
++  orders.placeOrder(null, {
++    customer: { name: 'Aline Mbuyi', phone: PHONE, email: 'aline@exemple.com' },
++    mode: 'retrait',
++    paymentMethod: method,
++    provider: method === 'mobile_money' ? 'Orange Money' : undefined,
++    payerPhone: method === 'mobile_money' ? '+243 820 000 000' : undefined,
++    items: [{ variantId: variant, quantity: 1 }],
++  })
++const rowsOf = async (orderId) =>
++  (await db.query(`select * from public.payments where order_id = $1 order by created_at`, [orderId])).rows
++const eventsOf = async (paymentId) =>
++  (await db.query(`select * from public.payment_events where payment_id = $1 order by created_at`, [paymentId])).rows
++
++before(async () => {
++  db = await createTestDatabase()
++  admin = await createUser(db, { roles: [{ role: 'super_admin' }] })
++  variant = (await db.query(`select v.id from public.product_variants v join public.products p on p.id = v.product_id where p.ref = 'GSB0010'`)).rows[0].id
++  await db.query('update public.product_variants set stock = 500 where id = $1', [variant])
++  configureMaishaPay({ publicKey: PUBLIC_KEY, secretKey: SECRET_KEY, mode: '0', apiUrl: 'https://maishapay.test/api', publicApiUrl: 'https://api.kclick.test', fetch: fakeFetch })
++})
++
++beforeEach(() => Object.assign(fake, { calls: [], collect: null, card: null, check: null, down: false }))
++
++test('mobile money : demande envoyée à MaishaPay avec les bons champs, une seule fois (double clic)', async () => {
++  const o = await placeOrder()
++  const res = await request(app).post('/api/v1/payments/start').send({ number: o.number, phone: PHONE })
++  assert.equal(res.status, 200, JSON.stringify(res.body))
++  assert.equal(res.body.status, 'en_attente')
++  assert.equal(res.body.waiting, true)
++  assert.equal(res.body.online, true)
++  assert.match(res.body.payerPhone, /^\+243 •+00$/)
++
++  assert.equal(fake.calls.length, 1)
++  const { path, body } = fake.calls[0]
++  assert.equal(path, '/collect/v2/store/mobileMoney')
++  assert.equal(body.gatewayMode, 0)
++  assert.equal(body.publicApiKey, PUBLIC_KEY)
++  assert.match(body.transactionReference, new RegExp(`^${o.number}-[0-9A-F]{6}$`))
++  assert.deepEqual(body.order, { amount: '17.83', currency: 'USD', customerFullName: 'Aline Mbuyi', customerEmailAdress: 'aline@exemple.com' })
++  assert.deepEqual(body.paymentChannel, { channel: 'MOBILEMONEY', provider: 'ORANGE', walletID: '+243820000000', callbackUrl: 'https://api.kclick.test/api/v1/payments/webhooks/maishapay' })
++
++  const [p] = await rowsOf(o.id)
++  assert.equal(p.reference, body.transactionReference)
++  assert.equal(p.provider_tx_id, String(txSeq))
++  assert.equal(p.fees, 0.4)
++  assert.ok(p.started_at && p.expires_at)
++
++  // Deuxième clic : pas de deuxième demande sur le téléphone
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  assert.equal(fake.calls.length, 1)
++
++  // Les clés ne sont jamais écrites dans le journal
++  const journal = JSON.stringify(await eventsOf(p.id))
++  assert.ok(!journal.includes(SECRET_KEY) && !journal.includes(PUBLIC_KEY))
++  assert.ok(journal.includes('"demande"') && journal.includes('"reponse"'))
++})
++
++test('message MaishaPay non fiable : « SUCCESS » reçu mais MaishaPay dit PENDING → rien ne change', async () => {
++  const o = await placeOrder()
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  const [p] = await rowsOf(o.id)
++  // Faux message (n'importe qui pourrait l'envoyer) : la vérification répond PENDING
++  const hook = await request(app)
++    .post('/api/v1/payments/webhooks/maishapay')
++    .send({ status_code: 200, transactionStatus: 'SUCCESS', transactionId: Number(p.provider_tx_id), originatingTransactionId: p.reference })
++  assert.equal(hook.status, 200)
++  assert.equal((await rowsOf(o.id))[0].status, 'en_attente')
++  assert.ok(fake.calls.some((c) => c.path.startsWith('/transaction/rest/v2/check')), 'vérification demandée à MaishaPay')
++})
++
++const outbox = async (orderId, kind) =>
++  (await db.query(`select count(*)::int as n from public.email_outbox where order_id = $1 and kind = $2`, [orderId, kind])).rows[0].n
++
++test('paiement confirmé par MaishaPay : payé, historique, e-mails une seule fois, équipe prévenue au paiement', async () => {
++  const o = await placeOrder()
++  await new Promise((r) => setTimeout(r, 50))
++  assert.equal(await outbox(o.id, 'team_new_order'), 0, 'pas d’alerte à l’équipe avant le paiement')
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  const [p] = await rowsOf(o.id)
++  checkSays('SUCCESS')
++  const msg = { status_code: 200, transactionStatus: 'SUCCESS', transactionId: Number(p.provider_tx_id), originatingTransactionId: p.reference }
++  await request(app).post('/api/v1/payments/webhooks/maishapay').send(msg)
++  await request(app).post('/api/v1/payments/webhooks/maishapay').send(msg) // MaishaPay renvoie le même message
++
++  const [paid] = await rowsOf(o.id)
++  assert.equal(paid.status, 'paye')
++  assert.equal(paid.provider_ref, p.provider_tx_id)
++  assert.ok(paid.paid_at)
++  const history = (await db.query(`select to_status from public.order_status_history where order_id = $1`, [o.id])).rows.map((r) => r.to_status)
++  assert.ok(history.includes('paiement paye'))
++  await new Promise((r) => setTimeout(r, 50))
++  assert.equal(await outbox(o.id, 'payment_received'), 1)
++  assert.equal(await outbox(o.id, 'team_new_order'), 1)
++
++  const status = await request(app).get(`/api/v1/payments/status/${o.number}`).query({ phone: '0810000000' })
++  assert.equal(status.body.status, 'paye')
++  assert.equal(status.body.canRetry, false)
++})
++
++test('paiement refusé : échec avec le motif, nouvelle tentative possible avec un autre opérateur', async () => {
++  const o = await placeOrder()
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  const [first] = await rowsOf(o.id)
++  checkSays('FAILED')
++  await request(app).post('/api/v1/payments/webhooks/maishapay').send({ transactionStatus: 'FAILED', transactionId: Number(first.provider_tx_id) })
++
++  const status = await payments.paymentStatus({ number: o.number, phone: PHONE })
++  assert.equal(status.status, 'echoue')
++  assert.equal(status.failureReason, 'Le paiement n’a pas abouti')
++  assert.equal(status.canRetry, true)
++
++  fake.calls = []
++  fake.check = null
++  const again = await payments.startPayment({ number: o.number, phone: PHONE, provider: 'Airtel Money', payerPhone: '0990000000' })
++  assert.equal(again.status, 'en_attente')
++  assert.equal(fake.calls[0].body.paymentChannel.provider, 'AIRTEL')
++  assert.equal(fake.calls[0].body.paymentChannel.walletID, '+243990000000')
++  const rows = await rowsOf(o.id)
++  assert.deepEqual(rows.map((r) => r.status), ['echoue', 'en_attente'])
++  assert.notEqual(rows[1].reference, rows[0].reference)
++})
++
++test('demande refusée tout de suite ou MaishaPay injoignable : échec lisible, on peut réessayer', async () => {
++  const o = await placeOrder()
++  fake.down = true
++  const res = await payments.startPayment({ number: o.number, phone: PHONE })
++  assert.equal(res.status, 'echoue')
++  assert.match(res.failureReason, /ne répond pas/)
++  assert.equal(res.canRetry, true)
++
++  fake.down = false
++  fake.collect = (b) => reply(400, { status_code: 400, transactionStatus: 'DECLINED', transactionId: 77, originatingTransactionId: b.transactionReference })
++  const again = await payments.startPayment({ number: o.number, phone: PHONE })
++  assert.equal(again.status, 'echoue')
++  assert.equal(again.failureReason, 'Paiement refusé par l’opérateur')
++})
++
++test('délai dépassé : le paiement en attente est marqué échoué par la vérification automatique', async () => {
++  const o = await placeOrder()
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  await db.query(`update public.payments set expires_at = now() - interval '1 minute', checked_at = now() - interval '5 minutes' where order_id = $1`, [o.id])
++  await payments.sweepPending()
++  const rows = await rowsOf(o.id)
++  assert.equal(rows[0].status, 'echoue')
++  assert.equal(rows[0].failure_reason, 'Délai de validation dépassé')
++  assert.equal(rows[1].status, 'en_attente')
++})
++
++test('carte : page de paiement sécurisée, retour du client vérifié puis renvoyé sur le suivi', async () => {
++  const o = await placeOrder('carte')
++  const res = await payments.startPayment({ number: o.number, phone: PHONE })
++  assert.equal(res.method, 'carte')
++  assert.match(res.paymentPage, /^https:\/\/maishapay\.test\/api\/collect\/postRedirectionRequest\/\d+$/)
++  const { body } = fake.calls[0]
++  assert.equal(fake.calls[0].path, '/collect/v3/store/card')
++  assert.equal(body.order.customerFirstname, 'Aline')
++  assert.equal(body.order.customerLastname, 'Mbuyi')
++  assert.equal(body.order.customerPhoneNumber, '+243810000000')
++  assert.equal(body.paymentChannel.channel, 'CARD')
++
++  const [p] = await rowsOf(o.id)
++  checkSays('SUCCESS')
++  const back = await request(app)
++    .get('/api/v1/payments/webhooks/maishapay')
++    .query({ status: 200, description: 'APPROVED', transactionRefId: p.reference, operatorRefId: p.provider_tx_id })
++  assert.equal(back.status, 302)
++  assert.match(back.headers.location, new RegExp(`/#suivi/${o.number}$`))
++  assert.equal((await rowsOf(o.id))[0].status, 'paye')
++})
++
++test('suivi du paiement : téléphone de la commande obligatoire', async () => {
++  const o = await placeOrder()
++  assert.equal((await request(app).get(`/api/v1/payments/status/${o.number}`).query({ phone: '0999999999' })).status, 404)
++  assert.equal((await request(app).post('/api/v1/payments/start').send({ number: o.number, phone: '0999999999' })).status, 404)
++  assert.equal((await request(app).get(`/api/v1/payments/status/${o.number}`).query({ phone: '0810000000' })).body.status, 'a_payer')
++})
++
++test('payé après l’annulation de la commande : enregistré, et remboursement créé pour l’équipe', async () => {
++  const o = await placeOrder()
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  const [p] = await rowsOf(o.id)
++  await orders.cancelOrder(admin, o.id, 'Client injoignable')
++  assert.equal((await rowsOf(o.id))[0].status, 'annule')
++
++  checkSays('SUCCESS')
++  await request(app).post('/api/v1/payments/webhooks/maishapay').send({ transactionStatus: 'SUCCESS', transactionId: Number(p.provider_tx_id) })
++  const refunds = (await db.query(`select * from public.payments where order_id = $1 and kind = 'remboursement'`, [o.id])).rows
++  assert.equal((await rowsOf(o.id)).find((r) => r.id === p.id).status, 'paye')
++  assert.equal(refunds.length, 1)
++  assert.equal(refunds[0].amount, 17.83)
++  assert.equal(refunds[0].status, 'en_attente')
++})
++
++test('dashboard : liste avec référence, numéro MaishaPay et dernier statut, recherche par commande', async () => {
++  const o = await placeOrder()
++  await payments.startPayment({ number: o.number, phone: PHONE })
++  const list = await payments.list({ q: o.number, limit: 50, offset: 0 })
++  assert.equal(list.items.length, 1)
++  const [row] = list.items
++  assert.match(row.reference, new RegExp(`^${o.number}-`))
++  assert.ok(row.provider_tx_id)
++  assert.equal(row.provider_status, 'PENDING')
++
++  const http = await request(app).get('/api/v1/payments').query({ q: o.number })
++  assert.equal(http.status, 401) // super-admin seulement
++})
+diff --git a/webapp/server/tests/integration/payments.test.js b/webapp/server/tests/integration/payments.test.js
+index 1741de7..a6944f9 100644
+--- a/webapp/server/tests/integration/payments.test.js
++++ b/webapp/server/tests/integration/payments.test.js
+@@ -29,13 +29,24 @@ before(async () => {
+   await db.query('update public.product_variants set stock = 100 where id = $1', [variant])
+ })
+ 
+-test('routes de paiement réservées au super-admin, prestataire pas encore branché', async () => {
++test('routes de paiement réservées au super-admin ; message MaishaPay vide ignoré, autre prestataire refusé', async () => {
+   assert.equal((await request(app).get('/api/v1/payments')).status, 401)
+-  const hook = await request(app).post('/api/v1/payments/webhooks/mobile_money').send({})
+-  assert.equal(hook.status, 501)
++  const hook = await request(app).post('/api/v1/payments/webhooks/maishapay').send({})
++  assert.equal(hook.status, 200)
++  assert.deepEqual(hook.body, { received: true, ok: false })
+   assert.equal((await request(app).post('/api/v1/payments/webhooks/especes').send({})).status, 400)
+ })
+ 
++test('sans clés MaishaPay : le paiement reste à confirmer à la main', async () => {
++  const o = await order()
++  const res = await request(app).post('/api/v1/payments/start').send({ number: o.number, phone: '+243 810 000 000' })
++  assert.equal(res.status, 200, JSON.stringify(res.body))
++  assert.equal(res.body.online, false)
++  assert.equal(res.body.status, 'a_payer')
++  const [p] = await paymentOf(o.id)
++  assert.equal(p.started_at, null)
++})
++
+ test('confirmer un paiement : payé, avec la référence, une seule fois', async () => {
+   const o = await order()
+   const [pending] = await paymentOf(o.id)
+diff --git a/webapp/supabase/migrations/20261124100000_maishapay.sql b/webapp/supabase/migrations/20261124100000_maishapay.sql
+new file mode 100644
+index 0000000..5ee0793
+--- /dev/null
++++ b/webapp/supabase/migrations/20261124100000_maishapay.sql
+@@ -0,0 +1,34 @@
++-- Paiements en ligne avec MaishaPay (mobile money et carte).
++-- Un paiement = une tentative : si elle échoue, une nouvelle ligne « en_attente » est créée pour réessayer.
++
++alter table public.payments
++  add column if not exists reference       text,        -- notre référence unique, envoyée à MaishaPay (transactionReference)
++  add column if not exists provider_tx_id  text,        -- numéro de la transaction chez MaishaPay (transactionId)
++  add column if not exists fees            numeric(10, 2), -- frais annoncés par MaishaPay (cost.frais)
++  add column if not exists failure_reason  text,        -- pourquoi le paiement a échoué (refus, délai dépassé…)
++  add column if not exists payment_page    text,        -- carte : page de paiement sécurisée où envoyer le client
++  add column if not exists started_at      timestamptz, -- demande envoyée au prestataire
++  add column if not exists expires_at      timestamptz, -- au-delà, le paiement en attente est considéré comme échoué
++  add column if not exists checked_at      timestamptz; -- dernière vérification auprès du prestataire
++
++create unique index if not exists payments_reference_key on public.payments (reference) where reference is not null;
++create index if not exists payments_provider_tx_idx on public.payments (provider_tx_id) where provider_tx_id is not null;
++-- Paiements en ligne encore en attente (revérifiés toutes les minutes)
++create index if not exists payments_pending_started_idx on public.payments (started_at)
++  where status = 'en_attente' and kind = 'paiement' and started_at is not null;
++
++-- Journal de chaque paiement : demande, réponse, notification reçue, vérification, expiration.
++-- Sert en cas de litige et pour ne jamais traiter deux fois le même message.
++-- Les clés MaishaPay ne sont JAMAIS enregistrées ici.
++create table if not exists public.payment_events (
++  id          uuid primary key default gen_random_uuid(),
++  payment_id  uuid not null references public.payments (id) on delete cascade,
++  source      text not null check (source in ('demande', 'reponse', 'notification', 'verification', 'expiration', 'erreur')),
++  status      text,  -- statut lu dans le message (PENDING, SUCCESS, FAILED…)
++  payload     jsonb,
++  created_at  timestamptz not null default now()
++);
++create index if not exists payment_events_payment_idx on public.payment_events (payment_id, created_at);
++
++-- Accès réservé à l'API (connexion serveur) : aucune lecture ni écriture depuis le navigateur
++alter table public.payment_events enable row level security;
