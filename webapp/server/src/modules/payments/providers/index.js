@@ -8,3 +8,4 @@ import * as mobileMoney from './mobileMoney.js'
 import * as card from './card.js'
 
 export const providers = { mobile_money: mobileMoney, carte: card }
+export { configure as configureMaishaPay } from './maishapay.js'
