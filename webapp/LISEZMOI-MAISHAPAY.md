@@ -1,7 +1,7 @@
 # Paiements MaishaPay — kclick
 
 Intégration du paiement en ligne (mobile money et carte) avec MaishaPay, en dollars.
-Les fichiers de ce zip gardent leur chemin dans le dépôt (`webapp/...`). Base : branche `finalMVP` (commit bebc608).
+Tout est intégré sur la branche `paymentMode`.
 
 ## Règles retenues
 - **Frais** : à la charge du client (MaishaPay les ajoute au montant débité ; ils sont enregistrés dans `payments.fees`).
@@ -64,7 +64,7 @@ Les fichiers de ce zip gardent leur chemin dans le dépôt (`webapp/...`). Base 
 - Résultat : **67 tests sur 67** passent.
 
 ## Mise en place
-1. Appliquer le patch (ou copier les fichiers) sur `finalMVP` : `git apply maishapay.patch`
+1. Code : déjà sur la branche `paymentMode`.
 2. Appliquer la migration sur Supabase : `webapp/supabase/migrations/20261124100000_maishapay.sql`
 3. Variables (Railway et `webapp/server/.env`, **jamais dans Git**) :
    ```
@@ -75,10 +75,18 @@ Les fichiers de ce zip gardent leur chemin dans le dépôt (`webapp/...`). Base 
    PAYMENT_TIMEOUT_MINUTES=10
    ```
    Sans les deux clés, rien ne change : les paiements restent confirmés à la main dans le dashboard.
+   Les clés contiennent des caractères `$` : dans un terminal, toujours les mettre entre apostrophes ('…').
+   Dans Railway et dans le fichier `.env`, les coller telles quelles.
 4. Tester avec les clés de test (`MAISHAPAY_MODE=0`) sur un vrai téléphone, puis passer aux clés réelles (`MP-LIVE…`, `MAISHAPAY_MODE=1`).
 
 ## À vérifier avec les clés de test
 - M-Pesa accepté en version 2 (`provider: MPESA`) ?
 - Le message de résultat mobile money arrive bien en JSON (le formulaire est aussi accepté).
 - Le retour de la carte (GET sur `/api/v1/payments/webhooks/maishapay`) ramène bien le client sur `#suivi/KC-…`.
-- Frais : le client est bien débité de « montant + frais ».
+- Frais : en mode test, MaishaPay retire les frais de ce que reçoit Kenny's (le client paie le prix affiché). Décision : on garde le prix de la plateforme.
+
+## Essais faits avec les clés de test (25 novembre)
+- M-Pesa au 0817723066 : 1 $, 17,83 $ et 21,83 $ → SUCCESS, confirmés par la vérification MaishaPay.
+- Par le site (commande → paiement) : « Paiement de $21.83 confirmé ».
+- En mode test, MaishaPay répond tout de suite, sans demande de code PIN sur le téléphone.
+- Carte : la page CyberSource (environnement de test) s'ouvre ; aucune carte saisie.

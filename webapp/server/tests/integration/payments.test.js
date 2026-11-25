@@ -29,11 +29,22 @@ before(async () => {
   await db.query('update public.product_variants set stock = 100 where id = $1', [variant])
 })
 
-test('routes de paiement réservées au super-admin, prestataire pas encore branché', async () => {
+test('routes de paiement réservées au super-admin ; message MaishaPay vide ignoré, autre prestataire refusé', async () => {
   assert.equal((await request(app).get('/api/v1/payments')).status, 401)
-  const hook = await request(app).post('/api/v1/payments/webhooks/mobile_money').send({})
-  assert.equal(hook.status, 501)
+  const hook = await request(app).post('/api/v1/payments/webhooks/maishapay').send({})
+  assert.equal(hook.status, 200)
+  assert.deepEqual(hook.body, { received: true, ok: false })
   assert.equal((await request(app).post('/api/v1/payments/webhooks/especes').send({})).status, 400)
+})
+
+test('sans clés MaishaPay : le paiement reste à confirmer à la main', async () => {
+  const o = await order()
+  const res = await request(app).post('/api/v1/payments/start').send({ number: o.number, phone: '+243 810 000 000' })
+  assert.equal(res.status, 200, JSON.stringify(res.body))
+  assert.equal(res.body.online, false)
+  assert.equal(res.body.status, 'a_payer')
+  const [p] = await paymentOf(o.id)
+  assert.equal(p.started_at, null)
 })
 
 test('confirmer un paiement : payé, avec la référence, une seule fois', async () => {

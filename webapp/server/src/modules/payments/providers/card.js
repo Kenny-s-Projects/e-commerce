@@ -22,7 +22,7 @@ export async function start({ order, payment }) {
     city: 'Kinshasa',
     phone: order.customer_phone,
     email: order.customer_email,
-    provider: 'VISA', 
+    provider: 'VISA', // la page CyberSource accepte aussi Mastercard
   })
 }
 

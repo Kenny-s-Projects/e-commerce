@@ -10,6 +10,7 @@ import { phoneFor, rememberOrder } from '../../lib/orderMemory.js'
 import { ease, fadeUp, underline } from '../Compte/accountUi.jsx'
 import PhoneField from '../../components/PhoneField/PhoneField.jsx'
 import { formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
+import PaymentStatus from '../../components/PaymentStatus/PaymentStatus.jsx'
 
 const TRIP_SECONDS = 20 * 60 // durée de référence d'une course, pour la barre de progression
 const REFRESH_MS = 30000
@@ -123,6 +124,13 @@ export default function TrackingPage({ number }) {
           {enRoute && order.rider && <Countdown key={order.pickedUpAt} minutes={order.rider.eta ?? 15} since={order.pickedUpAt} rider={order.rider.firstName} />}
         </div>
       </section>
+
+      {/* Paiement pas encore confirmé : état en direct, réessayer, ou finir le paiement par carte */}
+      {!paid && status !== 'annulee' && (
+        <div className="mx-auto max-w-[1100px] px-gutter pt-[clamp(24px,3vw,40px)] max-sm:px-[22px]">
+          <PaymentStatus number={order.number} phone={phone} onPaid={() => load()} className="bg-cream" />
+        </div>
+      )}
 
       <div className="mx-auto grid max-w-[1100px] gap-10 px-gutter py-[clamp(28px,4vw,64px)] max-sm:px-[22px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
         {/* Étapes */}

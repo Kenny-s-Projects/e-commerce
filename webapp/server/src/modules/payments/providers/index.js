@@ -1,8 +1,9 @@
 // Chaque moyen de paiement respecte la même interface :
-//   start({ order, payment })  → démarre le paiement (ex. demande de validation sur le téléphone)
-//   verify(webhookRequest)     → confirme ou refuse le paiement à partir du message du prestataire
+//   isEnabled()               → le prestataire est branché (clés présentes)
+//   start({ order, payment }) → démarre le paiement ; renvoie { status, providerTxId, fees, paymentPage, rawStatus, message, request, payload }
+//   verify(payment)           → état réel du paiement chez le prestataire (même forme)
 //   refund({ payment, amount })
-// Changer de prestataire = remplacer un seul fichier de ce dossier.
+// Prestataire actuel : MaishaPay (maishapay.js). Changer de prestataire = remplacer ces fichiers.
 // Pas de paiement à la livraison.
 import * as mobileMoney from './mobileMoney.js'
 import * as card from './card.js'

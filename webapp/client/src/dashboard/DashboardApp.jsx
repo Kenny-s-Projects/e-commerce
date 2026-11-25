@@ -11,6 +11,7 @@ import Dispatch from './admin/Dispatch.jsx'
 import ComingSoon from './admin/ComingSoon.jsx'
 import Settings from './admin/Settings.jsx'
 import Clients from './admin/Clients.jsx'
+import Payments from './admin/Payments.jsx'
 import ClientDetail from './admin/ClientDetail.jsx'
 import Users from './admin/Users.jsx'
 import UserForm from './admin/UserForm.jsx'
@@ -143,6 +144,8 @@ function Screens({ route }) {
             <ClientDetail id={route.id} />
           ) : route.section === 'clients' ? (
             <Clients />
+          ) : route.section === 'paiements' ? (
+            <Payments />
           ) : route.section === 'utilisateurs' && route.id ? (
             <UserForm id={route.id === 'nouveau' ? null : route.id} />
           ) : route.section === 'utilisateurs' ? (

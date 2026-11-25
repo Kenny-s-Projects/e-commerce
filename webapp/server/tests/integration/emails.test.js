@@ -5,6 +5,7 @@ import { createTestDatabase, createUser } from '../db.js'
 
 const orders = await import('../../src/modules/orders/orders.service.js')
 const parts = await import('../../src/modules/parts/parts.service.js')
+const payments = await import('../../src/modules/payments/payments.service.js')
 const users = await import('../../src/modules/users/users.service.js')
 const notifications = await import('../../src/modules/notifications/notifications.service.js')
 await import('../../src/modules/subscribers.js') // abonnés aux événements (chargés par app.js en temps normal)
@@ -116,6 +117,9 @@ test('commande sans e-mail client : seule l’équipe est prévenue', async () =
 test('rupture d’une part : le client est prévenu (motif et commande refusée)', async () => {
   const o = await checkout()
   await waitForEmails((r) => r.length >= 2)
+  // Payée : la Maison peut alors la préparer… ou la refuser
+  const payId = (await db.query(`select id from public.payments where order_id = $1 and kind = 'paiement'`, [o.id])).rows[0].id
+  await payments.confirm(admin, payId, { providerRef: 'MP-RUPTURE' })
   const partId = (await db.query('select id from public.order_parts where order_id = $1', [o.id])).rows[0].id
   await parts.setStatus(employee, partId, { status: 'refusee', reason: 'Rupture de stock' })
   const rows = await waitForEmails((r) => r.some((x) => x.kind === 'part_refused'))

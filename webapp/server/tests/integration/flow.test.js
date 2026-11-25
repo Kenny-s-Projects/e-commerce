@@ -26,6 +26,13 @@ const order = (overrides = {}) =>
     ...overrides,
   })
 
+// Paiement confirmé : une commande n'arrive chez les Maisons qu'une fois payée
+const pay = async (o) => {
+  const [{ id }] = (await db.query(`select id from public.payments where order_id = $1 and kind = 'paiement' and status = 'en_attente'`, [o.id])).rows
+  await payments.confirm(admin, id, { providerRef: `MP-${o.number}` })
+  return o
+}
+
 const partOf = async (orderId, brand = 'patchi') =>
   (await db.query(`select p.id from public.order_parts p join public.brands b on b.id = p.brand_id where p.order_id = $1 and b.slug = $2`, [orderId, brand])).rows[0].id
 
@@ -43,8 +50,16 @@ before(async () => {
   riderId = (await db.query(`insert into public.riders (profile_id, vehicle, zone, is_available) values ($1, 'Moto', 'Gombe', true) returning id`, [riderUser.id])).rows[0].id
 })
 
-test('employé Patchi : file de sa Maison, préparation puis prête (qui et quand)', async () => {
+test('commande pas encore payée : invisible pour la Maison, impossible à préparer', async () => {
   const o = await order()
+  assert.ok(!(await parts.listForBrand(employee, {})).some((x) => x.id === o.id))
+  await assert.rejects(parts.setStatus(employee, await partOf(o.id), { status: 'en_preparation' }), { code: 'NOT_PAID' })
+  await pay(o)
+  assert.ok((await parts.listForBrand(employee, {})).some((x) => x.id === o.id))
+})
+
+test('employé Patchi : file de sa Maison, préparation puis prête (qui et quand)', async () => {
+  const o = await pay(await order())
   const queue = await parts.listForBrand(employee, {})
   const mine = queue.find((x) => x.id === o.id)
   assert.equal(mine.parts[0].status, 'nouvelle')
@@ -67,7 +82,7 @@ test('employé Patchi : file de sa Maison, préparation puis prête (qui et quan
 })
 
 test('dispatch, collecte et livraison', async () => {
-  const o = await order()
+  const o = await pay(await order())
   const partId = await partOf(o.id)
   await assert.rejects(deliveries.assign(admin, { orderId: o.id, riderId, etaMinutes: 20 }), { code: 'NO_PART_READY' })
 
@@ -116,19 +131,22 @@ test('refus partiel (commande multi-Maisons) : la commande continue, montant aju
   await db.query(`update public.brands set is_open = true where slug = 'kyra'`)
   const kyraVariant = (await db.query(`select v.id from public.product_variants v join public.products p on p.id = v.product_id where p.slug = 'chanel-n5-deodorant'`)).rows[0].id
   await db.query('update public.product_variants set stock = 10 where id = $1', [kyraVariant])
-  const o = await order({ items: [{ variantId: box, quantity: 1 }, { variantId: kyraVariant, quantity: 1 }] })
+  const o = await pay(await order({ items: [{ variantId: box, quantity: 1 }, { variantId: kyraVariant, quantity: 1 }] }))
   await db.query(`update public.brands set is_open = false where slug = 'kyra'`)
 
   const view = await parts.setStatus(employee, await partOf(o.id), { status: 'refusee', reason: 'Rupture de stock' })
   assert.equal(view.status, 'en_attente')
   assert.equal(view.partial, true)
   assert.equal(view.otherBrands[0].brand, 'kyra')
-  const { rows } = await db.query(`select amount from public.payments where order_id = $1 and kind = 'paiement' and status = 'en_attente'`, [o.id])
-  assert.equal(rows[0].amount, 97)
+  // Déjà payée : la part refusée (petite boîte, 17,83 $) part en remboursement
+  const { rows } = await db.query(`select amount, status from public.payments where order_id = $1 and kind = 'remboursement'`, [o.id])
+  assert.equal(rows[0].amount, 17.83)
+  assert.equal(rows[0].status, 'en_attente')
+  assert.equal((await db.query('select adjusted_total from public.orders where id = $1', [o.id])).rows[0].adjusted_total, 97)
 })
 
 test('retrait : remise au client quand la part est prête', async () => {
-  const o = await order({ mode: 'retrait', address: undefined, items: [{ variantId: box, quantity: 1 }] })
+  const o = await pay(await order({ mode: 'retrait', address: undefined, items: [{ variantId: box, quantity: 1 }] }))
   await assert.rejects(orders.handover(employee, o.id), { code: 'PARTS_NOT_READY' })
   const partId = await partOf(o.id)
   await parts.setStatus(employee, partId, { status: 'en_preparation' })
@@ -139,7 +157,7 @@ test('retrait : remise au client quand la part est prête', async () => {
 })
 
 test('vue d’ensemble admin : chiffres du jour, statuts, Maisons, alertes, livreurs', async () => {
-  const late = await order()
+  const late = await pay(await order())
   const partId = await partOf(late.id)
   await parts.setStatus(employee, partId, { status: 'en_preparation' })
   await db.query(`update public.order_status_history set created_at = now() - interval '30 minutes' where order_part_id = $1 and to_status = 'en_preparation'`, [partId])

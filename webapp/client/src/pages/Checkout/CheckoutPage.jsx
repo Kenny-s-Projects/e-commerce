@@ -12,6 +12,8 @@ import useLiteMode from '../../hooks/useLiteMode.js'
 import PhoneField from '../../components/PhoneField/PhoneField.jsx'
 import { DEFAULT_CODE, formatPhone, phoneError, splitPhone } from '../../components/PhoneField/phone.js'
 import { HOME_HREF } from '../../hooks/useHashRoute.js'
+import PaymentStatus from '../../components/PaymentStatus/PaymentStatus.jsx'
+import { goToCardPage, startPayment } from '../../lib/payment.js'
 
 const ease = [0.22, 1, 0.36, 1]
 const DEFAULT_FEE = 4 // Gombe, le jour même (remplacé par les paramètres de l'API)
@@ -250,8 +252,15 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
       const created = await api.post('/orders', body)
       rememberOrder(created.number, phone)
       if (delivery === 'livraison') saveLastAddress(form)
-      setOrder({ number: created.number, total: created.total, count, delivery, payment, name: form.name.trim().split(' ')[0] })
+      // Paiement en ligne (MaishaPay) : demande sur le téléphone, ou page de paiement sécurisée pour la carte.
+      // Si le lancement échoue, la commande reste enregistrée : le client réessaie depuis la confirmation.
+      const payState = await startPayment(created.number, phone).catch(() => null)
       onDone?.(fromCart) // le panier n'est vidé qu'ici, une fois la commande enregistrée
+      if (payState?.method === 'carte' && payState.paymentPage) {
+        goToCardPage(payState.paymentPage) // retour par le suivi de la commande
+        return
+      }
+      setOrder({ number: created.number, phone, total: created.total, count, delivery, payment, payState, name: form.name.trim().split(' ')[0] })
       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
     } catch (err) {
       const byItem = Object.fromEntries((Array.isArray(err.details) ? err.details : []).filter((d) => d.variantId).map((d) => [d.variantId, d]))
@@ -278,7 +287,6 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
   /* ---------- Confirmation ---------- */
   if (order) {
     const follow = whatsappFor(t('Bonjour, je souhaite suivre ma commande kclick {n}.', { n: order.number }))
-    const momo = order.payment === 'mobile_money'
     return (
       <section className="grid min-h-[calc(100svh-4rem)] place-items-center bg-cream px-gutter py-20 text-center text-ink">
         <m.div className="max-w-[560px]" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}>
@@ -290,11 +298,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             {t('Votre commande {n} est enregistrée.', { n: order.number })}{' '}
             {order.delivery === 'livraison' ? t('Elle vous sera livrée aujourd’hui à Gombe.') : t('Elle vous attend en boutique, dès 9h00.')}
           </p>
-          <p className="mx-auto mt-4 max-w-[460px] rounded-xl bg-white/70 px-5 py-4 text-[13px] leading-relaxed text-ink/80">
-            {momo
-              ? t('Paiement en attente : validez la demande mobile money sur votre téléphone. La préparation commence dès que le paiement est confirmé.')
-              : t('Paiement en attente : vous serez redirigé vers le paiement sécurisé par carte [prestataire à brancher].')}
-          </p>
+          <PaymentStatus number={order.number} phone={order.phone} initial={order.payState} operators={operators} className="mx-auto mt-4 max-w-[460px]" />
           {/* Le numéro apparaît une fois la coche dessinée */}
           <m.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: reduce ? 0 : 0.75, ease }}>
             <p className="caps mt-8 text-gold">{t('Numéro de commande')}</p>
@@ -450,7 +454,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
             )}
             {payment === 'carte' && (
               <m.p key="carte" className="pt-5 text-[13px] leading-relaxed text-ink/70" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }}>
-                {t('Vous serez redirigé vers le paiement sécurisé pour saisir votre carte [prestataire à brancher]. Aucune donnée de carte ne passe par kclick.')}
+                {t('Vous serez redirigé vers le paiement sécurisé (Visa, Mastercard) pour saisir votre carte. Aucune donnée de carte ne passe par kclick.')}
               </m.p>
             )}
 
@@ -469,6 +473,7 @@ export default function CheckoutPage({ items, fromCart, onDone }) {
               <p aria-live="polite" className="min-h-[1.25rem] text-center text-[13px] text-ink/75">
                 {sending && longWait && t('Validez le paiement sur votre téléphone.')}
               </p>
+              <p className="text-center text-[11px] text-ink/55">{t('Paiement sécurisé par MaishaPay, en dollars. Les frais de l’opérateur de paiement sont à la charge du client.')}</p>
               <AnimatePresence>
                 {serverError && !sending && (
                   <m.div

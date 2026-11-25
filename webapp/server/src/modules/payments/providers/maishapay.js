@@ -2,6 +2,17 @@ import { env } from '../../../config/env.js'
 import { logger } from '../../../config/logger.js'
 import { AppError } from '../../../shared/errors.js'
 
+/*
+ * MaishaPay : tous les appels à leur API sont ici (documentation : collection Postman « Maishapay REST API DOC »).
+ *   Mobile money  POST /collect/v2/store/mobileMoney   → PENDING, puis résultat envoyé à notre callbackUrl (POST)
+ *   Carte         POST /collect/v3/store/card          → PENDING + paymentPage (page CyberSource), résultat en GET sur callbackUrl
+ *   Vérification  POST /transaction/rest/v2/check      → état réel d'une transaction (par son id, ou par notre référence avec ?useRef=1)
+ *
+ * Sécurité : les messages de MaishaPay ne sont pas signés. On ne s'y fie JAMAIS :
+ * chaque résultat est revérifié ici (verify) avant de marquer un paiement « payé ».
+ * Les clés ne sortent jamais de ce fichier (ni journaux, ni base, ni réponses).
+ */
+
 const config = {
   publicKey: env.MAISHAPAY_PUBLIC_KEY,
   secretKey: env.MAISHAPAY_SECRET_KEY,
