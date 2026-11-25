@@ -23,7 +23,7 @@ const schema = z.object({
   // Paiements MaishaPay : sans les deux clés, les paiements restent confirmés à la main (dashboard)
   MAISHAPAY_PUBLIC_KEY: z.string().optional().transform((v) => v || undefined),
   MAISHAPAY_SECRET_KEY: z.string().optional().transform((v) => v || undefined),
-  MAISHAPAY_MODE: z.enum(['0', '1']).default('0'), // 0 : test (sandbox), 1 : réel (live)
+  MAISHAPAY_MODE:  z.enum(['0', '1']).default('0'),
   MAISHAPAY_API_URL: z.url().default('https://marchand.maishapay.online/api').transform((v) => v.replace(/\/$/, '')),
   // Adresse publique de cette API (MaishaPay y envoie le résultat des paiements), ex. https://xxx.up.railway.app
   API_PUBLIC_URL: z.string().optional().transform((v) => (v ? v.replace(/\/$/, '') : undefined)),
