@@ -1,4 +1,4 @@
-# Paiements MaishaPay — kclick
+# Kclick
 
-Intégration du paiement en ligne (mobile money et carte) avec MaishaPay, en dollars.
-Les fichiers de ce zip gardent leur chemin dans le dépôt 
+Les Maisons Kenny’s réunies sur une seule adresse, livrées le jour même à Gombe.
+
